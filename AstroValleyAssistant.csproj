@@ -12,7 +12,6 @@
     <Folder Include="Core\Commands\" />
     <Folder Include="Core\Services\" />
     <Folder Include="Models\" />
-    <Folder Include="ViewModels\" />
   </ItemGroup>
 
 </Project>
