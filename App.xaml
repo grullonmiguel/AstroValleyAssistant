@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:AstroValleyAssistant" 
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:viewmodels="clr-namespace:AstroValleyAssistant.ViewModels"
              xmlns:views="clr-namespace:AstroValleyAssistant.Views">
     <Application.Resources>
@@ -16,5 +17,94 @@
         <DataTemplate DataType="{x:Type viewmodels:MapViewModel}">
             <views:MapView/>
         </DataTemplate>
+
+        <SolidColorBrush x:Key="Brand.Brush.Primary" Color="#534B80" />
+        <SolidColorBrush x:Key="Brand.Brush.Tertiary" Color="#EDEBF2" />
+        <SolidColorBrush x:Key="Theme.Brush.Border.Subtle" Color="#FFE0E0E0" />
+
+        <Thickness x:Key="Margin.Page">30 16 0 0</Thickness>
+        <Thickness x:Key="Padding.Header">16 0 16 0</Thickness>
+        <Thickness x:Key="Margin.Icon.Right" Right="10" />
+
+        <sys:Double x:Key="Size.Header.Height">50</sys:Double>
+        <sys:Double x:Key="Size.Icon.Medium">24</sys:Double>
+        <sys:Double x:Key="Size.Icon.Small">20</sys:Double>
+
+        <Geometry x:Key="Icon.Cubes">M12,2L2,7L12,12L22,7L12,2M12,14.5L2,9.5V17L12,22L22,17V9.5L12,14.5Z</Geometry>
+        <Geometry x:Key="Icon.HamburgerMenu">M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z</Geometry>
+
+        <Style x:Key="Theme.RadioButton.HeaderLink" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Margin" Value="5,0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border Name="PART_Border" 
+                  Background="{TemplateBinding Background}"
+                  BorderBrush="Transparent"
+                  BorderThickness="0,0,0,3"
+                  Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource Brand.Brush.Tertiary}"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource Brand.Brush.Primary}"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="RadioButton">
+                                <Border Name="PART_Border" 
+                          Background="{TemplateBinding Background}"
+                          BorderBrush="{StaticResource Brand.Brush.Primary}"
+                          BorderThickness="0,0,0,3"
+                          Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+
+        <Style x:Key="ViewSlideInFromTopStyle" TargetType="FrameworkElement">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <TranslateTransform Y="-30"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                                             To="0" 
+                                             Duration="0:0:0.4" >
+                                <DoubleAnimation.EasingFunction>
+                                    <CubicEase EasingMode="EaseOut"/>
+                                </DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                             To="1"
+                                             Duration="0:0:0.3"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Style.Triggers>
+        </Style>
     </Application.Resources>
 </Application>
