@@ -1,0 +1,13 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# VS file
+*.user
+*.suo
+*.sln.docstates
+.vs/
+
+# Other
+*.log
+*.DS_Store
