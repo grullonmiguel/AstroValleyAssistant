@@ -24,11 +24,16 @@ namespace AstroValleyAssistant
 
         private void ConfigureServices(IServiceCollection services)
         {
-            // Register Views - often as Singleton or Transient
+            // Register Shell 
             services.AddSingleton<MainView>();
+            services.AddSingleton<MainViewModel>();
+
+            // Register Page ViewModels as Singletons to preserve their state
+            services.AddSingleton<RegridViewModel>();
+            services.AddSingleton<RealAuctionViewModel>();
+            services.AddSingleton<MapViewModel>();
 
             // Register ViewModels
-            services.AddSingleton<MainViewModel>();
 
             // Register other services
             // services.AddTransient<IDataService, ApiDataService>();

@@ -9,6 +9,7 @@
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <SolidColorBrush x:Key="Brand.Brush.Primary" Color="#534B80" />
+        <SolidColorBrush x:Key="Brand.Brush.Tertiary" Color="#EDEBF2" />
         <SolidColorBrush x:Key="Theme.Brush.Border.Subtle" Color="#FFE0E0E0" />
 
         <Thickness x:Key="Margin.Page">30 16 0 0</Thickness>
@@ -21,6 +22,51 @@
 
         <Geometry x:Key="Icon.Cubes">M12,2L2,7L12,12L22,7L12,2M12,14.5L2,9.5V17L12,22L22,17V9.5L12,14.5Z</Geometry>
         <Geometry x:Key="Icon.HamburgerMenu">M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z</Geometry>
+
+        <Style x:Key="Theme.RadioButton.HeaderLink" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Margin" Value="5,0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border Name="PART_Border" 
+                         Background="{TemplateBinding Background}"
+                         BorderBrush="Transparent"
+                         BorderThickness="0,0,0,3"
+                         Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource Brand.Brush.Tertiary}"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource Brand.Brush.Primary}"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="RadioButton">
+                                <Border Name="PART_Border" 
+                                 Background="{TemplateBinding Background}"
+                                 BorderBrush="{StaticResource Brand.Brush.Primary}"
+                                 BorderThickness="0,0,0,3"
+                                 Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <Grid Background="#EDEBF2">
@@ -68,13 +114,16 @@
                     <!-- Navigation Buttons -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                         <RadioButton Content="Regrid" GroupName="Navigation"  
-                                     Command="{Binding NavigateCommand}" CommandParameter="Regrid"/>
+                                     Command="{Binding NavigateCommand}" CommandParameter="Regrid"
+                                     Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
 
                         <RadioButton Content="Real Auction" GroupName="Navigation" 
-                                     Command="{Binding NavigateCommand}" CommandParameter="RealAuction"/>
+                                     Command="{Binding NavigateCommand}" CommandParameter="RealAuction"
+                                     Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
 
                         <RadioButton Content="Maps" GroupName="Navigation"  
-                                     Command="{Binding NavigateCommand}" CommandParameter="Maps" IsChecked="True"/>
+                                     Command="{Binding NavigateCommand}" CommandParameter="Map" IsChecked="True"
+                                     Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
 
                         <Button Command="{Binding OpenMenuCommand}">
                             <Path Width="{StaticResource Size.Icon.Small}" Height="{StaticResource Size.Icon.Small}" 
