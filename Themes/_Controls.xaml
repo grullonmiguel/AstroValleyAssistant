@@ -5,6 +5,7 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/Themes/Controls/Button.xaml"/>
         <ResourceDictionary Source="/Themes/Controls/RadioButton.xaml"/>
+        <ResourceDictionary Source="/Themes/Controls/ListBox.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

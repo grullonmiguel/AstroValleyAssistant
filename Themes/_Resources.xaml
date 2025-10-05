@@ -16,12 +16,16 @@
     <!-- Accent Bar Style -->
     <sys:Double x:Key="Size.AccentBar.Thickness">20</sys:Double>
     <sys:Double x:Key="Size.AccentBar.ThicknessShort">16</sys:Double>
-    <sys:Double x:Key="Size.AccentBar.Length">235</sys:Double>
+    <sys:Double x:Key="Size.AccentBar.Length">240</sys:Double>
     
     <!--#endregion-->
-    
-    <Geometry x:Key="Icon.Cubes">M12,2L2,7L12,12L22,7L12,2M12,14.5L2,9.5V17L12,22L22,17V9.5L12,14.5Z</Geometry>
+
+    <!--#region Application Icons-->
+
+    <Geometry x:Key="Icon.AppLogo">M12,2L2,7L12,12L22,7L12,2M12,14.5L2,9.5V17L12,22L22,17V9.5L12,14.5Z</Geometry>
     <Geometry x:Key="Icon.HamburgerMenu">M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z</Geometry>
+
+    <!--#endregion-->
     
     <!--#region Common-->
     
@@ -32,7 +36,7 @@
                 <ControlTemplate TargetType="ContentControl">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Path Stretch="Uniform" 
-                             Data="{StaticResource Icon.Cubes}"                              
+                             Data="{StaticResource Icon.AppLogo}"                              
                              Width="{StaticResource Size.Icon.Medium}" 
                              Height="{StaticResource Size.Icon.Medium}" 
                              Margin="{StaticResource Margin.Icon.Right}"

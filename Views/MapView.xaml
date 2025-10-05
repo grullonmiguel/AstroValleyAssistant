@@ -3,10 +3,83 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:AstroValleyAssistant.Views"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid Style="{StaticResource ViewSlideInFromTopStyle}" >
-        <TextBlock Text="Map View" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center" />
+             xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:behaviors="clr-namespace:AstroValleyAssistant.Core.Behaviors"
+             mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800">
+    <Grid Margin="0 0 0 16" Style="{StaticResource ViewSlideInFromTopStyle}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <ListBox Grid.Column="0" 
+                 ItemsSource="{Binding States}"
+                 SelectedItem="{Binding SelectedState, Mode=TwoWay}"
+                 Background="{DynamicResource Brush.Accent}"
+                 BorderThickness="0"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ItemContainerStyle="{StaticResource Theme.ListBoxItem.StateList}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+            <i:Interaction.Behaviors>
+                <behaviors:ListBoxScrollBehavior />
+            </i:Interaction.Behaviors>
+        </ListBox>
+
+        <Viewbox Grid.Column="1">
+            <Grid Width="960" Height="593">
+                <ItemsControl Grid.Column="1" ItemsSource="{Binding States}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Path Data="{Binding PathData}" Stroke="{DynamicResource Brush.Map.Stroke}" StrokeThickness="0.5">
+                                <Path.Style>
+                                    <Style TargetType="Path">
+                                        <Setter Property="Fill" Value="{DynamicResource Brush.Map.DefaultFill}"/>
+                                        <Setter Property="ToolTip" Value="{Binding Name}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsHovered}" Value="True">
+                                                <Setter Property="Fill" Value="{DynamicResource Brush.Map.HoverFill}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="Fill" Value="{DynamicResource Brush.Accent}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Path.Style>
+
+                                <b:Interaction.Triggers>
+                                    <b:EventTrigger EventName="MouseEnter">
+                                        <b:ChangePropertyAction TargetObject="{Binding}" 
+                                            PropertyName="IsHovered" 
+                                            Value="True"/>
+                                    </b:EventTrigger>
+                                    <b:EventTrigger EventName="MouseLeave">
+                                        <b:ChangePropertyAction TargetObject="{Binding}" 
+                                            PropertyName="IsHovered" 
+                                            Value="False"/>
+                                    </b:EventTrigger>
+                                    <b:EventTrigger EventName="MouseDown">
+                                        <b:ChangePropertyAction TargetObject="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
+                                            PropertyName="SelectedState" 
+                                            Value="{Binding}"/>
+                                    </b:EventTrigger>
+                                </b:Interaction.Triggers>
+                            </Path>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Viewbox>
+
+
     </Grid>
 </UserControl>
