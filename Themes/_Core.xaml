@@ -1,0 +1,21 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <Thickness x:Key="Margin.Page">40 16 0 0</Thickness>
+    <Thickness x:Key="Padding.Header">16 0 16 0</Thickness>
+    <Thickness x:Key="Margin.Icon.Right" Right="8" />
+    <sys:Double x:Key="Size.Header.Height">50</sys:Double>
+    <sys:Double x:Key="Size.Icon.Medium">24</sys:Double>
+    <sys:Double x:Key="Size.Icon.Small">20</sys:Double>
+    
+    <!-- Accent Bar Style -->
+    <sys:Double x:Key="Size.AccentBar.Thickness">20</sys:Double>
+    <sys:Double x:Key="Size.AccentBar.ThicknessShort">16</sys:Double>
+    <sys:Double x:Key="Size.AccentBar.Length">235</sys:Double>
+
+    <Geometry x:Key="Icon.Cubes">M12,2L2,7L12,12L22,7L12,2M12,14.5L2,9.5V17L12,22L22,17V9.5L12,14.5Z</Geometry>
+    <Geometry x:Key="Icon.HamburgerMenu">M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z</Geometry>
+
+
+</ResourceDictionary>

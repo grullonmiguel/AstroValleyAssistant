@@ -1,0 +1,24 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style x:Key="Theme.Button.IconOnly" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="8"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style x:Key="Theme.Button.HamburgerMenu" TargetType="Button" BasedOn="{StaticResource Theme.Button.IconOnly}">
+        <Setter Property="Content">
+            <Setter.Value>
+                <Path Width="{StaticResource Size.Icon.Small}" 
+                      Height="{StaticResource Size.Icon.Small}" 
+                      Stretch="Uniform"
+                      Data="{StaticResource Icon.HamburgerMenu}"
+                      Fill="{DynamicResource Brush.Accent}"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+</ResourceDictionary>
