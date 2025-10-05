@@ -63,11 +63,7 @@ namespace AstroValleyAssistant.ViewModels
                         return new StateViewModel { Name = name, Abbreviation = abbr, PathData = geometry };
                     }
 
-                    tempStates.Add(CreateState("Alabama", "AL"));
-                    tempStates.Add(CreateState("Alaska", "AK"));
                     // ... add all 50 states ...
-                    tempStates.Add(CreateState("Wyoming", "WY"));
-
                     tempStates.Add(CreateState("Alabama",  "AL"));
                     tempStates.Add(CreateState("Alaska",  "AK"));
                     tempStates.Add(CreateState("Arizona",  "AZ"));
