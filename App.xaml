@@ -7,10 +7,9 @@
 
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Themes/_Core.xaml"/>
-                
-                <ResourceDictionary Source="/Themes/_Shared.xaml"/>
-                <ResourceDictionary Source="/Themes/Animations.xaml"/>
+                <ResourceDictionary Source="/Themes/_Resources.xaml"/>
+
+                <ResourceDictionary Source="/Themes/_Controls.xaml"/>
 
                 <ResourceDictionary Source="/Themes/Palettes/Light.xaml"/>
                 <ResourceDictionary Source="/Themes/Accents/Purple.xaml"/>
