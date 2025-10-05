@@ -7,18 +7,42 @@
         <Setter Property="Padding" Value="8"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Brush.Background.Hover}"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Foreground}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.3"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="Theme.Button.HamburgerMenu" TargetType="Button" BasedOn="{StaticResource Theme.Button.IconOnly}">
         <Setter Property="Content">
             <Setter.Value>
                 <Path Width="{StaticResource Size.Icon.Small}" 
-                      Height="{StaticResource Size.Icon.Small}" 
-                      Stretch="Uniform"
-                      Data="{StaticResource Icon.HamburgerMenu}"
-                      Fill="{DynamicResource Brush.Accent}"/>
+                  Height="{StaticResource Size.Icon.Small}" 
+                  Stretch="Uniform"
+                  Data="{StaticResource Icon.HamburgerMenu}"
+                  Fill="{Binding Path=Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
             </Setter.Value>
         </Setter>
     </Style>
-    
+
 </ResourceDictionary>

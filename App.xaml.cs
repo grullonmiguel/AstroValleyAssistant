@@ -1,4 +1,6 @@
-﻿using AstroValleyAssistant.ViewModels;
+﻿using AstroValleyAssistant.Core.Abstract;
+using AstroValleyAssistant.Core.Services;
+using AstroValleyAssistant.ViewModels;
 using AstroValleyAssistant.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,15 +38,21 @@ namespace AstroValleyAssistant
             // Register ViewModels
 
             // Register other services
+            services.AddSingleton<IThemeService, ThemeService>();
+
             // services.AddTransient<IDataService, ApiDataService>();
         }
+        
         protected override async void OnStartup(StartupEventArgs e)
         {
-            // 3. Start the host
+            // 1. -- Start the host
             await _host.StartAsync();
 
-            // 4. Resolve the main window and show it
-            // The DI container will create the MainViewModel and inject it into the MainView
+            // 2. -- Initialize the theme service
+            var themeService = _host.Services.GetRequiredService<IThemeService>();
+            themeService.Initialize();
+
+            // 3. -- Resolve the main window and show it
             var mainWindow = _host.Services.GetRequiredService<MainView>();
             mainWindow.Show();
 
