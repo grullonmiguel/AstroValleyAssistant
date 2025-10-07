@@ -7,7 +7,8 @@
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:converters="clr-namespace:AstroValleyAssistant.Core.Converters"
              xmlns:behaviors="clr-namespace:AstroValleyAssistant.Core.Behaviors"
-             mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800">
+             mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800"
+             x:Name="MapViewRoot">
     <UserControl.Resources>
         <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
         <converters:CenterPointConverter x:Key="CenterPointConverter"/>
@@ -59,12 +60,13 @@
                             <Run Text="{Binding TaxStatus, Converter={StaticResource EnumToDescriptionConverter}, StringFormat='{} {0}'}"/>
                         </TextBlock>
                     </ContentControl>
-                    <ContentControl Style="{StaticResource Theme.Control.InfoPill}" Margin="8,0,0,0">
+                    <Button Style="{StaticResource Theme.Button.InfoPill}" Margin="8,0,0,0" 
+                            Command="{Binding DataContext.ShowCountyMapCommand, ElementName=MapViewRoot}" CommandParameter="{Binding}">
                         <TextBlock>
                             <Run Text="Counties:" FontWeight="SemiBold"/>
                             <Run Text="{Binding CountyCount}"/>
                         </TextBlock>
-                    </ContentControl>
+                    </Button>
                 </StackPanel>
             </Grid>
 
@@ -77,14 +79,10 @@
                                 <Canvas/>
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
-
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Canvas>
-
-                                    <Path Data="{Binding PathData}" 
-                              Stroke="{DynamicResource Brush.Map.Stroke}" 
-                              StrokeThickness="0.5">
+                                    <Path Data="{Binding PathData}" Stroke="{DynamicResource Brush.Map.Stroke}" StrokeThickness="0.5">
                                         <Path.Style>
                                             <Style TargetType="Path">
                                                 <Setter Property="Fill" Value="{DynamicResource Brush.Map.DefaultFill}"/>

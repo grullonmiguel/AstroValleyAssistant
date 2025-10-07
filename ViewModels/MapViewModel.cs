@@ -1,13 +1,22 @@
 ﻿using AstroValleyAssistant.Core;
+using AstroValleyAssistant.Core.Abstract;
+using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Models;
+using AstroValleyAssistant.ViewModels.Dialogs;
 using System.Collections.ObjectModel;
+using System.Reflection.Metadata;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace AstroValleyAssistant.ViewModels
 {
     public class MapViewModel : ViewModelBase
     {
+
+        private readonly IDialogService _dialogService;
+        public ICommand ShowCountyMapCommand { get; }
+
         // This property can be used to show a loading indicator in the UI
         public bool IsLoading
         {
@@ -39,11 +48,26 @@ namespace AstroValleyAssistant.ViewModels
 
         public ObservableCollection<StateViewModel> States { get; } = [];
 
-        public MapViewModel()
+        public MapViewModel(IDialogService dialogService)
         {
+            _dialogService = dialogService;
+            ShowCountyMapCommand = new RelayCommand(ShowCountyMap);
+
             // Fire and forget the async loading method from the constructor
             _ = LoadStatesAsync();
+        }
 
+        private void ShowMap()
+        {
+            _dialogService.ShowDialog(new CountyMapDialogViewModel(SelectedState));
+        }
+
+        private void ShowCountyMap(object? parameter)
+        {
+            if (parameter is StateViewModel state)
+            {
+                _dialogService.ShowDialog(new CountyMapDialogViewModel(state));
+            }
         }
 
         private async Task LoadStatesAsync()
@@ -154,5 +178,7 @@ namespace AstroValleyAssistant.ViewModels
                 IsLoading = false;
             }
         }
+
+        
     }
 }

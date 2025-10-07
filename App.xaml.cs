@@ -39,7 +39,7 @@ namespace AstroValleyAssistant
 
             // Register other services
             services.AddSingleton<IThemeService, ThemeService>();
-
+            services.AddSingleton<IDialogService, DialogService>();
             // services.AddTransient<IDataService, ApiDataService>();
         }
         

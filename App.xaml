@@ -2,19 +2,20 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:AstroValleyAssistant" 
-             xmlns:sys="clr-namespace:System;assembly=mscorlib">
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:conv="clr-namespace:AstroValleyAssistant.Core.Converters">
     <Application.Resources>
 
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Themes/_Resources.xaml"/>
-
                 <ResourceDictionary Source="/Themes/_Controls.xaml"/>
-
                 <ResourceDictionary Source="/Themes/Palettes/Light.xaml"/>
                 <ResourceDictionary Source="/Themes/Accents/Purple.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
 
+            <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        </ResourceDictionary>
+        
     </Application.Resources>
 </Application>
