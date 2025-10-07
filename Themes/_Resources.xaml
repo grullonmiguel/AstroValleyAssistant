@@ -3,15 +3,19 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
     <!-- This file holds all theme-agnostic resources.-->
-    
+
     <!--#region Core-->
-    <Thickness x:Key="Margin.Page">40 16 0 0</Thickness>
-    <Thickness x:Key="Padding.Header">16 0 16 0</Thickness>
-    <Thickness x:Key="Margin.Icon.Right" Right="8" />
+    <sys:Double x:Key="FontSize.Small">12</sys:Double>
+    <sys:Double x:Key="FontSize.Normal">14</sys:Double>
+    <sys:Double x:Key="FontSize.Large">18</sys:Double>
     
     <sys:Double x:Key="Size.Header.Height">50</sys:Double>
     <sys:Double x:Key="Size.Icon.Medium">24</sys:Double>
     <sys:Double x:Key="Size.Icon.Small">20</sys:Double>
+
+    <Thickness x:Key="Margin.Page">40 16 0 0</Thickness>
+    <Thickness x:Key="Padding.Header">16 0 16 0</Thickness>
+    <Thickness x:Key="Margin.Icon.Right" Right="8" />
 
     <!-- Accent Bar Style -->
     <sys:Double x:Key="Size.AccentBar.Thickness">20</sys:Double>
@@ -107,7 +111,54 @@
             </EventTrigger>
         </Style.Triggers>
     </Style>
-    
+
+    <Style x:Key="Theme.Control.InfoPill" TargetType="ContentControl">
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Border CornerRadius="12"
+                        Padding="10,4"
+                        Background="{DynamicResource Brush.Pill.Background}">
+                        <ContentPresenter/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Theme.Control.TaxStatusPill" TargetType="ContentControl" BasedOn="{StaticResource Theme.Control.InfoPill}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding TaxStatus}" Value="TaxLien">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ContentControl">
+                            <Border CornerRadius="12" Padding="10,4" Background="{DynamicResource Brush.Status.Success}">
+                                <ContentPresenter TextElement.Foreground="{DynamicResource Brush.Status.Success.Foreground}"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </DataTrigger>
+
+            <DataTrigger Binding="{Binding TaxStatus}" Value="TaxDeed">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ContentControl">
+                            <Border CornerRadius="12" Padding="10,4" Background="{DynamicResource Brush.Status.Danger}">
+                                <ContentPresenter TextElement.Foreground="{DynamicResource Brush.Status.Danger.Foreground}"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </DataTrigger>
+
+        </Style.Triggers>
+    </Style>
+
     <!--#endregion-->
 
 </ResourceDictionary>

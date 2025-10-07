@@ -12,4 +12,13 @@
     <SolidColorBrush x:Key="Brush.Map.HoverFill" Color="#B0B0B0"/>
     <SolidColorBrush x:Key="Brush.Map.Stroke" Color="White"/>
 
+    <SolidColorBrush x:Key="Brush.Status.Success" Color="#D4EDDA"/>
+    <SolidColorBrush x:Key="Brush.Status.Success.Foreground" Color="#155724"/>
+    <SolidColorBrush x:Key="Brush.Status.Warning" Color="#FFF3CD"/>
+    <SolidColorBrush x:Key="Brush.Status.Warning.Foreground" Color="#856404"/>
+    <SolidColorBrush x:Key="Brush.Status.Danger" Color="#F8D7DA"/>
+    <SolidColorBrush x:Key="Brush.Status.Danger.Foreground" Color="#721C24"/>
+    <SolidColorBrush x:Key="Brush.Status.Info" Color="#D1ECF1"/>
+    <SolidColorBrush x:Key="Brush.Status.Info.Foreground" Color="#0C5460"/>
+
 </ResourceDictionary>

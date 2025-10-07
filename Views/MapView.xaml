@@ -5,81 +5,152 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:converters="clr-namespace:AstroValleyAssistant.Core.Converters"
              xmlns:behaviors="clr-namespace:AstroValleyAssistant.Core.Behaviors"
              mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800">
-    <Grid Margin="0 0 0 16" Style="{StaticResource ViewSlideInFromTopStyle}">
+    <UserControl.Resources>
+        <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
+        <converters:CenterPointConverter x:Key="CenterPointConverter"/>
+    </UserControl.Resources>
+    <Grid Margin="0 0 16 16" Style="{StaticResource ViewSlideInFromTopStyle}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
+        <!-- States List -->
         <ListBox Grid.Column="0" 
                  ItemsSource="{Binding States}"
                  SelectedItem="{Binding SelectedState, Mode=TwoWay}"
                  Background="{DynamicResource Brush.Accent}"
                  BorderThickness="0"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 ItemContainerStyle="{StaticResource Theme.ListBoxItem.StateList}">
+                 ItemContainerStyle="{StaticResource Theme.ListBoxItem.StateList}"
+                 behaviors:ListBoxSmartScrollBehavior.ScrollToSelectedItem="{Binding SelectedState}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
                 </DataTemplate>
             </ListBox.ItemTemplate>
-            <i:Interaction.Behaviors>
-                <behaviors:ListBoxScrollBehavior />
-            </i:Interaction.Behaviors>
+            <ScrollViewer.CanContentScroll>False</ScrollViewer.CanContentScroll>
+
+            <behaviors:ListBoxSmartScrollBehavior.VerticalOffset>
+                <Binding Path="ListBoxScrollOffset" Mode="TwoWay"/>
+            </behaviors:ListBoxSmartScrollBehavior.VerticalOffset>
         </ListBox>
 
-        <Viewbox Grid.Column="1">
-            <Grid Width="960" Height="593">
-                <ItemsControl Grid.Column="1" ItemsSource="{Binding States}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <Canvas/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Path Data="{Binding PathData}" Stroke="{DynamicResource Brush.Map.Stroke}" StrokeThickness="0.5">
-                                <Path.Style>
-                                    <Style TargetType="Path">
-                                        <Setter Property="Fill" Value="{DynamicResource Brush.Map.DefaultFill}"/>
-                                        <Setter Property="ToolTip" Value="{Binding Name}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsHovered}" Value="True">
-                                                <Setter Property="Fill" Value="{DynamicResource Brush.Map.HoverFill}"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="Fill" Value="{DynamicResource Brush.Accent}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Path.Style>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>  
+                <RowDefinition />
+            </Grid.RowDefinitions>
 
-                                <b:Interaction.Triggers>
-                                    <b:EventTrigger EventName="MouseEnter">
-                                        <b:ChangePropertyAction TargetObject="{Binding}" 
-                                            PropertyName="IsHovered" 
-                                            Value="True"/>
-                                    </b:EventTrigger>
-                                    <b:EventTrigger EventName="MouseLeave">
-                                        <b:ChangePropertyAction TargetObject="{Binding}" 
-                                            PropertyName="IsHovered" 
-                                            Value="False"/>
-                                    </b:EventTrigger>
-                                    <b:EventTrigger EventName="MouseDown">
-                                        <b:ChangePropertyAction TargetObject="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
-                                            PropertyName="SelectedState" 
-                                            Value="{Binding}"/>
-                                    </b:EventTrigger>
-                                </b:Interaction.Triggers>
-                            </Path>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+            <Grid Grid.Row="0" Margin="16 0 16 8"
+                  DataContext="{Binding SelectedState}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <ContentControl Style="{StaticResource Theme.Control.TaxStatusPill}" >
+                        <TextBlock>
+                            <Run Text="Type:" FontWeight="SemiBold"/>
+                            <Run Text="{Binding TaxStatus, Converter={StaticResource EnumToDescriptionConverter}, StringFormat='{} {0}'}"/>
+                        </TextBlock>
+                    </ContentControl>
+                    <ContentControl Style="{StaticResource Theme.Control.InfoPill}" Margin="8,0,0,0">
+                        <TextBlock>
+                            <Run Text="Counties:" FontWeight="SemiBold"/>
+                            <Run Text="{Binding CountyCount}"/>
+                        </TextBlock>
+                    </ContentControl>
+                </StackPanel>
             </Grid>
-        </Viewbox>
 
+            <!-- U.S. Map -->
+            <Viewbox Grid.Row="1">
+                <Grid Width="960" Height="593">
+                    <ItemsControl ItemsSource="{Binding States}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Canvas>
+
+                                    <Path Data="{Binding PathData}" 
+                              Stroke="{DynamicResource Brush.Map.Stroke}" 
+                              StrokeThickness="0.5">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Fill" Value="{DynamicResource Brush.Map.DefaultFill}"/>
+                                                <Setter Property="ToolTip" Value="{Binding Name}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsHovered}" Value="True">
+                                                        <Setter Property="Fill" Value="{DynamicResource Brush.Map.HoverFill}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="Fill" Value="{DynamicResource Brush.Accent}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                        <b:Interaction.Triggers>
+                                            <b:EventTrigger EventName="MouseEnter">
+                                                <b:ChangePropertyAction TargetObject="{Binding}" PropertyName="IsHovered" Value="True"/>
+                                            </b:EventTrigger>
+                                            <b:EventTrigger EventName="MouseLeave">
+                                                <b:ChangePropertyAction TargetObject="{Binding}" PropertyName="IsHovered" Value="False"/>
+                                            </b:EventTrigger>
+                                            <b:EventTrigger EventName="MouseDown">
+                                                <b:ChangePropertyAction TargetObject="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}" PropertyName="SelectedState" Value="{Binding}"/>
+                                            </b:EventTrigger>
+                                        </b:Interaction.Triggers>
+                                    </Path>
+
+                                    <TextBlock Text="{Binding Name}"
+                                   FontWeight="Bold"
+                                   IsHitTestVisible="False"
+                                   Foreground="{DynamicResource Brush.Accent.Foreground}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect ShadowDepth="1" BlurRadius="2" Opacity="0.5"/>
+                                        </TextBlock.Effect>
+                            
+                            <Canvas.Left>
+                                <MultiBinding Converter="{StaticResource CenterPointConverter}" ConverterParameter="X">
+                                    <Binding Path="PathData.Bounds"/>
+                                    <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}"/>
+                                </MultiBinding>
+                            </Canvas.Left>
+                            
+                            <Canvas.Top>
+                                <MultiBinding Converter="{StaticResource CenterPointConverter}" ConverterParameter="Y">
+                                    <Binding Path="PathData.Bounds"/>
+                                    <Binding Path="ActualHeight" RelativeSource="{RelativeSource Self}"/>
+                                </MultiBinding>
+                            </Canvas.Top>
+                                    </TextBlock>
+                                </Canvas>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Viewbox>
+        </Grid>
 
     </Grid>
 </UserControl>

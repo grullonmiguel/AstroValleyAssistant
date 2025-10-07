@@ -1,4 +1,5 @@
 ﻿using AstroValleyAssistant.Core;
+using AstroValleyAssistant.Models;
 using System.Windows.Media;
 
 namespace AstroValleyAssistant.ViewModels
@@ -9,6 +10,8 @@ namespace AstroValleyAssistant.ViewModels
         public string Name { get; set; }
         public string Abbreviation { get; set; }
         public Geometry PathData { get; set; }
+        public int CountyCount { get; set; }
+        public TaxSaleType TaxStatus { get; set; }
 
         public bool IsSelected
         {
