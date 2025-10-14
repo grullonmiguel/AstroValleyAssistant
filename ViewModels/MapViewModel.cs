@@ -1,6 +1,7 @@
 ﻿using AstroValleyAssistant.Core;
 using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
+using AstroValleyAssistant.Core.Data;
 using AstroValleyAssistant.Models;
 using AstroValleyAssistant.ViewModels.Dialogs;
 using System.Collections.ObjectModel;
@@ -15,6 +16,7 @@ namespace AstroValleyAssistant.ViewModels
     {
 
         private readonly IDialogService _dialogService;
+        private readonly GeographyDataService _geoService;
         public ICommand ShowCountyMapCommand { get; }
 
         // This property can be used to show a loading indicator in the UI
@@ -48,9 +50,10 @@ namespace AstroValleyAssistant.ViewModels
 
         public ObservableCollection<StateViewModel> States { get; } = [];
 
-        public MapViewModel(IDialogService dialogService)
+        public MapViewModel(IDialogService dialogService, GeographyDataService geoService)
         {
             _dialogService = dialogService;
+            _geoService = geoService;
             ShowCountyMapCommand = new RelayCommand(ShowCountyMap);
 
             // Fire and forget the async loading method from the constructor
@@ -59,14 +62,14 @@ namespace AstroValleyAssistant.ViewModels
 
         private void ShowMap()
         {
-            _dialogService.ShowDialog(new CountyMapDialogViewModel(SelectedState));
+            //_dialogService.ShowDialog(new CountyMapDialogViewModel(SelectedState));
         }
 
         private void ShowCountyMap(object? parameter)
         {
             if (parameter is StateViewModel state)
             {
-                _dialogService.ShowDialog(new CountyMapDialogViewModel(state));
+                _dialogService.ShowDialog(new CountyMapDialogViewModel(state, _geoService));
             }
         }
 

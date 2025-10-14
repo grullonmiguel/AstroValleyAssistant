@@ -63,8 +63,7 @@
               Visibility="{Binding CurrentDialogViewModel, Converter={StaticResource NullToVisibilityConverter}}">
             <ContentControl 
                 Style="{StaticResource Theme.ContentControl.DialogWindow}"
-                Content="{Binding CurrentDialogViewModel}"
-                />
+                Content="{Binding CurrentDialogViewModel}" />
         </Grid>
     </Grid>
 </Window>

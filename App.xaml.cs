@@ -1,4 +1,5 @@
 ﻿using AstroValleyAssistant.Core.Abstract;
+using AstroValleyAssistant.Core.Data;
 using AstroValleyAssistant.Core.Services;
 using AstroValleyAssistant.ViewModels;
 using AstroValleyAssistant.Views;
@@ -40,6 +41,7 @@ namespace AstroValleyAssistant
             // Register other services
             services.AddSingleton<IThemeService, ThemeService>();
             services.AddSingleton<IDialogService, DialogService>();
+            services.AddSingleton<GeographyDataService>();
             // services.AddTransient<IDataService, ApiDataService>();
         }
         
