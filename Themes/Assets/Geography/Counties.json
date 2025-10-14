@@ -734,7 +734,7 @@
       "key": "Geometry.Yell"
     }
   ],
-  
+
   "CA": [
     {
       "name": "Alameda",
@@ -969,7 +969,351 @@
       "key": "Geometry.Yuba"
     }
   ],
-  
+
+  "CO": [
+    {
+      "name": "Adams",
+      "key": "Geometry.Adams"
+    },
+    {
+      "name": "Alamosa",
+      "key": "Geometry.Alamosa"
+    },
+    {
+      "name": "Arapahoe",
+      "key": "Geometry.Arapahoe"
+    },
+    {
+      "name": "Archuleta",
+      "key": "Geometry.Archuleta"
+    },
+    {
+      "name": "Baca",
+      "key": "Geometry.Baca"
+    },
+    {
+      "name": "Bent",
+      "key": "Geometry.Bent"
+    },
+    {
+      "name": "Boulder",
+      "key": "Geometry.Boulder"
+    },
+    {
+      "name": "Broomfield",
+      "key": "Geometry.Broomfield"
+    },
+    {
+      "name": "Chaffee",
+      "key": "Geometry.Chaffee"
+    },
+    {
+      "name": "Cheyenne",
+      "key": "Geometry.Cheyenne"
+    },
+    {
+      "name": "Clear Creek",
+      "key": "Geometry.ClearCreek"
+    },
+    {
+      "name": "Conejos",
+      "key": "Geometry.Conejos"
+    },
+    {
+      "name": "Costilla",
+      "key": "Geometry.Costilla"
+    },
+    {
+      "name": "Crowley",
+      "key": "Geometry.Crowley"
+    },
+    {
+      "name": "Custer",
+      "key": "Geometry.Custer"
+    },
+    {
+      "name": "Delta",
+      "key": "Geometry.Delta"
+    },
+    {
+      "name": "Denver",
+      "key": "Geometry.Denver"
+    },
+    {
+      "name": "Dolores",
+      "key": "Geometry.Dolores"
+    },
+    {
+      "name": "Douglas",
+      "key": "Geometry.Douglas"
+    },
+    {
+      "name": "Eagle",
+      "key": "Geometry.Eagle"
+    },
+    {
+      "name": "El Paso",
+      "key": "Geometry.ElPaso"
+    },
+    {
+      "name": "Elbert",
+      "key": "Geometry.Elbert"
+    },
+    {
+      "name": "Fremont",
+      "key": "Geometry.Fremont"
+    },
+    {
+      "name": "Garfield",
+      "key": "Geometry.Garfield"
+    },
+    {
+      "name": "Gilpin",
+      "key": "Geometry.Gilpin"
+    },
+    {
+      "name": "Grand",
+      "key": "Geometry.Grand"
+    },
+    {
+      "name": "Gunnison",
+      "key": "Geometry.Gunnison"
+    },
+    {
+      "name": "Hinsdale",
+      "key": "Geometry.Hinsdale"
+    },
+    {
+      "name": "Huerfano",
+      "key": "Geometry.Huerfano"
+    },
+    {
+      "name": "Jackson",
+      "key": "Geometry.Jackson"
+    },
+    {
+      "name": "Jefferson",
+      "key": "Geometry.Jefferson"
+    },
+    {
+      "name": "Kiowa",
+      "key": "Geometry.Kiowa"
+    },
+    {
+      "name": "Kit Carson",
+      "key": "Geometry.KitCarson"
+    },
+    {
+      "name": "Lake",
+      "key": "Geometry.Lake"
+    },
+    {
+      "name": "La Plata",
+      "key": "Geometry.LaPlata"
+    },
+    {
+      "name": "Larimer",
+      "key": "Geometry.Larimer"
+    },
+    {
+      "name": "Las Animas",
+      "key": "Geometry.LasAnimas"
+    },
+    {
+      "name": "Lincoln",
+      "key": "Geometry.Lincoln"
+    },
+    {
+      "name": "Logan",
+      "key": "Geometry.Logan"
+    },
+    {
+      "name": "Mesa",
+      "key": "Geometry.Mesa"
+    },
+    {
+      "name": "Mineral",
+      "key": "Geometry.Mineral"
+    },
+    {
+      "name": "Moffat",
+      "key": "Geometry.Moffat"
+    },
+    {
+      "name": "Montezuma",
+      "key": "Geometry.Montezuma"
+    },
+    {
+      "name": "Montrose",
+      "key": "Geometry.Montrose"
+    },
+    {
+      "name": "Morgan",
+      "key": "Geometry.Morgan"
+    },
+    {
+      "name": "Otero",
+      "key": "Geometry.Otero"
+    },
+    {
+      "name": "Ouray",
+      "key": "Geometry.Ouray"
+    },
+    {
+      "name": "Park",
+      "key": "Geometry.Park"
+    },
+    {
+      "name": "Phillips",
+      "key": "Geometry.Phillips"
+    },
+    {
+      "name": "Pitkin",
+      "key": "Geometry.Pitkin"
+    },
+    {
+      "name": "Prowers",
+      "key": "Geometry.Prowers"
+    },
+    {
+      "name": "Pueblo",
+      "key": "Geometry.Pueblo"
+    },
+    {
+      "name": "Rio Blanco",
+      "key": "Geometry.RioBlanco"
+    },
+    {
+      "name": "Rio Grande",
+      "key": "Geometry.RioGrande"
+    },
+    {
+      "name": "Routt",
+      "key": "Geometry.Routt"
+    },
+    {
+      "name": "Saguache",
+      "key": "Geometry.Saguache"
+    },
+    {
+      "name": "San Juan",
+      "key": "Geometry.SanJuan"
+    },
+    {
+      "name": "San Miguel",
+      "key": "Geometry.SanMiguel"
+    },
+    {
+      "name": "Sedgwick",
+      "key": "Geometry.Sedgwick"
+    },
+    {
+      "name": "Summit",
+      "key": "Geometry.Summit"
+    },
+    {
+      "name": "Teller",
+      "key": "Geometry.Teller"
+    },
+    {
+      "name": "Washington",
+      "key": "Geometry.Washington"
+    },
+    {
+      "name": "Weld",
+      "key": "Geometry.Weld"
+    },
+    {
+      "name": "Yuma",
+      "key": "Geometry.Yuma"
+    }
+  ],
+
+  "DC": [
+    {
+      "name": "Ward1",
+      "key": "Geometry.Ward1"
+    },
+    {
+      "name": "Ward2",
+      "key": "Geometry.Ward2"
+    },
+    {
+      "name": "Ward3",
+      "key": "Geometry.Ward3"
+    },
+    {
+      "name": "Ward4",
+      "key": "Geometry.Ward4"
+    },
+    {
+      "name": "Ward5",
+      "key": "Geometry.Ward5"
+    },
+    {
+      "name": "Ward6",
+      "key": "Geometry.Ward6"
+    },
+    {
+      "name": "Ward7",
+      "key": "Geometry.Ward7"
+    },
+    {
+      "name": "Ward8",
+      "key": "Geometry.Ward8"
+    }
+  ],
+
+  "CT": [
+    {
+      "name": "Fairfield",
+      "key": "Geometry.Fairfield"
+    },
+    {
+      "name": "Hartford",
+      "key": "Geometry.Hartford"
+    },
+    {
+      "name": "Litchfield",
+      "key": "Geometry.Litchfield"
+    },
+    {
+      "name": "Middlesex",
+      "key": "Geometry.Middlesex"
+    },
+    {
+      "name": "New Haven",
+      "key": "Geometry.NewHaven"
+    },
+    {
+      "name": "New London",
+      "key": "Geometry.NewLondon"
+    },
+    {
+      "name": "Tolland",
+      "key": "Geometry.Tolland"
+    },
+    {
+      "name": "Windham",
+      "key": "Geometry.Windham"
+    }
+  ],
+
+  "DE": [
+    {
+      "name": "Kent",
+      "key": "Geometry.Kent"
+    },
+    {
+      "name": "New Castle",
+      "key": "Geometry.NewCastle"
+    },
+    {
+      "name": "Sussex",
+      "key": "Geometry.Sussex"
+    }
+  ],
+
   "FL": [
     {
       "name": "Alachua",
@@ -1240,7 +1584,7 @@
       "key": "Geometry.Washington"
     }
   ],
-  
+
   "TX": [
     {
       "name": "Anderson",

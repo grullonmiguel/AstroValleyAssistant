@@ -108,8 +108,9 @@ namespace AstroValleyAssistant.ViewModels
                     tempStates.Add(CreateState("Arizona", "AZ", 15, TaxSaleType.TaxLien));           
                     tempStates.Add(CreateState("Arkansas", "AR", 75, TaxSaleType.TaxDeed));          
                     tempStates.Add(CreateState("California", "CA", 58, TaxSaleType.TaxDeed));        
-                    tempStates.Add(CreateState("Colorado", "CO", 64, TaxSaleType.TaxLien));          
-                    tempStates.Add(CreateState("Connecticut", "CT", 8, TaxSaleType.RedeemableDeed)); 
+                    tempStates.Add(CreateState("Colorado", "CO", 64, TaxSaleType.TaxLien));
+                    tempStates.Add(CreateState("Connecticut", "CT", 8, TaxSaleType.RedeemableDeed));
+                    tempStates.Add(CreateState("District of Columbia", "DC", 1, TaxSaleType.TaxLien)); ; 
                     tempStates.Add(CreateState("Delaware", "DE", 3, TaxSaleType.RedeemableDeed));    
                     tempStates.Add(CreateState("Florida", "FL", 67, TaxSaleType.Hybrid));            
                     tempStates.Add(CreateState("Georgia", "GA", 159, TaxSaleType.RedeemableDeed));   

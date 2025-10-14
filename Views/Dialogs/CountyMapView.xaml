@@ -29,6 +29,7 @@
         <Grid Grid.Column="1">
             <Viewbox>
                 <ItemsControl ItemsSource="{Binding Counties}" Width="{Binding MapWidth}" Height="{Binding MapHeight}">
+                    
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas/>
