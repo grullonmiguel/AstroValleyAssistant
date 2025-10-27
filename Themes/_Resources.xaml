@@ -219,48 +219,119 @@
 
     <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
 
+    <CubicEase x:Key="MaterialEaseOut" EasingMode="EaseOut" />
+    
     <Style x:Key="Theme.ContentControl.DialogWindow" TargetType="ContentControl">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContentControl">
-                    <Border Background="{DynamicResource Brush.Background.Primary}"
-                        BorderBrush="{DynamicResource Brush.Border}"
-                        BorderThickness="1"
-                        CornerRadius="8" Margin="50"
-                        Effect="{StaticResource Dialog.Effect.Shadow}">
+                    <Border
+                    Background="{DynamicResource Brush.Background.Primary}"
+                    BorderBrush="{DynamicResource Brush.Border}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Margin="50"
+                    Effect="{StaticResource Dialog.Effect.Shadow}">
+                        <Border.RenderTransform>
+                            <TranslateTransform x:Name="DialogTransform" Y="-200"/>
+                        </Border.RenderTransform>
                         <DockPanel>
                             <Grid DockPanel.Dock="Top" Height="50" Background="Transparent">
-
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-
                                     <TextBlock 
-                                        VerticalAlignment="Center" Margin="16,0 0 0" 
-                                        FontSize="20" LineHeight="24" Foreground="{DynamicResource Brush.Accent}"
-                                        Text="{Binding Content.State.Name, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                    VerticalAlignment="Center" Margin="16,0 0 0" 
+                                    FontSize="20" LineHeight="24" Foreground="{DynamicResource Brush.Accent}"
+                                    Text="{Binding Content.State.Name, RelativeSource={RelativeSource TemplatedParent}}"/>
 
                                     <ContentControl Style="{StaticResource Theme.Control.CountyInfoPill}">
                                         <TextBlock Text="{Binding Content.State.TaxStatus, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource EnumToDescriptionConverter}, StringFormat='{} {0}'}"/>
                                     </ContentControl>
-
                                     <ContentControl Style="{StaticResource Theme.Control.CountyInfoPill}">
                                         <TextBlock>
-                                            <Run Text="{Binding Content.State.CountyCount, RelativeSource={RelativeSource TemplatedParent}}" />
-                                            <Run Text="counties" />
+                                        <Run Text="{Binding Content.State.CountyCount, RelativeSource={RelativeSource TemplatedParent}}" />
+                                        <Run Text="counties" />
                                         </TextBlock>
                                     </ContentControl>
                                 </StackPanel>
                                 <Button 
-                                    Content="✕" 
-                                    HorizontalAlignment="Right" 
-                                    Style="{DynamicResource Theme.Button.IconOnly}"
-                                    Padding="15,0"
-                                    FontSize="16"
-                                    Command="{Binding DataContext.CloseDialogCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                Content="✕" 
+                                HorizontalAlignment="Right" 
+                                Style="{DynamicResource Theme.Button.IconOnly}"
+                                Padding="15,0"
+                                FontSize="16"
+                                Command="{Binding DataContext.CloseDialogCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </Grid>
-
                             <ContentPresenter Margin="12"/>
                         </DockPanel>
                     </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Visibility" Value="Visible">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation
+                                            Storyboard.TargetName="DialogTransform"
+                                            Storyboard.TargetProperty="Y"
+                                            From="-200" To="0"
+                                            Duration="0:0:0.3"
+                                            EasingFunction="{StaticResource MaterialEaseOut}"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    
+    <Style x:Key="Theme.ContentControl.DrawerPanel" TargetType="ContentControl">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Border
+                    Width="400"
+                    Background="{DynamicResource Brush.Background.Primary}"
+                    BorderBrush="{DynamicResource Brush.Border}"
+                    BorderThickness="1"
+                    CornerRadius="8,0,0,8"
+                    HorizontalAlignment="Right"
+                    Margin="0,0,0,0"
+                    Effect="{StaticResource Dialog.Effect.Shadow}">
+                        <Border.RenderTransform>
+                            <TranslateTransform x:Name="DrawerTransform" X="400"/>
+                        </Border.RenderTransform>
+                        <Grid>
+                            <ContentPresenter Margin="12"/>
+                            <Button
+                            Margin="8"
+                            Content="✕"
+                            HorizontalAlignment="Right"
+                            Style="{DynamicResource Theme.Button.IconOnly}"
+                            Padding="15,0"
+                            FontSize="16"
+                            VerticalAlignment="Top"
+                            Command="{Binding DataContext.CloseDrawerCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Visibility" Value="Visible">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                        Storyboard.TargetName="DrawerTransform"
+                                        Storyboard.TargetProperty="X"
+                                        From="400" To="0"
+                                        Duration="0:0:0.3"
+                                        EasingFunction="{StaticResource MaterialEaseOut}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

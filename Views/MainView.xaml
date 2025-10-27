@@ -24,6 +24,15 @@
         <DataTemplate DataType="{x:Type dialogs:CountyMapDialogViewModel}">
             <viewDialogs:CountyMapView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:RealAuctionSettingsViewModel}">
+            <viewDialogs:RealAuctionSettingsView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:RegridSettingsViewModel}">
+            <viewDialogs:RegridSettingsView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:ThemeSettingsViewModel}">
+            <viewDialogs:ThemeSettingsView/>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid Background="{DynamicResource Brush.Background.Primary}">
@@ -45,7 +54,21 @@
                         <RadioButton Content="Regrid" Command="{Binding NavigateCommand}" CommandParameter="Regrid" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <RadioButton Content="Real Auction" Command="{Binding NavigateCommand}" CommandParameter="RealAuction" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <RadioButton Content="Maps" Command="{Binding NavigateCommand}" CommandParameter="Map" IsChecked="True" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
-                        <Button Command="{Binding OpenMenuCommand}" Style="{StaticResource Theme.Button.HamburgerMenu}" />
+                        <Button x:Name="HamburgerMenuButton" Command="{Binding OpenMenuCommand}" Style="{StaticResource Theme.Button.HamburgerMenu}" />
+                        <Popup
+                            PlacementTarget="{Binding ElementName=HamburgerMenuButton}"
+                            IsOpen="{Binding IsMenuOpen}"
+                            StaysOpen="False"
+                            AllowsTransparency="True">
+                            <Border CornerRadius="5"
+                                    Background="{DynamicResource Brush.Accent}">
+                                <StackPanel>
+                                    <Button Command="{Binding OpenDrawerCommand}" CommandParameter="OptionRealAuction" Content="Real Auction" Background="Transparent" Width="200" Margin="2 1" HorizontalContentAlignment="Left" Padding="8 2"/>
+                                    <Button Command="{Binding OpenDrawerCommand}" CommandParameter="OptionRegrid" Content="Regrid" Background="Transparent" Width="200" Margin="2 1" HorizontalContentAlignment="Left" Padding="8 2"/>
+                                    <Button Command="{Binding OpenDrawerCommand}" CommandParameter="OptionThemes" Content="Theme" Background="Transparent" Width="200" Margin="2 1" HorizontalContentAlignment="Left" Padding="8 2"/>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -59,11 +82,22 @@
         <ContentControl Style="{StaticResource Theme.Decorator.AccentOverlay}"/>
         
         <!-- Dialog Host -->
-        <Grid Background="#80000000" 
+        <Grid Background="{DynamicResource Brush.Background.Dialog}" 
               Visibility="{Binding CurrentDialogViewModel, Converter={StaticResource NullToVisibilityConverter}}">
             <ContentControl 
                 Style="{StaticResource Theme.ContentControl.DialogWindow}"
-                Content="{Binding CurrentDialogViewModel}" />
+                Content="{Binding CurrentDialogViewModel}" 
+                Visibility="{Binding CurrentDialogViewModel, Converter={StaticResource NullToVisibilityConverter}}"/>
+        </Grid>
+
+        <!-- Drawer Dialog Host (Right Side) -->
+        <Grid Background="{DynamicResource Brush.Background.Dialog}" 
+              Visibility="{Binding CurrentDrawerViewModel, Converter={StaticResource NullToVisibilityConverter}}">
+            <ContentControl 
+                Style="{StaticResource Theme.ContentControl.DrawerPanel}"
+                Content="{Binding CurrentDrawerViewModel}"
+                HorizontalAlignment="Right" 
+                Visibility="{Binding CurrentDrawerViewModel, Converter={StaticResource NullToVisibilityConverter}}"/>
         </Grid>
     </Grid>
 </Window>

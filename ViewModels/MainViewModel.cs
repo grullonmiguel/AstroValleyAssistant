@@ -2,8 +2,8 @@
 using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Core.Services;
+using AstroValleyAssistant.ViewModels.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Windows.Input;
 
 namespace AstroValleyAssistant.ViewModels
@@ -12,9 +12,48 @@ namespace AstroValleyAssistant.ViewModels
     {
         private readonly IServiceProvider _serviceProvider;
 
-        // This is the command that the RadioButtons in the view bind to.
+        #region Commands
+
         public ICommand NavigateCommand { get; }
         public ICommand CloseDialogCommand { get; }
+        public ICommand OpenMenuCommand => new RelayCommand(_ => IsMenuOpen = true);
+        public ICommand OpenDrawerCommand => new RelayCommand<string>(OnMenuOptionSelected);
+        public ICommand CloseDrawerCommand => new RelayCommand(_ => CloseDrawer());
+        #endregion
+
+        #region Properties
+
+        public bool IsMenuOpen
+        {
+            get => _isMenuOpen;
+            set => Set(ref _isMenuOpen, value);
+        }
+        private bool _isMenuOpen;
+
+        public ViewModelBase? CurrentViewModel
+        {
+            get => _currentViewModel;
+            set => Set(ref _currentViewModel, value);
+        }
+        private ViewModelBase? _currentViewModel;
+
+        public ViewModelDialogBase? CurrentDialogViewModel
+        {
+            get => _currentDialogViewModel;
+            set => Set(ref _currentDialogViewModel, value);
+        }
+        private ViewModelDialogBase? _currentDialogViewModel;
+
+        public ViewModelDialogBase? CurrentDrawerViewModel
+        {
+            get => _currentDrawerViewModel;
+            set => Set(ref _currentDrawerViewModel, value);
+        }
+        private ViewModelDialogBase? _currentDrawerViewModel;
+
+        #endregion
+
+        #region Constructor
 
         public MainViewModel(IServiceProvider serviceProvider, IDialogService dialogService)
         {
@@ -33,22 +72,7 @@ namespace AstroValleyAssistant.ViewModels
             }
         }
 
-        // This property holds the active view model.
-        // The ContentControl in the view binds to this.
-        public ViewModelBase CurrentViewModel
-        {
-            get => _currentViewModel;
-            set => Set(ref _currentViewModel, value);
-        }
-        private ViewModelBase _currentViewModel;
-
-
-        public ViewModelDialogBase CurrentDialogViewModel
-        {
-            get => _currentDialogViewModel;
-            set => Set(ref _currentDialogViewModel, value);
-        }
-        private ViewModelDialogBase _currentDialogViewModel;
+        #endregion
 
         #region Methods
 
@@ -71,13 +95,32 @@ namespace AstroValleyAssistant.ViewModels
             };
         }
 
-        public void ShowDialog(ViewModelDialogBase viewModel)
+        public void ShowDialog(ViewModelDialogBase viewModel) => CurrentDialogViewModel = viewModel;
+
+        private void CloseDialog() => CurrentDialogViewModel = null;
+
+        public void OpenDrawer(ViewModelDialogBase drawerViewModel) => CurrentDrawerViewModel = drawerViewModel;
+
+        public void CloseDrawer() => CurrentDrawerViewModel = null;
+        
+        private void OnMenuOptionSelected(string option)
         {
-            CurrentDialogViewModel = viewModel;
-        }
-        private void CloseDialog()
-        {
-            CurrentDialogViewModel = null;
+            // Close menu
+            IsMenuOpen = false;
+
+            // Trigger the correct drawer dialog based on option
+            switch (option)
+            {
+                case "OptionRealAuction":
+                    CurrentDrawerViewModel = new RealAuctionSettingsViewModel();
+                    break;
+                case "OptionRegrid":
+                    CurrentDrawerViewModel = new RegridSettingsViewModel();
+                    break;
+                case "OptionThemes":
+                    CurrentDrawerViewModel = new ThemeSettingsViewModel();
+                    break;
+            }
         }
 
         #endregion
