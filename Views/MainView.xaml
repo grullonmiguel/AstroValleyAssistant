@@ -7,7 +7,7 @@
         xmlns:viewDialogs="clr-namespace:AstroValleyAssistant.Views.Dialogs"
         xmlns:dialogs="clr-namespace:AstroValleyAssistant.ViewModels.Dialogs"
         Title="Astro Valley Assistant"
-        Height="768" Width="1024"
+        Height="768" Width="1280"
         MinHeight="480" MinWidth="640"
         WindowStartupLocation="CenterScreen">
 
