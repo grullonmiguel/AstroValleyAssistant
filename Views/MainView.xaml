@@ -54,8 +54,17 @@
                         <RadioButton Content="Regrid" Command="{Binding NavigateCommand}" CommandParameter="Regrid" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <RadioButton Content="Real Auction" Command="{Binding NavigateCommand}" CommandParameter="RealAuction" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <RadioButton Content="Maps" Command="{Binding NavigateCommand}" CommandParameter="Map" IsChecked="True" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
-                        <Button x:Name="HamburgerMenuButton" Command="{Binding OpenMenuCommand}" Style="{StaticResource Theme.Button.HamburgerMenu}" />
-                        <Popup
+                        <Button x:Name="HamburgerMenuButton" Command="{Binding OpenMenuCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}" Style="{StaticResource Theme.Button.HamburgerMenu}" >
+                            <Button.ContextMenu>
+                                <ContextMenu Style="{StaticResource Theme.ContextMenu}">
+                                    <MenuItem Header="Real Auction" Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="OptionRealAuction"/>
+                                    <MenuItem Header="Regrid" Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="OptionRegrid" />
+                                    <MenuItem Header="Theme" Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="OptionThemes" />
+
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                        <!--<Popup
                             PlacementTarget="{Binding ElementName=HamburgerMenuButton}"
                             IsOpen="{Binding IsMenuOpen}"
                             StaysOpen="False"
@@ -68,7 +77,7 @@
                                     <Button Command="{Binding OpenDrawerCommand}" CommandParameter="OptionThemes" Content="Theme" Background="Transparent" Width="200" Margin="2 1" HorizontalContentAlignment="Left" Padding="8 2"/>
                                 </StackPanel>
                             </Border>
-                        </Popup>
+                        </Popup>-->
                     </StackPanel>
                 </Grid>
             </Border>

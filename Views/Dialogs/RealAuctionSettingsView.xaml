@@ -6,7 +6,31 @@
              xmlns:local="clr-namespace:AstroValleyAssistant.Views.Dialogs"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
+    <Grid >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        
+        <TextBlock Text="Real Auction" FontSize="24" Foreground="{DynamicResource Brush.Accent}"/>
+        <TextBlock Grid.Row="1" TextWrapping="Wrap" FontSize="16" Margin="0 8" Text="Choose State, County and Auction Date" />
+
+        <!-- State -->
+        <TextBlock Text="State" FontWeight="Bold" Grid.Row="2"/>
+        <ComboBox
+            Grid.Row="3"
+            Margin="0 8 0 0"
+            Background="Transparent"
+            ItemsSource="{Binding States}"
+            SelectedItem="{Binding Path=StateSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
     </Grid>
 </UserControl>

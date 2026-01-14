@@ -76,6 +76,73 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Context Menu Style -->
+    <Style x:Key="Theme.ContextMenu" TargetType="ContextMenu">
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Normal}"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Subtle}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border x:Name="MainMenu" Background="{DynamicResource Brush.Accent}" BorderThickness="1" BorderBrush="{DynamicResource Brush.Accent}">
+                        <StackPanel ClipToBounds="True" IsItemsHost="True"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Theme.ContextMenuItem" TargetType="MenuItem">
+        <Setter Property="Padding" Value="16 4"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+        <Setter Property="FontSize" Value="{DynamicResource FontSize.Normal}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Subtle}"/>
+
+        <!-- Template for Custom Icon Styling -->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" x:Name="brd">
+                        <Grid >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <!-- Icon Column -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- Text Column -->
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Icon Background -->
+                            <Border x:Name="box" Grid.Column="0" Background="Transparent" Padding="0" CornerRadius="0">
+                                <ContentPresenter ContentSource="Icon"/>
+                            </Border>
+
+                            <!-- Menu Item Text -->
+                            <TextBlock 
+                                x:Name="txt"
+                                Grid.Column="1" 
+                                Text="{TemplateBinding Header}" 
+                                Padding="{TemplateBinding Padding}" 
+                                FontSize="{TemplateBinding FontSize}"
+                                Foreground="{TemplateBinding Foreground}"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+                            <Setter Property="Background" Value="{DynamicResource Brush.Background.Primary}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="box" Property="Opacity" Value=".2"/>
+                            <Setter TargetName="txt" Property="Opacity" Value=".2"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Application Logo Style -->
     <Style x:Key="AppLogo" TargetType="ContentControl">
         <Setter Property="Template">
@@ -227,12 +294,12 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ContentControl">
                     <Border
-                    Background="{DynamicResource Brush.Background.Primary}"
-                    BorderBrush="{DynamicResource Brush.Border}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Margin="50"
-                    Effect="{StaticResource Dialog.Effect.Shadow}">
+                        Background="{DynamicResource Brush.Background.Primary}"
+                        BorderBrush="{DynamicResource Brush.Border}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Margin="50"
+                        Effect="{StaticResource Dialog.Effect.Shadow}">
                         <Border.RenderTransform>
                             <TranslateTransform x:Name="DialogTransform" Y="-200"/>
                         </Border.RenderTransform>
@@ -240,9 +307,9 @@
                             <Grid DockPanel.Dock="Top" Height="50" Background="Transparent">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
                                     <TextBlock 
-                                    VerticalAlignment="Center" Margin="16,0 0 0" 
-                                    FontSize="20" LineHeight="24" Foreground="{DynamicResource Brush.Accent}"
-                                    Text="{Binding Content.State.Name, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                        VerticalAlignment="Center" Margin="16,0 0 0" 
+                                        FontSize="20" LineHeight="24" Foreground="{DynamicResource Brush.Accent}"
+                                        Text="{Binding Content.State.Name, RelativeSource={RelativeSource TemplatedParent}}"/>
 
                                     <ContentControl Style="{StaticResource Theme.Control.CountyInfoPill}">
                                         <TextBlock Text="{Binding Content.State.TaxStatus, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource EnumToDescriptionConverter}, StringFormat='{} {0}'}"/>

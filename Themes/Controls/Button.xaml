@@ -45,7 +45,6 @@
         </Setter>
     </Style>
 
-
     <Style x:Key="Theme.Button.InfoPill" TargetType="Button">
         <Setter Property="Focusable" Value="False"/>
         <Setter Property="Cursor" Value="Hand"/>

@@ -4,6 +4,7 @@ using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Core.Services;
 using AstroValleyAssistant.ViewModels.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace AstroValleyAssistant.ViewModels
@@ -16,9 +17,10 @@ namespace AstroValleyAssistant.ViewModels
 
         public ICommand NavigateCommand { get; }
         public ICommand CloseDialogCommand { get; }
-        public ICommand OpenMenuCommand => new RelayCommand(_ => IsMenuOpen = true);
+        public ICommand OpenMenuCommand => new RelayCommand<Button>(OnOpenContextMenu);
         public ICommand OpenDrawerCommand => new RelayCommand<string>(OnMenuOptionSelected);
         public ICommand CloseDrawerCommand => new RelayCommand(_ => CloseDrawer());
+
         #endregion
 
         #region Properties
@@ -120,6 +122,15 @@ namespace AstroValleyAssistant.ViewModels
                 case "OptionThemes":
                     CurrentDrawerViewModel = new ThemeSettingsViewModel();
                     break;
+            }
+        }
+
+        private void OnOpenContextMenu(Button button)
+        {
+            if (button.ContextMenu != null)
+            {
+                button.ContextMenu.IsOpen = true;
+                button.ContextMenu.DataContext = button.DataContext;
             }
         }
 
