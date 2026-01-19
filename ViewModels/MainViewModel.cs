@@ -2,6 +2,7 @@
 using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Core.Services;
+using AstroValleyAssistant.Models;
 using AstroValleyAssistant.ViewModels.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows.Controls;
@@ -25,7 +26,7 @@ namespace AstroValleyAssistant.ViewModels
         public ICommand OpenMenuCommand => _openMenuCommand ??= new RelayCommand<Button>(OnOpenContextMenu);
 
         private ICommand? _openDrawerCommand;
-        public ICommand OpenDrawerCommand => _openDrawerCommand ??= new RelayCommand<string>(OnMenuOptionSelected);
+        public ICommand OpenDrawerCommand => _openDrawerCommand ??= new RelayCommand<MenuOption>(OnMenuOptionSelected);
 
         private ICommand? _closeDrawerCommand;
         public ICommand CloseDrawerCommand => _closeDrawerCommand ??= new RelayCommand(_ => CloseDrawer());
@@ -115,15 +116,8 @@ namespace AstroValleyAssistant.ViewModels
 
         public void CloseDrawer() => CurrentDrawerViewModel = null;
 
-        /// <summary>
-        /// Handles a menu option selection by resolving and opening the corresponding drawer view model.
-        /// </summary>
-        private void OnMenuOptionSelected(string? option)
+        private void OnMenuOptionSelected(MenuOption option)
         {
-            // Ignore unknown or null options.
-            if (string.IsNullOrWhiteSpace(option))
-                return;
-
             // Close the menu as soon as a valid option is selected.
             IsMenuOpen = false;
 
@@ -134,28 +128,25 @@ namespace AstroValleyAssistant.ViewModels
         /// <summary>
         /// Maps a menu option key to the corresponding drawer view model instance.
         /// </summary>
-        private ViewModelDialogBase? CreateDrawerViewModel(string option)
+        private ViewModelDialogBase? CreateDrawerViewModel(MenuOption option)
         {
-            // Access the DI container once here.
-            var services = ((App)System.Windows.Application.Current).Services;
-
             switch (option)
             {
-                case "OptionRealAuction":
+                case MenuOption.RealAuction:
                     {
-                        var vm = services.GetRequiredService<RealAuctionSettingsViewModel>();
+                        var vm = _serviceProvider.GetRequiredService<RealAuctionSettingsViewModel>();
                         vm.Saved = CloseDrawer;
                         return vm;
                     }
 
-                case "OptionRegrid":
+                case MenuOption.Regrid:
                     {
-                        var vm = services.GetRequiredService<RegridSettingsViewModel>();
+                        var vm = _serviceProvider.GetRequiredService<RegridSettingsViewModel>();
                         vm.Saved = CloseDrawer;
                         return vm;
                     }
 
-                case "OptionThemes":
+                case MenuOption.Themes:
                     // This could also be resolved via DI for consistency.
                     return new ThemeSettingsViewModel();
 

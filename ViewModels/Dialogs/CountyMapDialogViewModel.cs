@@ -23,9 +23,7 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
         }
         private bool _isLoading;
 
-        // Properties to bind the map dimensions to
-        public double MapWidth => CalculateMapDimensions().Width;
-        
+        public double MapWidth => CalculateMapDimensions().Width;        
         public double MapHeight => CalculateMapDimensions().Height;
 
         public StateViewModel State { get; }
@@ -60,9 +58,8 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             _geoService = geoService;
 
             State = state;
-            Title = $"{State.Name}: {State.CountyCount} Counties";
-
             IsLoading = true;
+            Title = $"{State.Name}: {State.CountyCount} Counties";
         }
 
         #endregion
@@ -74,20 +71,15 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             // 1. Check the cache: If the value exists AND is not Empty, return it immediately.
             // Add the !totalBounds.IsEmpty check here to ensure we don't cache a failed result.
             if (_mapBoundsCache.HasValue && !_mapBoundsCache.Value.IsEmpty)
-            {
                 return _mapBoundsCache.Value;
-            }
 
             Rect totalBounds = Rect.Empty;
 
             // 2. Calculation: Iterate through all loaded counties to find the total bounding box.
             foreach (var county in Counties)
-            {
+            {                
                 if (county.PathData != null)
-                {
-                    // Union combines the current total area with the new county's bounds
-                    totalBounds.Union(county.PathData.Bounds);
-                }
+                    totalBounds.Union(county.PathData.Bounds); // Union combines the current total area with the new county's bounds
             }
 
             // 3. Conditional Caching: Only cache the result if the calculation was successful (i.e., not empty).
@@ -141,7 +133,6 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
                     Counties.Add(county);
                 }
 
-                // Trigger property change notifications for the calculated properties
                 // This makes the Viewbox instantly size itself correctly.
                 OnPropertyChanged(nameof(MapWidth));
                 OnPropertyChanged(nameof(MapHeight));

@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:AstroValleyAssistant"
         xmlns:views="clr-namespace:AstroValleyAssistant.Views"
+        xmlns:consts="clr-namespace:AstroValleyAssistant.Models"
         xmlns:viewmodels="clr-namespace:AstroValleyAssistant.ViewModels"
         xmlns:viewDialogs="clr-namespace:AstroValleyAssistant.Views.Dialogs"
         xmlns:dialogs="clr-namespace:AstroValleyAssistant.ViewModels.Dialogs"
@@ -57,27 +58,12 @@
                         <Button x:Name="HamburgerMenuButton" Command="{Binding OpenMenuCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}" Style="{StaticResource Theme.Button.HamburgerMenu}" >
                             <Button.ContextMenu>
                                 <ContextMenu Style="{StaticResource Theme.ContextMenu}">
-                                    <MenuItem Header="Real Auction" Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="OptionRealAuction"/>
-                                    <MenuItem Header="Regrid" Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="OptionRegrid" />
-                                    <MenuItem Header="Theme" Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="OptionThemes" />
-
+                                    <MenuItem Header="Real Auction" Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.RealAuction}" />
+                                    <MenuItem Header="Regrid"       Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.Regrid}" />
+                                    <MenuItem Header="Theme"        Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.Themes}" />
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>
-                        <!--<Popup
-                            PlacementTarget="{Binding ElementName=HamburgerMenuButton}"
-                            IsOpen="{Binding IsMenuOpen}"
-                            StaysOpen="False"
-                            AllowsTransparency="True">
-                            <Border CornerRadius="5"
-                                    Background="{DynamicResource Brush.Accent}">
-                                <StackPanel>
-                                    <Button Command="{Binding OpenDrawerCommand}" CommandParameter="OptionRealAuction" Content="Real Auction" Background="Transparent" Width="200" Margin="2 1" HorizontalContentAlignment="Left" Padding="8 2"/>
-                                    <Button Command="{Binding OpenDrawerCommand}" CommandParameter="OptionRegrid" Content="Regrid" Background="Transparent" Width="200" Margin="2 1" HorizontalContentAlignment="Left" Padding="8 2"/>
-                                    <Button Command="{Binding OpenDrawerCommand}" CommandParameter="OptionThemes" Content="Theme" Background="Transparent" Width="200" Margin="2 1" HorizontalContentAlignment="Left" Padding="8 2"/>
-                                </StackPanel>
-                            </Border>
-                        </Popup>-->
                     </StackPanel>
                 </Grid>
             </Border>

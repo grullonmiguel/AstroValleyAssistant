@@ -2,6 +2,13 @@
 
 namespace AstroValleyAssistant.Models
 {
+    public enum MenuOption
+    {
+        RealAuction,
+        Regrid,
+        Themes
+    }
+
     public enum TaxSaleType
     {
         [Description("Tax Lien")]

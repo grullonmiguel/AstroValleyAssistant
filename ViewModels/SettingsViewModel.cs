@@ -23,11 +23,8 @@ namespace AstroValleyAssistant.ViewModels
 
         private void SetNewTheme(string? theme)
         {
-            // Example: "Dark-Teal"
             if (!string.IsNullOrEmpty(theme))
-            {
                 _themeService.SetTheme(theme);
-            }
         }
     }
 }
