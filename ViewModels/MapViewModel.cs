@@ -5,7 +5,6 @@ using AstroValleyAssistant.Core.Data;
 using AstroValleyAssistant.Models;
 using AstroValleyAssistant.ViewModels.Dialogs;
 using System.Collections.ObjectModel;
-using System.Reflection.Metadata;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -17,7 +16,13 @@ namespace AstroValleyAssistant.ViewModels
 
         private readonly IDialogService _dialogService;
         private readonly GeographyDataService _geoService;
-        public ICommand ShowCountyMapCommand { get; }
+
+        //private ICommand? _showMapCommand;
+        //public ICommand ShowCountyMapCommand => _showMapCommand ??= new RelayCommand<StateViewModel>(ShowCountyMap);
+
+        private AsyncRelayCommand<StateViewModel>? _showMapCommand;
+        public ICommand ShowCountyMapCommand =>
+            _showMapCommand ??= new AsyncRelayCommand<StateViewModel>(ShowCountyMap);
 
         // This property can be used to show a loading indicator in the UI
         public bool IsLoading
@@ -46,15 +51,18 @@ namespace AstroValleyAssistant.ViewModels
                     _selectedState.IsSelected = true;
             }
         }
-        private StateViewModel _selectedState;
+        private StateViewModel? _selectedState;
 
         public ObservableCollection<StateViewModel> States { get; } = [];
 
         public MapViewModel(IDialogService dialogService, GeographyDataService geoService)
         {
+            // Run validation
+            ArgumentNullException.ThrowIfNull(dialogService);
+            ArgumentNullException.ThrowIfNull(geoService);
+
             _dialogService = dialogService;
             _geoService = geoService;
-            ShowCountyMapCommand = new RelayCommand(ShowCountyMap);
 
             // Fire and forget the async loading method from the constructor
             _ = LoadStatesAsync();
@@ -65,12 +73,21 @@ namespace AstroValleyAssistant.ViewModels
             //_dialogService.ShowDialog(new CountyMapDialogViewModel(SelectedState));
         }
 
-        private void ShowCountyMap(object? parameter)
+        // Opens the county map dialog for a given state.
+        private async Task ShowCountyMap(StateViewModel? state)
         {
-            if (parameter is StateViewModel state)
-            {
-                _dialogService.ShowDialog(new CountyMapDialogViewModel(state, _geoService));
-            }
+            // Create and show the county map dialog, passing the selected state and geo service 
+            //_dialogService.ShowDialog(new CountyMapDialogViewModel(state, _geoService));
+
+            var vm = new CountyMapDialogViewModel(state, _geoService);
+
+            // Show dialog first so animation can run
+            _dialogService.ShowDialog(vm);
+
+            await Task.Delay(300);
+
+            // Then load data asynchronously
+            await vm.InitializeAsync();
         }
 
         private async Task LoadStatesAsync()
@@ -83,26 +100,8 @@ namespace AstroValleyAssistant.ViewModels
                 List<StateViewModel> loadedStates = await Task.Run(() =>
                 {
                     var tempStates = new List<StateViewModel>();
-                    var statesDictionary = new ResourceDictionary
-                    {
-                        Source = new Uri("/Themes/Assets/Geography/States.xaml", UriKind.Relative)
-                    };
 
-                    // Create a helper method or loop to avoid repeating code
-                    StateViewModel CreateState(string name, string abbr, int countyCount, TaxSaleType taxStatus)
-                    {
-                        var geometry = statesDictionary[$"Geometry.{abbr}"] as Geometry;
-                        return new StateViewModel
-                        {
-                            Name = name,
-                            Abbreviation = abbr,
-                            PathData = geometry,
-                            CountyCount = countyCount,
-                            TaxStatus = taxStatus
-                        };
-                    }
-
-                    // ... add all 50 states ...
+                    // Add U.S. states
                     tempStates.Add(CreateState("Alabama", "AL", 67, TaxSaleType.TaxLien));           
                     tempStates.Add(CreateState("Alaska", "AK", 29, TaxSaleType.TaxDeed));            
                     tempStates.Add(CreateState("Arizona", "AZ", 15, TaxSaleType.TaxLien));           
@@ -153,8 +152,7 @@ namespace AstroValleyAssistant.ViewModels
                     tempStates.Add(CreateState("Washington", "WA", 39, TaxSaleType.TaxDeed));         
                     tempStates.Add(CreateState("West Virginia", "WV", 55, TaxSaleType.Hybrid));       
                     tempStates.Add(CreateState("Wisconsin", "WI", 72, TaxSaleType.TaxDeed));          
-                    tempStates.Add(CreateState("Wyoming", "WY", 23, TaxSaleType.TaxLien));            
-
+                    tempStates.Add(CreateState("Wyoming", "WY", 23, TaxSaleType.TaxLien));
 
                     return tempStates;
                 });
@@ -166,7 +164,6 @@ namespace AstroValleyAssistant.ViewModels
                     States.Add(state);
                 }
 
-
                 // Set a default selection
                 if (States?.Count > 0)
                     SelectedState = States.FirstOrDefault(s => s.Abbreviation == "FL");
@@ -175,7 +172,6 @@ namespace AstroValleyAssistant.ViewModels
             {
                 // Log the error or show a message to the user
                 Console.WriteLine($"Failed to load state geometry: {ex.Message}");
-                // You could set a property here to show an error message in the UI
             }
             finally
             {
@@ -183,6 +179,34 @@ namespace AstroValleyAssistant.ViewModels
             }
         }
 
-        
+        // Factory method that creates a StateViewModel from basic state data.
+        // Looks up the corresponding Geometry in the ResourceDictionary using the state abbreviation.
+        private StateViewModel CreateState(string name, string abbr, int countyCount, TaxSaleType taxStatus)
+        {
+            // Build the resource key (e.g., "Geometry.FL") used in the XAML ResourceDictionary.
+            var key = $"Geometry.{abbr}";
+
+            var statesDictionary = new ResourceDictionary { Source = new Uri("/Themes/Assets/Geography/States.xaml", UriKind.Relative) };
+
+            // Check that the resource key exists before accessing it.
+            if (!statesDictionary.Contains(key))
+                throw new KeyNotFoundException($"No geometry resource found for key '{key}'.");
+
+            // Retrieve the resource and ensure it is actually a Geometry instance.
+            if (statesDictionary[key] is not Geometry geometry)
+                throw new InvalidCastException($"Resource '{key}' is not of type Geometry.");
+
+            // Create and return the view model populated with state metadata and its path geometry.
+            return new StateViewModel
+            {
+                Name = name,
+                Abbreviation = abbr,
+                PathData = geometry,
+                CountyCount = countyCount,
+                TaxStatus = taxStatus
+            };
+        }
+
+
     }
 }

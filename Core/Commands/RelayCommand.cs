@@ -73,7 +73,7 @@ namespace AstroValleyAssistant.Core.Commands
             // Handles null for reference types and Nullable<T>
             // Returns default (e.g., 0 for int) for non-nullable value types
             if (parameter == null)
-                
+
                 return default;
 
             // If the parameter is already the correct type
@@ -91,6 +91,136 @@ namespace AstroValleyAssistant.Core.Commands
             catch (Exception) // Catches InvalidCastException, FormatException, etc.
             {
                 // If conversion fails, return the default value for T
+                return default;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Async command without a strongly-typed parameter.
+    /// Wraps a Func&lt;object?, Task&gt; and integrates with WPF's ICommand.
+    /// </summary>
+    public class AsyncRelayCommand : ICommand
+    {
+        private readonly Func<object?, Task> _executeAsync;
+        private readonly Predicate<object?>? _canExecute;
+        private bool _isExecuting;
+
+        public AsyncRelayCommand(Func<object?, Task> executeAsync,
+                                 Predicate<object?>? canExecute = null)
+        {
+            _executeAsync = executeAsync ?? throw new ArgumentNullException(nameof(executeAsync));
+            _canExecute = canExecute;
+        }
+
+        public event EventHandler? CanExecuteChanged
+        {
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
+        }
+
+        public bool CanExecute(object? parameter)
+        {
+            if (_isExecuting)
+                return false; // optional: disable while running
+
+            return _canExecute == null || _canExecute(parameter);
+        }
+
+        public async void Execute(object? parameter)
+        {
+            if (!CanExecute(parameter))
+                return;
+
+            try
+            {
+                _isExecuting = true;
+                CommandManager.InvalidateRequerySuggested();
+
+                await _executeAsync(parameter).ConfigureAwait(false);
+            }
+            finally
+            {
+                _isExecuting = false;
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Async command with a strongly-typed parameter T.
+    /// Handles basic object-to-T conversion for XAML bindings.
+    /// </summary>
+    public class AsyncRelayCommand<T> : ICommand
+    {
+        private readonly Func<T?, Task> _executeAsync;
+        private readonly Predicate<T?>? _canExecute;
+        private bool _isExecuting;
+
+        public AsyncRelayCommand(Func<T?, Task> executeAsync,
+                                 Predicate<T?>? canExecute = null)
+        {
+            _executeAsync = executeAsync ?? throw new ArgumentNullException(nameof(executeAsync));
+            _canExecute = canExecute;
+        }
+
+        public event EventHandler? CanExecuteChanged
+        {
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
+        }
+
+        public bool CanExecute(object? parameter)
+        {
+            if (_isExecuting)
+                return false; // optional: disable while running
+
+            if (_canExecute == null)
+                return true;
+
+            return _canExecute(ConvertParameter(parameter));
+        }
+
+        public async void Execute(object? parameter)
+        {
+            if (!CanExecute(parameter))
+                return;
+
+            try
+            {
+                _isExecuting = true;
+                CommandManager.InvalidateRequerySuggested();
+
+                var typedParam = ConvertParameter(parameter);
+                await _executeAsync(typedParam).ConfigureAwait(false);
+            }
+            finally
+            {
+                _isExecuting = false;
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        /// <summary>
+        /// Safely converts the object parameter to the generic type T.
+        /// Mirrors the pattern used in your generic RelayCommand.
+        /// </summary>
+        private static T? ConvertParameter(object? parameter)
+        {
+            if (parameter == null)
+                return default;
+
+            if (parameter is T typedParam)
+                return typedParam;
+
+            try
+            {
+                var targetType = typeof(T);
+                var conversionType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+                return (T?)Convert.ChangeType(parameter, conversionType);
+            }
+            catch
+            {
                 return default;
             }
         }

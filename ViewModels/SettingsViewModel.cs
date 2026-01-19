@@ -9,20 +9,24 @@ namespace AstroValleyAssistant.ViewModels
     {
         private readonly IThemeService _themeService;
 
-        public ICommand ChangeThemeCommand { get; }
+        private ICommand? _changeThemeCommand;
+        public ICommand ChangeThemeCommand => _changeThemeCommand ??= new RelayCommand(theme => SetNewTheme(theme as string));
 
         public SettingsViewModel(IThemeService themeService)
         {
+            // Ensure a valid theme service is provided 
+            ArgumentNullException.ThrowIfNull(themeService);
+
+            // Store the non-null theme service for use in this view model.
             _themeService = themeService;
-            ChangeThemeCommand = new RelayCommand(p => SetNewTheme(p as string));
         }
 
-        private void SetNewTheme(string themeName)
+        private void SetNewTheme(string? theme)
         {
             // Example: "Dark-Teal"
-            if (!string.IsNullOrEmpty(themeName))
+            if (!string.IsNullOrEmpty(theme))
             {
-                _themeService.SetTheme(themeName);
+                _themeService.SetTheme(theme);
             }
         }
     }

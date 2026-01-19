@@ -28,8 +28,7 @@
 
         <Grid Grid.Column="1">
             <Viewbox>
-                <ItemsControl ItemsSource="{Binding Counties}" Width="{Binding MapWidth}" Height="{Binding MapHeight}">
-                    
+                <ItemsControl ItemsSource="{Binding Counties}" Width="{Binding MapWidth}" Height="{Binding MapHeight}">                    
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas/>
@@ -51,7 +50,6 @@
                                         </b:EventTrigger>
                                     </b:Interaction.Triggers>
                                 </Path>
-
                                 <TextBlock Text="{Binding Name}" Style="{StaticResource Theme.TextBlock.MapLabel}">                            
                                     <Canvas.Left>
                                         <MultiBinding Converter="{StaticResource CenterPointConverter}" ConverterParameter="X">
@@ -72,5 +70,11 @@
                 </ItemsControl>
             </Viewbox>
         </Grid>
+
+        <!-- Loading Data Section-->
+        <StackPanel Grid.Column="1" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center">
+            <ContentControl Style="{StaticResource Theme.Icon.Timer}" Width="50" Height="50" Margin="0 0 0 16"/>
+            <TextBlock Text="Loading..." FontSize="16" LineHeight="24" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" />
+        </StackPanel>
     </Grid>
 </UserControl>

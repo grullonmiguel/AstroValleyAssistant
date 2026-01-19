@@ -2,6 +2,7 @@
 using AstroValleyAssistant.Core.Data;
 using AstroValleyAssistant.Core.Services;
 using AstroValleyAssistant.ViewModels;
+using AstroValleyAssistant.ViewModels.Dialogs;
 using AstroValleyAssistant.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -12,6 +13,7 @@ namespace AstroValleyAssistant
     public partial class App : Application
     {
         private readonly IHost _host;
+        public IServiceProvider Services => _host.Services;
 
         public App()
         {
@@ -39,10 +41,16 @@ namespace AstroValleyAssistant
             // Register ViewModels
 
             // Register other services
+            services.AddSingleton<SettingsService>();
             services.AddSingleton<IThemeService, ThemeService>();
             services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<GeographyDataService>();
-            // services.AddTransient<IDataService, ApiDataService>();
+
+            // Point the interfaces to that same singleton instance
+            services.AddSingleton<IRegridSettings>(x => x.GetRequiredService<SettingsService>());
+            services.AddSingleton<IRealAuctionSettings>(x => x.GetRequiredService<SettingsService>());
+            services.AddTransient<RegridSettingsViewModel>();
+            services.AddTransient<RealAuctionSettingsViewModel>();
         }
         
         protected override async void OnStartup(StartupEventArgs e)

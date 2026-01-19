@@ -12,7 +12,7 @@ namespace AstroValleyAssistant.Core.Data
         private static Dictionary<string, List<CountyInfo>> _countyDataCache;
 
         // The public method to get data for a state
-        public async Task<List<CountyInfo>> GetCountiesForStateAsync(string stateAbbreviation)
+        public async Task<List<CountyInfo>> GetCountiesForStateAsync(string? stateAbbreviation)
         {
             // 1. Ensure the data is loaded and cached
             await LoadDataIfNeededAsync();
@@ -40,9 +40,10 @@ namespace AstroValleyAssistant.Core.Data
             }
 
             await using FileStream stream = File.OpenRead(filePath);
+
             _countyDataCache = await JsonSerializer.DeserializeAsync<Dictionary<string, List<CountyInfo>>>(stream, new JsonSerializerOptions
             {
-                PropertyNameCaseInsensitive = true // Makes it flexible (name vs Name)
+                PropertyNameCaseInsensitive = true
             });
         }
     }

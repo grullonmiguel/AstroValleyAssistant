@@ -34,5 +34,77 @@ namespace AstroValleyAssistant.Properties {
                 this["ThemeName"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Regrid_UserName {
+            get {
+                return ((string)(this["Regrid_UserName"]));
+            }
+            set {
+                this["Regrid_UserName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Regrid_Password {
+            get {
+                return ((string)(this["Regrid_Password"]));
+            }
+            set {
+                this["Regrid_Password"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Real_URL {
+            get {
+                return ((string)(this["Real_URL"]));
+            }
+            set {
+                this["Real_URL"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Real_State {
+            get {
+                return ((string)(this["Real_State"]));
+            }
+            set {
+                this["Real_State"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Real_County {
+            get {
+                return ((string)(this["Real_County"]));
+            }
+            set {
+                this["Real_County"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Real_Date {
+            get {
+                return ((string)(this["Real_Date"]));
+            }
+            set {
+                this["Real_Date"] = value;
+            }
+        }
     }
 }

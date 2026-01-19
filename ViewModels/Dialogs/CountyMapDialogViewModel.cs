@@ -1,9 +1,9 @@
 ﻿using AstroValleyAssistant.Core;
+using AstroValleyAssistant.Core.Data;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Windows.Media;
 using System.Windows;
-using AstroValleyAssistant.Core.Data;
+using System.Windows.Media;
 
 namespace AstroValleyAssistant.ViewModels.Dialogs
 {
@@ -15,6 +15,13 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
         private Rect? _mapBoundsCache;
 
         #region Properties
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set => Set(ref _isLoading, value);
+        }
+        private bool _isLoading;
 
         // Properties to bind the map dimensions to
         public double MapWidth => CalculateMapDimensions().Width;
@@ -38,7 +45,7 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
                     _selectedCounty.IsSelected = true;
             }
         }
-        private CountyViewModel _selectedCounty;
+        private CountyViewModel? _selectedCounty;
 
         #endregion
 
@@ -46,21 +53,26 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
 
         public CountyMapDialogViewModel(StateViewModel state, GeographyDataService geoService)
         {
+            // Run validation
+            ArgumentNullException.ThrowIfNull(state);
+            ArgumentNullException.ThrowIfNull(geoService);
+
+            _geoService = geoService;
+
             State = state;
             Title = $"{State.Name}: {State.CountyCount} Counties";
-            _geoService = geoService; // Inject the service
-            _ = LoadCountiesAsync();
+
+            IsLoading = true;
         }
 
         #endregion
 
         #region Methods
 
-        // /ViewModels/Dialogs/CountyMapDialogViewModel.cs
         private Rect CalculateMapDimensions()
         {
-            // 1. Check the cache: If the value exists AND is not Rect.Empty, return it immediately.
-            // We add the !totalBounds.IsEmpty check here to ensure we don't cache a failed result.
+            // 1. Check the cache: If the value exists AND is not Empty, return it immediately.
+            // Add the !totalBounds.IsEmpty check here to ensure we don't cache a failed result.
             if (_mapBoundsCache.HasValue && !_mapBoundsCache.Value.IsEmpty)
             {
                 return _mapBoundsCache.Value;
@@ -73,7 +85,7 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             {
                 if (county.PathData != null)
                 {
-                    // Rect.Union combines the current total area with the new county's bounds
+                    // Union combines the current total area with the new county's bounds
                     totalBounds.Union(county.PathData.Bounds);
                 }
             }
@@ -88,12 +100,18 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             return totalBounds;
         }
 
+        public async Task InitializeAsync()
+        {
+            await LoadCountiesAsync();
+            IsLoading = false;
+        }
+
         private async Task LoadCountiesAsync()
         {
             try
             {
                 // 1. Get the county info from the service
-                var countiesForState = await _geoService.GetCountiesForStateAsync(State.Abbreviation);
+                var countiesForState = await _geoService.GetCountiesForStateAsync(State?.Abbreviation);
 
                 var loadedCounties = await Task.Run(() =>
                 {

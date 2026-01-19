@@ -15,11 +15,20 @@ namespace AstroValleyAssistant.ViewModels
 
         #region Commands
 
-        public ICommand NavigateCommand { get; }
-        public ICommand CloseDialogCommand { get; }
-        public ICommand OpenMenuCommand => new RelayCommand<Button>(OnOpenContextMenu);
-        public ICommand OpenDrawerCommand => new RelayCommand<string>(OnMenuOptionSelected);
-        public ICommand CloseDrawerCommand => new RelayCommand(_ => CloseDrawer());
+        private ICommand? _navigateCommand;
+        public ICommand NavigateCommand => _navigateCommand ??= new RelayCommand(Navigate);
+
+        private ICommand? _closeDialogCommand;
+        public ICommand CloseDialogCommand => _closeDialogCommand ??= new RelayCommand(_ => CloseDialog());
+
+        private ICommand? _openMenuCommand;
+        public ICommand OpenMenuCommand => _openMenuCommand ??= new RelayCommand<Button>(OnOpenContextMenu);
+
+        private ICommand? _openDrawerCommand;
+        public ICommand OpenDrawerCommand => _openDrawerCommand ??= new RelayCommand<string>(OnMenuOptionSelected);
+
+        private ICommand? _closeDrawerCommand;
+        public ICommand CloseDrawerCommand => _closeDrawerCommand ??= new RelayCommand(_ => CloseDrawer());
 
         #endregion
 
@@ -59,18 +68,19 @@ namespace AstroValleyAssistant.ViewModels
 
         public MainViewModel(IServiceProvider serviceProvider, IDialogService dialogService)
         {
+            // Run validation
+            ArgumentNullException.ThrowIfNull(dialogService);
+            ArgumentNullException.ThrowIfNull(serviceProvider);
+           
+            // Set the initial view.
             _serviceProvider = serviceProvider;
-            NavigateCommand = new RelayCommand(Navigate);
-            CloseDialogCommand = new RelayCommand(_ => CloseDialog());
-
-            // Set the initial view. Since "Maps" was checked by default in your XAML.
             CurrentViewModel = _serviceProvider.GetRequiredService<MapViewModel>();
 
             // Tell the dialog service what to do when a dialog is requested
-            if (dialogService is DialogService concreteDialogService)
+            if (dialogService is DialogService dialog)
             {
-                concreteDialogService.ShowDialogAction = vm => CurrentDialogViewModel = vm;
-                concreteDialogService.CloseDialogAction = CloseDialog;
+                dialog.ShowDialogAction = vm => CurrentDialogViewModel = vm;
+                dialog.CloseDialogAction = CloseDialog;
             }
         }
 
@@ -104,34 +114,68 @@ namespace AstroValleyAssistant.ViewModels
         public void OpenDrawer(ViewModelDialogBase drawerViewModel) => CurrentDrawerViewModel = drawerViewModel;
 
         public void CloseDrawer() => CurrentDrawerViewModel = null;
-        
-        private void OnMenuOptionSelected(string option)
+
+        /// <summary>
+        /// Handles a menu option selection by resolving and opening the corresponding drawer view model.
+        /// </summary>
+        private void OnMenuOptionSelected(string? option)
         {
-            // Close menu
+            // Ignore unknown or null options.
+            if (string.IsNullOrWhiteSpace(option))
+                return;
+
+            // Close the menu as soon as a valid option is selected.
             IsMenuOpen = false;
 
-            // Trigger the correct drawer dialog based on option
+            // Resolve the appropriate drawer view model for the selected option.
+            CurrentDrawerViewModel = CreateDrawerViewModel(option);
+        }
+
+        /// <summary>
+        /// Maps a menu option key to the corresponding drawer view model instance.
+        /// </summary>
+        private ViewModelDialogBase? CreateDrawerViewModel(string option)
+        {
+            // Access the DI container once here.
+            var services = ((App)System.Windows.Application.Current).Services;
+
             switch (option)
             {
                 case "OptionRealAuction":
-                    CurrentDrawerViewModel = new RealAuctionSettingsViewModel();
-                    break;
+                    {
+                        var vm = services.GetRequiredService<RealAuctionSettingsViewModel>();
+                        vm.Saved = CloseDrawer;
+                        return vm;
+                    }
+
                 case "OptionRegrid":
-                    CurrentDrawerViewModel = new RegridSettingsViewModel();
-                    break;
+                    {
+                        var vm = services.GetRequiredService<RegridSettingsViewModel>();
+                        vm.Saved = CloseDrawer;
+                        return vm;
+                    }
+
                 case "OptionThemes":
-                    CurrentDrawerViewModel = new ThemeSettingsViewModel();
-                    break;
+                    // This could also be resolved via DI for consistency.
+                    return new ThemeSettingsViewModel();
+
+                default:
+                    // Unknown option; no drawer to open.
+                    return null;
             }
         }
 
-        private void OnOpenContextMenu(Button button)
+        private void OnOpenContextMenu(Button? button)
         {
-            if (button.ContextMenu != null)
-            {
-                button.ContextMenu.IsOpen = true;
-                button.ContextMenu.DataContext = button.DataContext;
-            }
+            // Guard clause
+            if (button?.ContextMenu is null)
+                return;
+
+            // Share the button's DataContext with the context menu for consistent bindings.
+            button.ContextMenu.DataContext = button.DataContext;
+
+            // Open the context menu.
+            button.ContextMenu.IsOpen = true;
         }
 
         #endregion
