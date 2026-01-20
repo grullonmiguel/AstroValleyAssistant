@@ -46,6 +46,13 @@ namespace AstroValleyAssistant
             services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<GeographyDataService>();
 
+            // Typed Client registration for the Scraper
+            services.AddHttpClient<IRealTaxDeedClient, RealTaxDeedClient>(client =>
+            {
+                // Common configuration for all requests made by this service
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
+
             // Point the interfaces to that same singleton instance
             services.AddSingleton<IRegridSettings>(x => x.GetRequiredService<SettingsService>());
             services.AddSingleton<IRealAuctionSettings>(x => x.GetRequiredService<SettingsService>());

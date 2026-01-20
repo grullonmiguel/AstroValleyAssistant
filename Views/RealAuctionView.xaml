@@ -20,8 +20,6 @@
             <Border Padding="16" BorderBrush="{StaticResource Brush.Accent}" BorderThickness="1">
                 <ComboBox />
             </Border>
-                
-
 
             <Border Background="{StaticResource Brush.Accent}" Padding="16 10" Margin="0 16 0 0">
                 <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="County" />
@@ -45,7 +43,7 @@
             </Grid.RowDefinitions>
 
             <Border Background="{StaticResource Brush.Accent}" Padding="16" Height="40">
-                
+                <Button HorizontalAlignment="Right" Content="Scrape" Command="{Binding ScrapeRealAuctionCommand}" />
             </Border>
         </Grid>
         
