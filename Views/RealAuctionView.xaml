@@ -7,39 +7,49 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid Style="{StaticResource ViewSlideInFromTopStyle}" Margin="0 0 16 16" >
-
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel >
-            <Border Background="{StaticResource Brush.Accent}" Padding="16 10">                
+        <!-- Sidebar -->
+        <Border Background="{StaticResource Brush.Accent}" Padding="16 10">
+            <StackPanel>
                 <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="State" />
-            </Border>
-            <Border Padding="16" BorderBrush="{StaticResource Brush.Accent}" BorderThickness="1">
-                <ComboBox />
-            </Border>
+                <ComboBox ItemsSource="{Binding RealAuctionData.States}" 
+                          SelectedItem="{Binding RealAuctionData.SelectedState}" 
+                          DisplayMemberPath="Name"/>                
+                
+                <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="County" Margin="0 16 0 0"/>
+                <ListBox ItemsSource="{Binding RealAuctionData.Counties}" Height="90" SelectedItem="{Binding RealAuctionData.SelectedCounty}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock Text="{Binding Name}" />
+                                <!--
+                                <TextBlock Text="{Binding Calendar}" FontSize="10" />
+                                <TextBlock Text="{Binding Auction}" FontSize="10" />
+                                -->
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                
+                <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="Date" Margin="0 16 0 0" />
+                <DatePicker SelectedDate="{Binding RealAuctionData.SelectedDate}" DisplayDateStart="{Binding RealAuctionData.MinAuctionDate, Mode=OneWay}" />
+            
+                <!-- Button to explicitly regenerate URL (optional) -->
+                <Button Content="Update Auction URL" Command="{Binding RealAuctionData.GenerateAuctionUrlCommand}" HorizontalAlignment="Right" Margin="0 16"/>
+            
+            </StackPanel>
+        </Border>
 
-            <Border Background="{StaticResource Brush.Accent}" Padding="16 10" Margin="0 16 0 0">
-                <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="County" />
-            </Border>
-            <Border Padding="16" BorderBrush="{StaticResource Brush.Accent}" BorderThickness="1">
-                <ComboBox />
-            </Border>
-
-            <Border Background="{StaticResource Brush.Accent}" Padding="16 10" Margin="0 16 0 0">
-                <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="Date" />
-            </Border>
-            <Border Padding="16" BorderBrush="{StaticResource Brush.Accent}" BorderThickness="1">
-                <ComboBox />
-            </Border>
-        </StackPanel>
-
+        <!-- Auction Data -->
         <Grid Grid.Column="1" Margin="16 0 0 0 ">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition />
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <Border Background="{StaticResource Brush.Accent}" Padding="16 10" >
@@ -50,13 +60,22 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="{Binding Status}" />
+                    <TextBlock HorizontalAlignment="Left">
+                        <Hyperlink NavigateUri="{Binding CurrentAuctionUrl}" RequestNavigate="Hyperlink_RequestNavigate" Style="{StaticResource Hyperlinks.Primary}">
+                            <TextBlock Text="{Binding CurrentAuctionAlias}" />
+                        </Hyperlink>
+                    </TextBlock>
 
-                    <ProgressBar IsIndeterminate="True" Grid.Column="1" Width="180" HorizontalAlignment="Left"
-                                 Height="10" 
-                                 Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <Button Grid.Column="2" Content="Scrape" Command="{Binding ScrapeRealAuctionCommand}" 
+                            Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                    <Button Grid.Column="2" Content="Scrape" Command="{Binding ScrapeRealAuctionCommand}" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Button Content="Clear" Command="{Binding ClearCommand}" />
+                        <Button Content="Copy"  />
+                        <Button Content="Get Regrid Data" />
+                    </StackPanel>
+                    
                 </Grid>
             </Border>
 
@@ -83,6 +102,20 @@
                     <DataGridTextColumn Header="Date" Binding="{Binding DateDisplay, StringFormat=\{0:MM/dd/yyyy\}}" Width="100"/>
                 </DataGrid.Columns>
             </DataGrid>
+
+            <Grid Grid.Row="2" Margin="0 8 0 0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource Brush.Accent}" />
+
+
+                <ProgressBar IsIndeterminate="True" Height="16" Grid.Column="2"
+                             Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

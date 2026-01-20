@@ -2,30 +2,32 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
     
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Background.Primary" Color="#FFFFFF"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Background.Hover" Color="#EDEBF2"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Background.Secondary" Color="#F0F0F0"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Text.Primary" Color="#333333"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Border" Color="#FFE0E0E0"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Background.Primary"      Color="#FFFFFF"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Background.Hover"        Color="#EDEBF2"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Background.Secondary"    Color="#F0F0F0"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Text.Primary"            Color="#333333"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Border"                  Color="#FFE0E0E0"/>
 
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Map.DefaultFill"         Color="#D0D0D0"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Map.HoverFill"           Color="#B0B0B0"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Map.Stroke"              Color="White"/>
 
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Map.DefaultFill" Color="#D0D0D0"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Map.HoverFill" Color="#B0B0B0"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Map.Stroke" Color="White"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Success"              Color="#D4EDDA"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Success.Foreground"   Color="#155724"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Warning"              Color="#FFF3CD"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Warning.Foreground"   Color="#856404"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Danger"               Color="#F8D7DA"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Danger.Foreground"    Color="#721C24"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Info"                 Color="#D1ECF1"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Info.Foreground"      Color="#0C5460"/>
 
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Success" Color="#D4EDDA"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Success.Foreground" Color="#155724"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Warning" Color="#FFF3CD"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Warning.Foreground" Color="#856404"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Danger" Color="#F8D7DA"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Danger.Foreground" Color="#721C24"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Info" Color="#D1ECF1"/>
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Info.Foreground" Color="#0C5460"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Datagrid.Header.Background"      Color="#DBD8E9" />
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Datagrid.Header.Foreground"      Color="#534B80" />
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Datagrid.Row.Background"         Color="White" />
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Datagrid.BorderBrush"            Color="#EDEBF2" />
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Datagrid.Row.Background.Alternating" Color="#F4F4F9" />
 
-    <SolidColorBrush x:Key="Brush.Datagrid.Header.Background" Color="#DBD8E9" />
-    <SolidColorBrush x:Key="Brush.Datagrid.Header.Foreground" Color="#534B80" />
-    <SolidColorBrush x:Key="Brush.Datagrid.Row.Background" Color="White" />
-    <SolidColorBrush x:Key="Brush.Datagrid.Row.Background.Alternating" Color="#F4F4F9" />
-    <SolidColorBrush x:Key="Brush.Datagrid.BorderBrush" Color="#EDEBF2" />
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Hyperlink.Primary.Hover"         Color="#DBD8E9" />
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Hyperlink.Primary.Foreground"    Color="White" />
 
 </ResourceDictionary>

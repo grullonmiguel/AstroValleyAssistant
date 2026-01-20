@@ -259,7 +259,15 @@
         </Setter>
     </Style>
 
-
+    <Style x:Key="Hyperlinks.Primary" TargetType="Hyperlink" BasedOn="{StaticResource {x:Type Hyperlink}}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Hyperlink.Primary.Foreground}" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Hyperlink.Primary.Hover}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
     <!-- Application Logo Style -->
     <Style x:Key="AppLogo" TargetType="ContentControl">
         <Setter Property="Template">

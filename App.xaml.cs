@@ -45,6 +45,7 @@ namespace AstroValleyAssistant
             services.AddSingleton<IThemeService, ThemeService>();
             services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<GeographyDataService>();
+            services.AddSingleton<RealAuctionDataService>();
 
             // Typed Client registration for the Scraper
             services.AddHttpClient<IRealTaxDeedClient, RealTaxDeedClient>(client =>
@@ -57,6 +58,7 @@ namespace AstroValleyAssistant
             services.AddSingleton<IRealAuctionSettings>(x => x.GetRequiredService<SettingsService>());
             services.AddTransient<RegridSettingsViewModel>();
             services.AddTransient<RealAuctionSettingsViewModel>();
+            services.AddTransient<RealAuctionDataViewModel>();
         }
         
         protected override async void OnStartup(StartupEventArgs e)

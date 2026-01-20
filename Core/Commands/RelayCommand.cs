@@ -28,6 +28,11 @@ namespace AstroValleyAssistant.Core.Commands
         {
             _execute(parameter);
         }
+
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
 
     /// <summary>
@@ -93,6 +98,10 @@ namespace AstroValleyAssistant.Core.Commands
                 // If conversion fails, return the default value for T
                 return default;
             }
+        }
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 

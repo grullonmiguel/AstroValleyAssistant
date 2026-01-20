@@ -3,6 +3,7 @@ using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Models;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows.Input;
 
 namespace AstroValleyAssistant.ViewModels
@@ -16,11 +17,16 @@ namespace AstroValleyAssistant.ViewModels
 
         // Command to open the AppraiserUrl
         private ICommand? _scrapeRealAuction;
-        public ICommand ScrapeRealAuctionCommand => _scrapeRealAuction ??= new RelayCommand(_ =>  Scrape());
+        public ICommand ScrapeRealAuctionCommand => _scrapeRealAuction ??= new RelayCommand(_ =>  Scrape(), _ => CanScrape());
+
+        private ICommand? _clearCommand;
+        public ICommand ClearCommand => _clearCommand ??= new RelayCommand(_ => Clear());
 
         #endregion
 
         #region Properties
+
+        public RealAuctionDataViewModel RealAuctionData { get; }
 
         // The collection your WPF DataGrid binds to
         public ObservableCollection<AuctionItemViewModel> AuctionRecords { get; set; } = new();
@@ -33,6 +39,20 @@ namespace AstroValleyAssistant.ViewModels
 
         private string? _status;
 
+        public string? CurrentAuctionUrl
+        {
+            get => _currentAuctionUrl;
+            private set => Set(ref _currentAuctionUrl, value);
+        }
+        private string? _currentAuctionUrl;
+
+        public string? CurrentAuctionAlias
+        {
+            get => _currentAuctionAlias;
+            private set => Set(ref _currentAuctionAlias, value);
+        }
+        private string? _currentAuctionAlias;
+
         public bool? IsScraping
         {
             get => _isScraping;
@@ -40,21 +60,59 @@ namespace AstroValleyAssistant.ViewModels
         }
         private bool? _isScraping;
 
+        public bool IsScrapeVisible
+        {
+            get => _isScrapeVisible;
+            set => Set(ref _isScrapeVisible, value);
+        }
+        private bool _isScrapeVisible;
+        
+        public bool IsResultButtonsVisible
+        {
+            get => _isResultButtonsVisible;
+            set => Set(ref _isResultButtonsVisible, value);
+        }
+        private bool _isResultButtonsVisible;
+
         #endregion
 
         // Add properties and commands specific to the "Real Auction" view here.
-        public RealAuctionViewModel(IRealTaxDeedClient realScraper)
+        public RealAuctionViewModel(IRealTaxDeedClient realScraper, RealAuctionDataViewModel realAuctionDataViewModel)
         {
             // Run validation
             ArgumentNullException.ThrowIfNull(realScraper);
+            ArgumentNullException.ThrowIfNull(realAuctionDataViewModel);
 
             _realScraper = realScraper;
 
+            RealAuctionData = realAuctionDataViewModel;
+            RealAuctionData.AuctionUrlAvailable += OnAuctionUrlAvailable;
+
             // Add Dummy Data for Styling
             LoadDummyData();
+
+            OnLoaded();
+            // initial state: only Scrape visible
+            IsScrapeVisible = true;
+            IsResultButtonsVisible = false;
         }
 
-        private void Scrape() => Task.Run(async () => { await ScrapeRealAuction(); });
+        private void OnLoaded()
+        {
+            Task.Run(RealAuctionData.InitializeAsync);
+        }
+
+        private void Scrape()
+        {
+            Task.Run(async () => 
+            { 
+                await ScrapeRealAuction();
+
+                // when results are available:
+                IsScrapeVisible = false;
+                IsResultButtonsVisible = true;
+            });
+        }
 
         private async Task ScrapeRealAuction()
         {
@@ -99,7 +157,7 @@ namespace AstroValleyAssistant.ViewModels
                 });
 
                 // Final UI update
-                Status = $"Scrape complete! {records.Count} retrieved.";
+                Status = $"Process completed! {records.Count} records retrieved.";
             }
             catch (OperationCanceledException)
             {
@@ -168,5 +226,61 @@ namespace AstroValleyAssistant.ViewModels
             );
             AuctionRecords.Add(new AuctionItemViewModel(record4));
         }
+
+        #region Real Auction Counties
+
+        private async Task LoadCountiesAsync()
+        {
+            try
+            {
+
+                // 1. Get the county info from the service
+                //var countiesForState = await _realService.GetCountiesForStateAsync("FL");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to load: {ex.Message}");
+            }
+        }
+
+        private void OnAuctionUrlAvailable(string url, DateTime date)
+        {
+            CurrentAuctionUrl = url;
+
+            var countyName = RealAuctionData.SelectedCounty?.Name ?? "Auction";
+            CurrentAuctionAlias = $"{countyName} - {date:M/d/yyyy}";
+
+            (_scrapeRealAuction as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        private bool CanScrape()
+        {
+            // require a non-empty, well-formed absolute URL
+            if (string.IsNullOrWhiteSpace(CurrentAuctionUrl))
+                return false;
+
+            if (!Uri.IsWellFormedUriString(CurrentAuctionUrl, UriKind.Absolute))
+                return false;
+
+            // require a valid, non-past date from the data VM
+            var date = RealAuctionData.SelectedDate;
+            if (date is null || date.Value.Date < DateTime.Today)
+                return false;
+
+            return true;
+        }
+
+        private void Clear()
+        {
+            // clear your results here (e.g., collection, text, etc.)
+            AuctionRecords.Clear();
+            Status = string.Empty;
+
+            // show Scrape again, hide result buttons
+            IsScrapeVisible = true;
+            IsResultButtonsVisible = false;
+        }
+
+        #endregion
     }
 }

@@ -3,80 +3,280 @@
     {
       "name": "Alachua",
       "calendar": "https://alachua.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://alachua.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://qpublic.schneidercorp.com/Application.aspx?AppID=1081&LayerID=26490&PageTypeID=4&PageID=10770&Q=320373606&KeyValue={0}"
+      "auction": "https://alachua.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     },
     {
       "name": "Baker",
       "calendar": "https://baker.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://baker.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://bakerpa.com/propertydetails.php?parcel={0}"
+      "auction": "https://baker.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     },
     {
       "name": "Bay",
       "calendar": "https://bay.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://bay.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://qpublic.schneidercorp.com/application.aspx?AppID=834&LayerID=15170&PageTypeID=4&PageID=6825&Q=192963963&KeyValue={0}"
+      "auction": "https://bay.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     },
     {
       "name": "Brevard",
       "calendar": "https://brevard.realforeclose.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://brevard.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://www.bcpao.us/PropertySearch/#/parcel/{0}"
+      "auction": "https://brevard.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     },
     {
       "name": "Calhoun",
       "calendar": "https://calhoun.realforeclose.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://calhoun.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://beacon.schneidercorp.com/Application.aspx?AppID=829&LayerID=15004&PageTypeID=4&PageID=6750&KeyValue={0}"
+      "auction": "https://calhoun.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     },
     {
       "name": "Charlotte",
       "calendar": "https://charlotte.realforeclose.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://charlotte.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://www.ccappraiser.com/Show_parcel.asp?acct={0}&gen=T&tax=T&bld=T&oth=T&sal=T&lnd=T&leg=T"
+      "auction": "https://charlotte.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     },
     {
       "name": "Citrus",
       "calendar": "https://citrus.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://citrus.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://www.citruspa.org/_Web/datalets/datalet.aspx?mode=profileall&UseSearch=no&pin={0}&jur=19&LMparent=20"
+      "auction": "https://citrus.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     },
     {
       "name": "Clay",
       "calendar": "https://clay.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://clay.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://qpublic.schneidercorp.com/Application.aspx?AppID=830&LayerID=15008&PageTypeID=4&PageID=6756&Q=172585046&KeyValue={0}"
+      "auction": "https://clay.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     },
     {
       "name": "Columbia",
       "calendar": "Future",
-      "auction": "Future",
-      "appraiser": "Future"
+      "auction": "Future"
     },
     {
       "name": "Duval",
       "calendar": "https://duval.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://duval.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://paopropertysearch.coj.net/Basic/Detail.aspx?RE={0}"
+      "auction": "https://duval.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     },
     {
       "name": "Escambia",
       "calendar": "https://escambia.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://escambia.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://www.escpa.org/cama/Detail_a.aspx?s={0}"
+      "auction": "https://escambia.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     },
     {
       "name": "Flagler",
       "calendar": "https://flagler.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://flagler.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://qpublic.schneidercorp.com/Application.aspx?AppID=598&LayerID=9801&PageTypeID=4&PageID=4330&Q=1542956115&KeyValue={0}"
+      "auction": "https://flagler.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     },
     {
       "name": "Gilchrist",
       "calendar": "https://gilchrist.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
-      "auction": "https://gilchrist.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
-      "appraiser": "https://qpublic.schneidercorp.com/Application.aspx?AppID=820&LayerID=15174&PageTypeID=4&PageID=6883&Q=1071567062&KeyValue={0}"
+      "auction": "https://gilchrist.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Gulf",
+      "calendar": "https://gulf.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://gulf.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Hendry",
+      "calendar": "https://hendry.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://hendry.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Hernando",
+      "calendar": "https://hernando.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://hernando.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Highlands",
+      "calendar": "https://highlands.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://highlands.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Hillsborough",
+      "calendar": "https://hillsborough.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://hillsborough.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Indian River",
+      "calendar": "https://indian-river.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://indian-river.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Jackson",
+      "calendar": "https://jackson.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://jackson.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Lake",
+      "calendar": "https://lake.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://lake.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Lee",
+      "calendar": "https://lee.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://lee.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Leon",
+      "calendar": "https://leon.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://leon.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Manatee",
+      "calendar": "https://manatee.realforeclose.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://manatee.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Marion",
+      "calendar": "https://marion.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://marion.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Martin",
+      "calendar": "https://martin.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://martin.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+
+    },
+    {
+      "name": "Miami-Dade",
+      "calendar": "https://miami-dade.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://miami-dade.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Monroe",
+      "calendar": "https://monroe.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://monroe.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Nassau",
+      "calendar": "https://nassau.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://nassau.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Okeechobee",
+      "calendar": "https://okeechobee.realforeclose.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://okeechobee.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Orange",
+      "calendar": "https://orange.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://orange.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Osceola",
+      "calendar": "https://osceola.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://osceola.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Palm Beach",
+      "calendar": "https://palmbeach.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://palmbeach.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Pasco",
+      "calendar": "https://pasco.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://pasco.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Pinellas",
+      "calendar": "https://pinellas.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://pinellas.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Polk",
+      "calendar": "https://polk.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://polk.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Putnam",
+      "calendar": "https://putnam.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://putnam.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "St. Lucie",
+      "calendar": "https://stlucie.realforeclose.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://stlucie.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Santa Rosa",
+      "calendar": "https://santarosa.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://santarosa.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Sarasota",
+      "calendar": "https://sarasota.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://sarasota.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Seminole",
+      "calendar": "https://seminole.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://seminole.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Suwannee",
+      "calendar": "https://suwannee.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://suwannee.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Volusia",
+      "calendar": "https://volusia.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://volusia.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Walton",
+      "calendar": "https://walton.realforeclose.com/index.cfm?zaction=USER&zmethod=CALENDAR\t",
+      "auction": "https://walton.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Washington",
+      "calendar": "https://washington.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://washington.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    }
+  ],
+
+  "TX": [
+    {
+      "name": "Angelina",
+      "calendar": "https://angelina.texas.sheriffsaleauctions.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://angelina.texas.sheriffsaleauctions.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Aransas",
+      "calendar": "https://aransas.texas.sheriffsaleauctions.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://aransas.texas.sheriffsaleauctions.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Atacosta",
+      "calendar": "https://atascosa.texas.sheriffsaleauctions.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://atascosa.texas.sheriffsaleauctions.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Caldwell",
+      "calendar": "https://caldwell.texas.sheriffsaleauctions.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://caldwell.texas.sheriffsaleauctions.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Cameron",
+      "calendar": "https://cameron.texas.sheriffsaleauctions.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://cameron.texas.sheriffsaleauctions.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Dallas",
+      "calendar": "https://dallas.texas.sheriffsaleauctions.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://dallas.texas.sheriffsaleauctions.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "El Paso",
+      "calendar": "https://elpaso.texas.sheriffsaleauctions.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://elpaso.texas.sheriffsaleauctions.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    },
+    {
+      "name": "Ellis",
+      "calendar": "https://ellis.texas.sheriffsaleauctions.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://ellis.texas.sheriffsaleauctions.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
+    }
+  ],
+
+  "WA":
+  [
+    {
+      "name": "Washington",
+      "calendar": "https://king.wa.realforeclose.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://king.wa.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}"
     }
   ]
 }

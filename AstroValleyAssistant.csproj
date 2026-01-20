@@ -33,6 +33,9 @@
     <None Update="Themes\Assets\Geography\Counties.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Themes\Assets\Geography\Counties_RealAuction.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
