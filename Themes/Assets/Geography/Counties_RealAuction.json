@@ -1,0 +1,82 @@
+{
+  "FL": [
+    {
+      "name": "Alachua",
+      "calendar": "https://alachua.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://alachua.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://qpublic.schneidercorp.com/Application.aspx?AppID=1081&LayerID=26490&PageTypeID=4&PageID=10770&Q=320373606&KeyValue={0}"
+    },
+    {
+      "name": "Baker",
+      "calendar": "https://baker.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://baker.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://bakerpa.com/propertydetails.php?parcel={0}"
+    },
+    {
+      "name": "Bay",
+      "calendar": "https://bay.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://bay.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://qpublic.schneidercorp.com/application.aspx?AppID=834&LayerID=15170&PageTypeID=4&PageID=6825&Q=192963963&KeyValue={0}"
+    },
+    {
+      "name": "Brevard",
+      "calendar": "https://brevard.realforeclose.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://brevard.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://www.bcpao.us/PropertySearch/#/parcel/{0}"
+    },
+    {
+      "name": "Calhoun",
+      "calendar": "https://calhoun.realforeclose.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://calhoun.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://beacon.schneidercorp.com/Application.aspx?AppID=829&LayerID=15004&PageTypeID=4&PageID=6750&KeyValue={0}"
+    },
+    {
+      "name": "Charlotte",
+      "calendar": "https://charlotte.realforeclose.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://charlotte.realforeclose.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://www.ccappraiser.com/Show_parcel.asp?acct={0}&gen=T&tax=T&bld=T&oth=T&sal=T&lnd=T&leg=T"
+    },
+    {
+      "name": "Citrus",
+      "calendar": "https://citrus.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://citrus.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://www.citruspa.org/_Web/datalets/datalet.aspx?mode=profileall&UseSearch=no&pin={0}&jur=19&LMparent=20"
+    },
+    {
+      "name": "Clay",
+      "calendar": "https://clay.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://clay.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://qpublic.schneidercorp.com/Application.aspx?AppID=830&LayerID=15008&PageTypeID=4&PageID=6756&Q=172585046&KeyValue={0}"
+    },
+    {
+      "name": "Columbia",
+      "calendar": "Future",
+      "auction": "Future",
+      "appraiser": "Future"
+    },
+    {
+      "name": "Duval",
+      "calendar": "https://duval.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://duval.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://paopropertysearch.coj.net/Basic/Detail.aspx?RE={0}"
+    },
+    {
+      "name": "Escambia",
+      "calendar": "https://escambia.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://escambia.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://www.escpa.org/cama/Detail_a.aspx?s={0}"
+    },
+    {
+      "name": "Flagler",
+      "calendar": "https://flagler.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://flagler.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://qpublic.schneidercorp.com/Application.aspx?AppID=598&LayerID=9801&PageTypeID=4&PageID=4330&Q=1542956115&KeyValue={0}"
+    },
+    {
+      "name": "Gilchrist",
+      "calendar": "https://gilchrist.realtaxdeed.com/index.cfm?zaction=USER&zmethod=CALENDAR",
+      "auction": "https://gilchrist.realtaxdeed.com/index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE={0}",
+      "appraiser": "https://qpublic.schneidercorp.com/Application.aspx?AppID=820&LayerID=15174&PageTypeID=4&PageID=6883&Q=1071567062&KeyValue={0}"
+    }
+  ]
+}

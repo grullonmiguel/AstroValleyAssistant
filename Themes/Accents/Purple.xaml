@@ -12,6 +12,7 @@
 
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Text.Subtle" Color="#DBD8E9"/>
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Accent.Foreground" Color="#EDEBF2"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Sidebar.Foreground" Color="#DBD8E9"/>
 
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Pill.Background" Color="#DBD8E9"/>
 </ResourceDictionary>

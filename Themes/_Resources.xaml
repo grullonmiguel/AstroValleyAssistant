@@ -75,6 +75,11 @@
         </Style.Triggers>
     </Style>
 
+    <Style x:Key="Theme.TextBlock.SidebarLabel" TargetType="TextBlock" BasedOn="{StaticResource Theme.TextBlock.MapLabel}">
+        <Setter Property="Visibility" Value="Visible"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Sidebar.Foreground}"/>
+    </Style>
+
     <!-- Context Menu Style -->
     <Style x:Key="Theme.ContextMenu" TargetType="ContextMenu">
         <Setter Property="OverridesDefaultStyle" Value="True"/>
