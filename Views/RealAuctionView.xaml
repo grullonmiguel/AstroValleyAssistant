@@ -42,11 +42,47 @@
                 <RowDefinition />
             </Grid.RowDefinitions>
 
-            <Border Background="{StaticResource Brush.Accent}" Padding="16" Height="40">
-                <Button HorizontalAlignment="Right" Content="Scrape" Command="{Binding ScrapeRealAuctionCommand}" />
+            <Border Background="{StaticResource Brush.Accent}" Padding="16 10" >
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="{Binding Status}" />
+
+                    <ProgressBar IsIndeterminate="True" Grid.Column="1" Width="180" HorizontalAlignment="Left"
+                                 Height="10" 
+                                 Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <Button Grid.Column="2" Content="Scrape" Command="{Binding ScrapeRealAuctionCommand}" />
+                </Grid>
             </Border>
+
+            <DataGrid ItemsSource="{Binding AuctionRecords}" Grid.Row="1"
+                      AutoGenerateColumns="False" 
+                      IsReadOnly="True" 
+                      CanUserAddRows="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Parcel ID" Binding="{Binding ParcelId}" Width="Auto"/>
+                    <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
+                    <DataGridTemplateColumn Header="Appraiser" Width="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock HorizontalAlignment="Center">
+                                    <Hyperlink NavigateUri="{Binding AppraiserUrl}" RequestNavigate="Hyperlink_RequestNavigate">
+                                        View
+                                    </Hyperlink>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="100"/>
+                    <DataGridTextColumn Header="Opening Bid" Binding="{Binding Bid, StringFormat={}{0:C}}" Width="100"/>
+                    <DataGridTextColumn Header="Date" Binding="{Binding DateDisplay, StringFormat=\{0:MM/dd/yyyy\}}" Width="100"/>
+                </DataGrid.Columns>
+            </DataGrid>
         </Grid>
-        
-        <TextBlock Text="Real Auction View" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" />
     </Grid>
 </UserControl>

@@ -49,7 +49,6 @@ namespace AstroValleyAssistant
             // Typed Client registration for the Scraper
             services.AddHttpClient<IRealTaxDeedClient, RealTaxDeedClient>(client =>
             {
-                // Common configuration for all requests made by this service
                 client.Timeout = TimeSpan.FromSeconds(30);
             });
 

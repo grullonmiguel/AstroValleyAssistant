@@ -22,4 +22,10 @@
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Info" Color="#D1ECF1"/>
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Info.Foreground" Color="#0C5460"/>
 
+    <SolidColorBrush x:Key="Brush.Datagrid.Header.Background" Color="#DBD8E9" />
+    <SolidColorBrush x:Key="Brush.Datagrid.Header.Foreground" Color="#534B80" />
+    <SolidColorBrush x:Key="Brush.Datagrid.Row.Background" Color="White" />
+    <SolidColorBrush x:Key="Brush.Datagrid.Row.Background.Alternating" Color="#F4F4F9" />
+    <SolidColorBrush x:Key="Brush.Datagrid.BorderBrush" Color="#EDEBF2" />
+
 </ResourceDictionary>
