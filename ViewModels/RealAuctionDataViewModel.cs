@@ -11,9 +11,15 @@ namespace AstroValleyAssistant.ViewModels
 {
     public class RealAuctionDataViewModel : ViewModelBase
     {
+        #region Fields
+
         private readonly IRealAuctionSettings _settings;
         private readonly RealAuctionDataService _dataService;
 
+        // Hold cached values from settings
+        private string? _initialStateCode;
+        private string? _initialCountyName;
+        private DateTime? _initialDate;
 
         public event Action<string, DateTime>? AuctionUrlAvailable;
 
@@ -24,6 +30,8 @@ namespace AstroValleyAssistant.ViewModels
             ["TX"] = "Texas",
             ["WA"] = "Washington"
         };
+
+        #endregion
 
         #region Commands
 
@@ -42,7 +50,7 @@ namespace AstroValleyAssistant.ViewModels
             set
             {
                 Set(ref _selectedState, value);
-                LoadCountiesForSelectedState();
+                _= LoadCountiesForSelectedState();
             }
         }
         private StateInfo? _selectedState;
@@ -50,37 +58,26 @@ namespace AstroValleyAssistant.ViewModels
         public ObservableCollection<RealAuctionDataService.RealAuctionCountyInfo> Counties
         {
             get => _counties;
-            private set
-            {
-                Set(ref _counties, value);
-            }
+            private set => Set(ref _counties, value);
         }
         private ObservableCollection<RealAuctionDataService.RealAuctionCountyInfo> _counties = new();
                 
         public RealAuctionDataService.RealAuctionCountyInfo? SelectedCounty
         {
             get => _selectedCounty;
-            set
-            {
-                Set(ref _selectedCounty, value);
-            }
+            set => Set(ref _selectedCounty, value);
         }
         private RealAuctionDataService.RealAuctionCountyInfo? _selectedCounty;
 
         public DateTime? SelectedDate
         {
             get => _selectedDate;
-            set
-            {
-                Set(ref _selectedDate, value);
-            }
+            set => Set(ref _selectedDate, value);
         }
         private DateTime? _selectedDate;
 
-
         // Optional: convenience min date for a DatePicker binding
         public DateTime MinAuctionDate => DateTime.Today;
-
         
         public string? AuctionUrl
         {
@@ -136,10 +133,17 @@ namespace AstroValleyAssistant.ViewModels
             if (DateTime.TryParse(_settings.LastAuctionDate, out var lastDate))
                 SelectedDate = lastDate;
 
+            // baseline = what's in settings when the app opens
+            _initialStateCode = SelectedState?.Code;
+            _initialCountyName = SelectedCounty?.Name;
+            _initialDate = SelectedDate?.Date;
+
             if (CanUpdateUrl())
             {
-                UpdateAuctionUrl();
             }
+                UpdateAuctionUrl();
+
+            NotifyAuctionUrlIfValid();
         }
 
         private async Task LoadCountiesForSelectedState()
@@ -182,13 +186,29 @@ namespace AstroValleyAssistant.ViewModels
 
             SaveSettings();
             NotifyAuctionUrlIfValid();
+
+            // new baseline after successful update
+            _initialStateCode = SelectedState?.Code;
+            _initialCountyName = SelectedCounty?.Name;
+            _initialDate = SelectedDate?.Date;
         }
 
         private bool CanUpdateUrl()
         {
-            return SelectedCounty is not null
-                   && SelectedDate is not null
-                   && SelectedDate.Value.Date >= DateTime.Today;
+            if (SelectedState is null || SelectedCounty is null || SelectedDate is null)
+                return false;
+
+            var date = SelectedDate.Value.Date;
+            if (date < DateTime.Today)
+                return false;
+
+            // must differ from what we loaded from settings
+            bool changed =
+                !string.Equals(_initialStateCode, SelectedState.Code, StringComparison.Ordinal) ||
+                !string.Equals(_initialCountyName, SelectedCounty.Name, StringComparison.Ordinal) ||
+                _initialDate != date;
+
+            return changed;
         }
 
         private void SaveSettings()

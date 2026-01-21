@@ -4,8 +4,39 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:AstroValleyAssistant.Views"
+             xmlns:behaviors="clr-namespace:AstroValleyAssistant.Core.Behaviors"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
+
+    <UserControl.Resources>
+
+        <DataTemplate x:Key="CountySelectedTemplate">
+            <TextBlock Text="{Binding Name}" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="CountyDropDownTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Name}" />
+                <TextBlock HorizontalAlignment="Center" Grid.Column="1">
+                    <Hyperlink NavigateUri="{Binding Calendar}" RequestNavigate="Hyperlink_RequestNavigate" Style="{StaticResource Hyperlinks.Primary}" TextDecorations="None">
+                        <Grid Background="Transparent">
+                            <Path Data="{StaticResource Icon.Calendar}" Width="14" Height="14" Fill="{DynamicResource Brush.Accent.Secondary}" Stretch="Uniform" />
+                        </Grid>
+                    </Hyperlink>
+                </TextBlock>
+            </Grid>
+        </DataTemplate>
+
+        <behaviors:ComboBoxItemTemplateSelector x:Key="CountyTemplateSelector" 
+                                                SelectedTemplate="{StaticResource CountySelectedTemplate}" 
+                                                DropDownTemplate="{StaticResource CountyDropDownTemplate}" />
+
+    </UserControl.Resources>
+
     <Grid Style="{StaticResource ViewSlideInFromTopStyle}" Margin="0 0 16 16" >
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"/>
@@ -15,31 +46,33 @@
         <!-- Sidebar -->
         <Border Background="{StaticResource Brush.Accent}" Padding="16 10">
             <StackPanel>
-                <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="State" />
-                <ComboBox ItemsSource="{Binding RealAuctionData.States}" 
-                          SelectedItem="{Binding RealAuctionData.SelectedState}" 
-                          DisplayMemberPath="Name"/>                
+                <Border Padding="18 0 8 0" Margin="-16 -10 -16 8" Height="50">
+                    <TextBlock Text="Auction Filters" Foreground="{StaticResource Brush.Text.Subtle}" VerticalAlignment="Center" FontSize="14"/>
+                </Border>
+                <TextBlock  Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="State" Margin="4 0 0 4" />
+
+                <ComboBox DisplayMemberPath="Name"
+                          ItemsSource="{Binding RealAuctionData.States}" 
+                          SelectedItem="{Binding RealAuctionData.SelectedState}"                           
+                          Style="{StaticResource Theme.ComboBox.Secondary}"/>                
                 
-                <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="County" Margin="0 16 0 0"/>
-                <ListBox ItemsSource="{Binding RealAuctionData.Counties}" Height="90" SelectedItem="{Binding RealAuctionData.SelectedCounty}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Vertical">
-                                <TextBlock Text="{Binding Name}" />
-                                <!--
-                                <TextBlock Text="{Binding Calendar}" FontSize="10" />
-                                <TextBlock Text="{Binding Auction}" FontSize="10" />
-                                -->
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="County" Margin="4 16 0 4"/>
+
+                <ComboBox ItemsSource="{Binding RealAuctionData.Counties}"
+                          SelectedItem="{Binding RealAuctionData.SelectedCounty}"
+                          Style="{StaticResource Theme.ComboBox.Secondary}"
+                          ItemTemplateSelector="{StaticResource CountyTemplateSelector}" />
                 
                 <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="Date" Margin="0 16 0 0" />
-                <DatePicker SelectedDate="{Binding RealAuctionData.SelectedDate}" DisplayDateStart="{Binding RealAuctionData.MinAuctionDate, Mode=OneWay}" />
+                <DatePicker Style="{StaticResource Theme.DatePicker.Primary}" 
+                            SelectedDate="{Binding RealAuctionData.SelectedDate}" 
+                            DisplayDateStart="{Binding RealAuctionData.MinAuctionDate, Mode=OneWay}" />
             
                 <!-- Button to explicitly regenerate URL (optional) -->
-                <Button Content="Update Auction URL" Command="{Binding RealAuctionData.GenerateAuctionUrlCommand}" HorizontalAlignment="Right" Margin="0 16"/>
+                <Button Content="Update"
+                        Style="{StaticResource Theme.Button.Primary}"
+                        Command="{Binding RealAuctionData.GenerateAuctionUrlCommand}" 
+                        HorizontalAlignment="Right" Margin="0 16"/>
             
             </StackPanel>
         </Border>
@@ -52,7 +85,7 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Border Background="{StaticResource Brush.Accent}" Padding="16 10" >
+            <Border Background="{StaticResource Brush.Accent}" Padding="16 0" Height="50">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
@@ -60,20 +93,22 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock HorizontalAlignment="Left">
+                    <TextBlock HorizontalAlignment="Left" VerticalAlignment="Center">
                         <Hyperlink NavigateUri="{Binding CurrentAuctionUrl}" RequestNavigate="Hyperlink_RequestNavigate" Style="{StaticResource Hyperlinks.Primary}">
-                            <TextBlock Text="{Binding CurrentAuctionAlias}" />
+                            <TextBlock Text="{Binding CurrentAuctionAlias}" FontSize="14" />
                         </Hyperlink>
                     </TextBlock>
 
-                    <Button Grid.Column="2" Content="Scrape" Command="{Binding ScrapeRealAuctionCommand}" 
+                    <Button Grid.Column="2" Content="Scrape" VerticalAlignment="Center"
+                            Command="{Binding ScrapeRealAuctionCommand}" 
+                            Style="{StaticResource Theme.Button.Primary}"
                             Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                    <StackPanel Grid.Column="2" Orientation="Horizontal"
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
                                 Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button Content="Clear" Command="{Binding ClearCommand}" />
-                        <Button Content="Copy"  />
-                        <Button Content="Get Regrid Data" />
+                        <Button Content="Copy" />
+                        <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}"/>
                     </StackPanel>
                     
                 </Grid>

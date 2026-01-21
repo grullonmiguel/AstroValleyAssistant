@@ -21,13 +21,5 @@
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Info"                 Color="#D1ECF1"/>
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Status.Info.Foreground"      Color="#0C5460"/>
 
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Datagrid.Header.Background"      Color="#DBD8E9" />
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Datagrid.Header.Foreground"      Color="#534B80" />
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Datagrid.Row.Background"         Color="White" />
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Datagrid.BorderBrush"            Color="#EDEBF2" />
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Datagrid.Row.Background.Alternating" Color="#F4F4F9" />
-
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Hyperlink.Primary.Hover"         Color="#DBD8E9" />
-    <SolidColorBrush po:Freeze="True" x:Key="Brush.Hyperlink.Primary.Foreground"    Color="White" />
 
 </ResourceDictionary>

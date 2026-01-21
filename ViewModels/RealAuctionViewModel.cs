@@ -89,7 +89,7 @@ namespace AstroValleyAssistant.ViewModels
             RealAuctionData.AuctionUrlAvailable += OnAuctionUrlAvailable;
 
             // Add Dummy Data for Styling
-            LoadDummyData();
+            //LoadDummyData();
 
             OnLoaded();
             // initial state: only Scrape visible
