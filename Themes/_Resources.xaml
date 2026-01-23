@@ -254,6 +254,47 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <Style x:Key="VibrantButtonStyle" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Subtle}"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Height" Value="30"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Text.Subtle}"/>
+        <Setter Property="BorderThickness" Value=".5"/>
+        <Setter Property="Background" Value="#20000000"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" 
+                            Background="{TemplateBinding Background}" 
+                            CornerRadius="8" 
+                            BorderThickness="{TemplateBinding BorderThickness}" 
+                            BorderBrush="{TemplateBinding BorderBrush}">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Opacity" Value="0.7"/>
+                            <Setter Property="Background" Value="{DynamicResource Brush.Accent.Secondary}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent.Tertiary}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Tertiary}"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Opacity" Value="0.5"/>
+                            <Setter Property="Foreground" Value="Black"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.3"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <!--#endregion-->
     
     <!--#region DataGrid -->
@@ -263,6 +304,7 @@
         <Setter Property="SelectionMode" Value="Single" />
 
         <Setter Property="AlternationCount" Value="2" />
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="RowBackground" Value="{DynamicResource Brush.Background.Secondary}" />
 
         <Setter Property="HeadersVisibility" Value="Column" />
@@ -270,7 +312,7 @@
         <Setter Property="AutoGenerateColumns" Value="False" />
         <Setter Property="CanUserSortColumns" Value="True" />
         <Setter Property="GridLinesVisibility" Value="All" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent.Secondary}" />
         <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource Brush.Accent.Secondary}" />
         <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource Brush.Accent.Secondary}" />

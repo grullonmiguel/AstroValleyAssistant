@@ -1,0 +1,29 @@
+﻿<UserControl x:Class="AstroValleyAssistant.Views.PropertyDetailsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel >
+        <Border Padding="18 0 8 0" Margin="-16 -10 -16 8" Height="50">
+            <TextBlock Text="Quick Actions" Foreground="{StaticResource Brush.Text.Subtle}" VerticalAlignment="Center" FontSize="14"/>
+        </Border>
+
+        <Button Content="Appraiser" Margin="0 4"
+                Command="{Binding OpenAppraiserCommand}"
+                Style="{StaticResource VibrantButtonStyle}" 
+                IsEnabled="{Binding AppraiserUrl, Converter={StaticResource IsNotNullOrEmptyConverter}, FallbackValue=False}"/>
+
+        <Button Content="Regrid Details" Margin="0 4"
+                Command="{Binding OpenRegridCommand}" 
+                Style="{StaticResource VibrantButtonStyle}" 
+                IsEnabled="{Binding RegridUrl, Converter={StaticResource IsNotNullOrEmptyConverter}, FallbackValue=False}" />
+
+        <Button Content="Flood Map" Margin="0 4"
+                Command="{Binding OpenFloodCommand}" 
+                Style="{StaticResource VibrantButtonStyle}" 
+                IsEnabled="{Binding FemaUrl, Converter={StaticResource IsNotNullOrEmptyConverter}, FallbackValue=False}"/>
+
+        <Button Content="Google Map" Margin="0 4"
+                Command="{Binding OpenMapsCommand}" 
+                Style="{StaticResource VibrantButtonStyle}" 
+                IsEnabled="{Binding GoogleUrl, Converter={StaticResource IsNotNullOrEmptyConverter}, FallbackValue=False}"/>
+    </StackPanel>
+</UserControl>

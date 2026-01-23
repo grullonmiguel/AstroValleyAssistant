@@ -24,4 +24,14 @@ namespace AstroValleyAssistant.Models
         Hybrid
     }
 
+    public enum ScrapeStatus
+    {
+        Pending,
+        Loading,
+        Success,
+        NotFound,       // No parcel found for that ID/Address
+        MultipleMatches, // Ambiguous results from Regrid
+        Error           // Network or server issues (like the 423 Locked)
+    }
+
 }

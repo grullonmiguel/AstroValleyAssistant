@@ -14,8 +14,10 @@
                 <ResourceDictionary Source="/Themes/Accents/Purple.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
+            <conv:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
             <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
-            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <conv:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter"/>
+            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         </ResourceDictionary>
         
     </Application.Resources>

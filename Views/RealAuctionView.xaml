@@ -34,6 +34,52 @@
         <behaviors:ComboBoxItemTemplateSelector x:Key="CountyTemplateSelector" 
                                                 SelectedTemplate="{StaticResource CountySelectedTemplate}" 
                                                 DropDownTemplate="{StaticResource CountyDropDownTemplate}" />
+       
+        <DataTemplate x:Key="StatusBadgeTemplate">
+            <Border x:Name="StatusBadge" 
+                    CornerRadius="4" 
+                    Padding="6 4" 
+                    HorizontalAlignment="Center"
+                    Background="#EEEEEE">
+                <TextBlock x:Name="StatusText" 
+                       Text="Pending" 
+                       Foreground="Gray" 
+                       FontSize="10" 
+                       HorizontalAlignment="Center"/>
+            </Border>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="Loading">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#3000AEEF"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#00AEEF"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="● Loading"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="Success">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#3065B5A6"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#65B5A6"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="✔ Complete"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="MultipleMatches">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#30FFB74D"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#FFB74D"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="⚠ Multiple"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="NotFound">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#30EF5350"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#EF5350"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="? Not Found"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="Error">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#30FF1744"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#FF1744"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="✘ Failed"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
 
     </UserControl.Resources>
 
@@ -45,36 +91,50 @@
 
         <!-- Sidebar -->
         <Border Background="{StaticResource Brush.Accent}" Padding="16 10">
-            <StackPanel>
-                <Border Padding="18 0 8 0" Margin="-16 -10 -16 8" Height="50">
-                    <TextBlock Text="Auction Filters" Foreground="{StaticResource Brush.Text.Subtle}" VerticalAlignment="Center" FontSize="14"/>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <StackPanel Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                    <Border Padding="18 0 8 0" Margin="-16 -10 -16 8" Height="50">
+                        <TextBlock Text="Auction Filters" Foreground="{StaticResource Brush.Text.Subtle}" VerticalAlignment="Center" FontSize="14"/>
+                    </Border>
+                    <TextBlock  Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="State" Margin="4 0 0 4" />
+
+                    <ComboBox DisplayMemberPath="Name"
+                              ItemsSource="{Binding RealAuctionData.States}" 
+                              SelectedItem="{Binding RealAuctionData.SelectedState}"                           
+                              Style="{StaticResource Theme.ComboBox.Secondary}"/>                
+                
+                    <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="County" Margin="4 16 0 4"/>
+
+                    <ComboBox ItemsSource="{Binding RealAuctionData.Counties}"
+                              SelectedItem="{Binding RealAuctionData.SelectedCounty}"
+                              Style="{StaticResource Theme.ComboBox.Secondary}"
+                              ItemTemplateSelector="{StaticResource CountyTemplateSelector}" />
+                
+                    <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="Date" Margin="0 16 0 0" />
+                    <DatePicker Style="{StaticResource Theme.DatePicker.Primary}" 
+                                SelectedDate="{Binding RealAuctionData.SelectedDate}" 
+                                DisplayDateStart="{Binding RealAuctionData.MinAuctionDate, Mode=OneWay}" />
+            
+                    <!-- Button to explicitly regenerate URL (optional) -->
+                    <Button Content="Update"
+                            Style="{StaticResource Theme.Button.Primary}"
+                            Command="{Binding RealAuctionData.GenerateAuctionUrlCommand}" 
+                            HorizontalAlignment="Right" Margin="0 16"/>
+                </StackPanel>
+
+                <Border Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <local:PropertyDetailsControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" />                    
                 </Border>
-                <TextBlock  Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="State" Margin="4 0 0 4" />
 
-                <ComboBox DisplayMemberPath="Name"
-                          ItemsSource="{Binding RealAuctionData.States}" 
-                          SelectedItem="{Binding RealAuctionData.SelectedState}"                           
-                          Style="{StaticResource Theme.ComboBox.Secondary}"/>                
-                
-                <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="County" Margin="4 16 0 4"/>
+                <Border Grid.Row="1" Visibility="{Binding SelectedAuctionRecord.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" Margin="0 16 0 0">
+                    <local:MultipleMatchesControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" />
+                </Border>
 
-                <ComboBox ItemsSource="{Binding RealAuctionData.Counties}"
-                          SelectedItem="{Binding RealAuctionData.SelectedCounty}"
-                          Style="{StaticResource Theme.ComboBox.Secondary}"
-                          ItemTemplateSelector="{StaticResource CountyTemplateSelector}" />
-                
-                <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="Date" Margin="0 16 0 0" />
-                <DatePicker Style="{StaticResource Theme.DatePicker.Primary}" 
-                            SelectedDate="{Binding RealAuctionData.SelectedDate}" 
-                            DisplayDateStart="{Binding RealAuctionData.MinAuctionDate, Mode=OneWay}" />
-            
-                <!-- Button to explicitly regenerate URL (optional) -->
-                <Button Content="Update"
-                        Style="{StaticResource Theme.Button.Primary}"
-                        Command="{Binding RealAuctionData.GenerateAuctionUrlCommand}" 
-                        HorizontalAlignment="Right" Margin="0 16"/>
-            
-            </StackPanel>
+            </Grid>
         </Border>
 
         <!-- Auction Data -->
@@ -88,16 +148,12 @@
             <Border Background="{StaticResource Brush.Accent}" Padding="16 0" Height="50">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition />
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock HorizontalAlignment="Left" VerticalAlignment="Center">
-                        <Hyperlink NavigateUri="{Binding CurrentAuctionUrl}" RequestNavigate="Hyperlink_RequestNavigate" Style="{StaticResource Hyperlinks.Primary}">
-                            <TextBlock Text="{Binding CurrentAuctionAlias}" FontSize="14" />
-                        </Hyperlink>
-                    </TextBlock>
+                    <Button Content="{Binding CurrentAuctionAlias}" Style="{StaticResource VibrantButtonStyle}" Command="{Binding OpenRealAuctiomCommand}"/>
 
                     <Button Grid.Column="2" Content="Scrape" VerticalAlignment="Center"
                             Command="{Binding ScrapeRealAuctionCommand}" 
@@ -108,20 +164,39 @@
                                 Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button Content="Clear" Command="{Binding ClearCommand}" />
                         <Button Content="Copy" />
-                        <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}"/>
+                        <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}" Command="{Binding ScrapeRegridCommand}" />
                     </StackPanel>
                     
                 </Grid>
             </Border>
-
-            <DataGrid ItemsSource="{Binding AuctionRecords}" Grid.Row="1"
+            
+            <!-- Parcel List -->
+            <FrameworkElement Grid.Row="1" x:Name="FrameWorkElementProxy" Visibility="Collapsed"/>
+            <DataGrid Grid.Row="1"
+                      x:Name="AuctionGrid"
                       AutoGenerateColumns="False" 
                       IsReadOnly="True" 
-                      CanUserAddRows="False">
+                      CanUserAddRows="False"
+                      ItemsSource="{Binding AuctionRecords}" 
+                      SelectedItem="{Binding SelectedAuctionRecord, Mode=TwoWay}">
                 <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Status" Width="90" CellTemplate="{StaticResource StatusBadgeTemplate}"   />
                     <DataGridTextColumn Header="Parcel ID" Binding="{Binding ParcelId}" Width="Auto"/>
+                    <!--<DataGridTemplateColumn Header="Regrid" Width="75" 
+                                            Visibility="{Binding DataContext.IsRegridDataLoaded, Source={x:Reference Name=FrameWorkElementProxy}, Converter={StaticResource BooleanToVisibilityConverter}}" >
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock HorizontalAlignment="Center">
+                                    <Hyperlink NavigateUri="{Binding RegridUrl}" RequestNavigate="Hyperlink_RequestNavigate">
+                                        View
+                                    </Hyperlink>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>-->
                     <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
-                    <DataGridTemplateColumn Header="Appraiser" Width="100">
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="Auto" />
+                    <!--<DataGridTemplateColumn Header="Appraiser" Width="100">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock HorizontalAlignment="Center">
@@ -131,10 +206,13 @@
                                 </TextBlock>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                    </DataGridTemplateColumn>-->
                     <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="100"/>
                     <DataGridTextColumn Header="Opening Bid" Binding="{Binding Bid, StringFormat={}{0:C}}" Width="100"/>
-                    <DataGridTextColumn Header="Date" Binding="{Binding DateDisplay, StringFormat=\{0:MM/dd/yyyy\}}" Width="100"/>
+                    <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="100"  />
+                    <!--<DataGridTextColumn Header="Date" Binding="{Binding DateDisplay, StringFormat=\{0:MM/dd/yyyy\}}" Width="100"/>-->
+                    <!--<DataGridHyperlinkColumn Header="Maps" Binding="{Binding GoogleUrl}" 
+                                             Visibility="{Binding DataContext.RegridColumnsVisible, Source={x:Reference Name=FrameWorkElementProxy}, Converter={StaticResource BooleanToVisibilityConverter}}" />-->
                 </DataGrid.Columns>
             </DataGrid>
 

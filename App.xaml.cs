@@ -52,6 +52,10 @@ namespace AstroValleyAssistant
             {
                 client.Timeout = TimeSpan.FromSeconds(30);
             });
+            services.AddHttpClient<IRegridClient, RegridClient>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
 
             // Point the interfaces to that same singleton instance
             services.AddSingleton<IRegridSettings>(x => x.GetRequiredService<SettingsService>());
