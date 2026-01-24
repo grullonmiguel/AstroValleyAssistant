@@ -11,16 +11,6 @@ namespace AstroValleyAssistant.Core.Services
     public class RegridClient : IRegridClient
     {
         private readonly HttpClient _httpClient;
-        private readonly string _defaultContext = "/us";
-
-        // Map UI Labels to potential JSON keys or HTML markers
-        private readonly Dictionary<string, string[]> _fieldMap = new()
-        {
-            { "Acres", new[] { "ll_gisacre", "Measurements", "acres" } },
-            { "Zoning", new[] { "zoning", "Zoning type", "land_use" } },
-            { "Owner", new[] { "owner", "Enhanced Owner", "owner_name" } },
-            { "Flood", new[] { "flood_zone", "FEMA Flood Zone" } }
-        };
 
         public RegridClient(HttpClient httpClient)
         {
@@ -112,7 +102,7 @@ namespace AstroValleyAssistant.Core.Services
             }
         }
 
-        private RegridRecord ParseRegridJson(string json, string regridUrl)
+        private PropertyRecord ParseRegridJson(string json, string regridUrl)
         {
             using var doc = JsonDocument.Parse(json);
 
@@ -121,30 +111,31 @@ namespace AstroValleyAssistant.Core.Services
 
             LogAvailableKeys(f);
 
-            // Tier 1: Try the concatenated string from the formatted_addresses array
-            string fullAddress = doc.RootElement.GetFormattedAddress();
-            // Tier 2: If the array was empty, try the specific 'address' key in fields
+            // Get formatted address
+            var fullAddress = doc.RootElement.GetFormattedAddress();
+            // If formatted addres was not provided, get it from the address tab
             if (string.IsNullOrWhiteSpace(fullAddress)) fullAddress = f.GetJsonString("address");
-            // Tier 3: Final fallback to the root 'headline' property
+            // Final fallback to get the address from the 'headline' property
             if (string.IsNullOrEmpty(fullAddress)) fullAddress = doc.RootElement.GetJsonString("headline");
 
-            return new RegridRecord(
-                ParcelId: f.GetJsonString("parcelnumb", "parcelid", "lowparcelid"),
-                Address: fullAddress,
-                City: f.GetJsonString("scity", "municipality"),
-                Zip: f.GetJsonString("szip", "zipcode"),
-                Acres: f.GetJsonDouble("ll_gisacre", "acres"),
-                Owner: f.GetJsonString("owner", "eo_owner"),
-                ZoningCode: f.GetJsonString("zoning", "zoning_description"),
-                ZoningType: f.GetJsonString("zoning_type", "zoning_subtype" , "usedesc" ),
-                GeoCoordinates: $"{f.GetJsonString("lat")}, {f.GetJsonString("lon")}",
-                ElevationHigh: f.GetJsonString("highest_parcel_elevation"),
-                ElevationLow: f.GetJsonString("lowest_parcel_elevation"),
-                FloodZone: f.GetJsonString("fema_flood_zone", "fema_flood_zone_subtype", "fema_nri_risk_rating" ),
-                RegridUrl: regridUrl,
-                AssessedValue: GetAssessedValue(f),
-                BirdseyeUrl: doc.RootElement.GetJsonString("birdseye")
-            );
+            return new PropertyRecord
+            {
+                RegridUrl =         regridUrl,
+                ParcelId =          f.GetJsonString("parcelnumb", "parcelid", "lowparcelid"),
+                Address =           fullAddress,
+                City =              f.GetJsonString("scity", "municipality"),
+                Zip =               f.GetJsonString("szip", "zipcode"),
+                Acres =             f.GetJsonDouble("ll_gisacre", "acres"),
+                Owner =             f.GetJsonString("owner", "eo_owner"),
+                ZoningCode =        f.GetJsonString("zoning", "zoning_description"),
+                ZoningType =        f.GetJsonString("zoning_type", "zoning_subtype" , "usedesc" ),
+                GeoCoordinates =    $"{f.GetJsonString("lat")}, {f.GetJsonString("lon")}",
+                ElevationHigh =     f.GetJsonString("highest_parcel_elevation"),
+                ElevationLow =      f.GetJsonString("lowest_parcel_elevation"),
+                FloodZone =         f.GetJsonString("fema_flood_zone", "fema_flood_zone_subtype", "fema_nri_risk_rating" ),
+                AssessedValue =     GetAssessedValue(f),
+                BirdseyeUrl =       doc.RootElement.GetJsonString("birdseye")
+            };
         }
 
         private decimal? GetAssessedValue(JsonElement fields)
@@ -201,7 +192,7 @@ namespace AstroValleyAssistant.Core.Services
                 catch when (retryCount < 3)
                 {
                     retryCount++;
-                    // Exponential backoff to remain polite to the server
+                    // Do not spam the server
                     await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount)), ct);
                 }
             }

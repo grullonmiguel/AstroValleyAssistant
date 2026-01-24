@@ -90,7 +90,8 @@
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <Border Background="{StaticResource Brush.Accent}" Padding="16 10">
+        <Border Background="{StaticResource Brush.Accent}" Padding="16 10" 
+                IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -103,26 +104,26 @@
                     <TextBlock  Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="State" Margin="4 0 0 4" />
 
                     <ComboBox DisplayMemberPath="Name"
-                              ItemsSource="{Binding RealAuctionData.States}" 
-                              SelectedItem="{Binding RealAuctionData.SelectedState}"                           
+                              ItemsSource="{Binding RealAuctionCalendarData.States}" 
+                              SelectedItem="{Binding RealAuctionCalendarData.SelectedState}"                           
                               Style="{StaticResource Theme.ComboBox.Secondary}"/>                
                 
                     <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="County" Margin="4 16 0 4"/>
 
-                    <ComboBox ItemsSource="{Binding RealAuctionData.Counties}"
-                              SelectedItem="{Binding RealAuctionData.SelectedCounty}"
+                    <ComboBox ItemsSource="{Binding RealAuctionCalendarData.Counties}"
+                              SelectedItem="{Binding RealAuctionCalendarData.SelectedCounty}"
                               Style="{StaticResource Theme.ComboBox.Secondary}"
                               ItemTemplateSelector="{StaticResource CountyTemplateSelector}" />
                 
                     <TextBlock Style="{StaticResource Theme.TextBlock.SidebarLabel}" Text="Date" Margin="0 16 0 0" />
                     <DatePicker Style="{StaticResource Theme.DatePicker.Primary}" 
-                                SelectedDate="{Binding RealAuctionData.SelectedDate}" 
-                                DisplayDateStart="{Binding RealAuctionData.MinAuctionDate, Mode=OneWay}" />
+                                SelectedDate="{Binding RealAuctionCalendarData.SelectedDate}" 
+                                DisplayDateStart="{Binding RealAuctionCalendarData.MinAuctionDate, Mode=OneWay}" />
             
                     <!-- Button to explicitly regenerate URL (optional) -->
                     <Button Content="Update"
                             Style="{StaticResource Theme.Button.Primary}"
-                            Command="{Binding RealAuctionData.GenerateAuctionUrlCommand}" 
+                            Command="{Binding RealAuctionCalendarData.GenerateAuctionUrlCommand}" 
                             HorizontalAlignment="Right" Margin="0 16"/>
                 </StackPanel>
 
@@ -130,10 +131,9 @@
                     <local:PropertyDetailsControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" />                    
                 </Border>
 
-                <Border Grid.Row="1" Visibility="{Binding SelectedAuctionRecord.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" Margin="0 16 0 0">
+                <Border Grid.Row="1" Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" Margin="0 16 0 0">
                     <local:MultipleMatchesControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" />
                 </Border>
-
             </Grid>
         </Border>
 
@@ -158,9 +158,11 @@
                     <Button Grid.Column="2" Content="Scrape" VerticalAlignment="Center"
                             Command="{Binding ScrapeRealAuctionCommand}" 
                             Style="{StaticResource Theme.Button.Primary}"
+                            IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}"
                             Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                                IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}"
                                 Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button Content="Clear" Command="{Binding ClearCommand}" />
                         <Button Content="Copy" />
@@ -172,47 +174,15 @@
             
             <!-- Parcel List -->
             <FrameworkElement Grid.Row="1" x:Name="FrameWorkElementProxy" Visibility="Collapsed"/>
-            <DataGrid Grid.Row="1"
-                      x:Name="AuctionGrid"
-                      AutoGenerateColumns="False" 
-                      IsReadOnly="True" 
-                      CanUserAddRows="False"
-                      ItemsSource="{Binding AuctionRecords}" 
-                      SelectedItem="{Binding SelectedAuctionRecord, Mode=TwoWay}">
+            <DataGrid Grid.Row="1" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}">
                 <DataGrid.Columns>
                     <DataGridTemplateColumn Header="Status" Width="90" CellTemplate="{StaticResource StatusBadgeTemplate}"   />
                     <DataGridTextColumn Header="Parcel ID" Binding="{Binding ParcelId}" Width="Auto"/>
-                    <!--<DataGridTemplateColumn Header="Regrid" Width="75" 
-                                            Visibility="{Binding DataContext.IsRegridDataLoaded, Source={x:Reference Name=FrameWorkElementProxy}, Converter={StaticResource BooleanToVisibilityConverter}}" >
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock HorizontalAlignment="Center">
-                                    <Hyperlink NavigateUri="{Binding RegridUrl}" RequestNavigate="Hyperlink_RequestNavigate">
-                                        View
-                                    </Hyperlink>
-                                </TextBlock>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>-->
                     <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
                     <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="Auto" />
-                    <!--<DataGridTemplateColumn Header="Appraiser" Width="100">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock HorizontalAlignment="Center">
-                                    <Hyperlink NavigateUri="{Binding AppraiserUrl}" RequestNavigate="Hyperlink_RequestNavigate">
-                                        View
-                                    </Hyperlink>
-                                </TextBlock>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>-->
                     <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="100"/>
                     <DataGridTextColumn Header="Opening Bid" Binding="{Binding Bid, StringFormat={}{0:C}}" Width="100"/>
                     <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="100"  />
-                    <!--<DataGridTextColumn Header="Date" Binding="{Binding DateDisplay, StringFormat=\{0:MM/dd/yyyy\}}" Width="100"/>-->
-                    <!--<DataGridHyperlinkColumn Header="Maps" Binding="{Binding GoogleUrl}" 
-                                             Visibility="{Binding DataContext.RegridColumnsVisible, Source={x:Reference Name=FrameWorkElementProxy}, Converter={StaticResource BooleanToVisibilityConverter}}" />-->
                 </DataGrid.Columns>
             </DataGrid>
 
@@ -224,7 +194,6 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Text="{Binding Status}" Foreground="{StaticResource Brush.Accent}" />
-
 
                 <ProgressBar IsIndeterminate="True" Height="16" Grid.Column="2"
                              Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>

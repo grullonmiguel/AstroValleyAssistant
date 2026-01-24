@@ -308,7 +308,9 @@
         <Setter Property="RowBackground" Value="{DynamicResource Brush.Background.Secondary}" />
 
         <Setter Property="HeadersVisibility" Value="Column" />
+        <Setter Property="IsReadOnly" Value="true" />
         <Setter Property="RowHeaderWidth" Value="0" />
+        <Setter Property="CanUserAddRows" Value="False" />
         <Setter Property="AutoGenerateColumns" Value="False" />
         <Setter Property="CanUserSortColumns" Value="True" />
         <Setter Property="GridLinesVisibility" Value="All" />
@@ -929,6 +931,11 @@
                             </Popup>
                         </Grid>
                     </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.3" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

@@ -14,6 +14,7 @@
                 <ResourceDictionary Source="/Themes/Accents/Purple.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
+            <conv:BooleanInvertConverter x:Key="BooleanInvertConverter"/>
             <conv:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
             <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
             <conv:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter"/>

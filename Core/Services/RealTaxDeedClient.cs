@@ -32,9 +32,9 @@ namespace AstroValleyAssistant.Core.Services
             _httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
         }
 
-        public async Task<List<AuctionRecord>> GetAuctionsAsync(string url, CancellationToken ct = default, IProgress<int> progress = null)
+        public async Task<List<PropertyRecord>> GetAuctionRecordsAsync(string url, CancellationToken ct = default, IProgress<int> progress = null)
         {
-            var allRecords = new List<AuctionRecord>();
+            var allRecords = new List<PropertyRecord>();
             var uri = new Uri(url);
             var baseDomain = $"{uri.Scheme}://{uri.Host}";
             var query = HttpUtility.ParseQueryString(uri.Query);
@@ -99,9 +99,9 @@ namespace AstroValleyAssistant.Core.Services
             return allRecords;
         }
 
-        private List<AuctionRecord> ParseRetHtml(string retHtml, DateTime auctionDate, int pageNum, string baseDomain)
+        private List<PropertyRecord> ParseRetHtml(string retHtml, DateTime auctionDate, int pageNum, string baseDomain)
         {
-            var records = new List<AuctionRecord>();
+            var records = new List<PropertyRecord>();
 
             // Flexible split to handle different div attribute order (tabindex, id, etc.)
             string[] auctionBlocks = Regex.Split(retHtml, @"<div[^>]*id=""AITEM_", RegexOptions.IgnoreCase)
@@ -149,15 +149,16 @@ namespace AstroValleyAssistant.Core.Services
                             addrLine2 = ExtractValue(currentItem, "</th><td @CAD_DTA\">", "", "@G", startIndex: addr1Idx + 20);
                     }
 
-                    records.Add(new AuctionRecord(
-                        ParcelId: parcelId,
-                        PropertyAddress: $"{Clean(addrLine1)} {Clean(addrLine2)}".Trim(),
-                        OpeningBid: ParseCurrency(openingBidRaw),
-                        AssessedValue: ParseCurrency(assessedValueRaw),
-                        AuctionDate: auctionDate,
-                        PageNumber: pageNum,
-                        AppraiserUrl: appUrl
-                    ));
+                    records.Add(new PropertyRecord
+                    {
+                        ParcelId =      parcelId,
+                        Address =       $"{Clean(addrLine1)} {Clean(addrLine2)}".Trim(),
+                        OpeningBid =    ParseCurrency(openingBidRaw),
+                        AssessedValue = ParseCurrency(assessedValueRaw),
+                        AuctionDate =   auctionDate,
+                        PageNumber =    pageNum,
+                        AppraiserUrl =  appUrl
+                    });
                 }
                 catch (Exception ex)
                 {

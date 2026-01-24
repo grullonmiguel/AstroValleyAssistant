@@ -9,7 +9,7 @@ using System.Windows.Input;
 
 namespace AstroValleyAssistant.ViewModels
 {
-    public class RealAuctionDataViewModel : ViewModelBase
+    public class RealAuctionCalendarDataViewModel : ViewModelBase
     {
         #region Fields
 
@@ -41,8 +41,22 @@ namespace AstroValleyAssistant.ViewModels
         #endregion
 
         #region Properties
+        
+        public string? AuctionUrl
+        {
+            get => _auctionUrl;
+            private set => Set(ref _auctionUrl, value);
+        }
+        private string? _auctionUrl;
 
         public IReadOnlyList<StateInfo> States { get; private set; } = Array.Empty<StateInfo>();
+
+        public DateTime? SelectedDate
+        {
+            get => _selectedDate;
+            set => Set(ref _selectedDate, value);
+        }
+        private DateTime? _selectedDate;
 
         public StateInfo? SelectedState
         {
@@ -54,13 +68,6 @@ namespace AstroValleyAssistant.ViewModels
             }
         }
         private StateInfo? _selectedState;
-
-        public ObservableCollection<RealAuctionDataService.RealAuctionCountyInfo> Counties
-        {
-            get => _counties;
-            private set => Set(ref _counties, value);
-        }
-        private ObservableCollection<RealAuctionDataService.RealAuctionCountyInfo> _counties = new();
                 
         public RealAuctionDataService.RealAuctionCountyInfo? SelectedCounty
         {
@@ -69,28 +76,21 @@ namespace AstroValleyAssistant.ViewModels
         }
         private RealAuctionDataService.RealAuctionCountyInfo? _selectedCounty;
 
-        public DateTime? SelectedDate
+        public ObservableCollection<RealAuctionDataService.RealAuctionCountyInfo> Counties
         {
-            get => _selectedDate;
-            set => Set(ref _selectedDate, value);
+            get => _counties;
+            private set => Set(ref _counties, value);
         }
-        private DateTime? _selectedDate;
+        private ObservableCollection<RealAuctionDataService.RealAuctionCountyInfo> _counties = new();
 
-        // Optional: convenience min date for a DatePicker binding
+        // Tells the UI dates prior to today are not allowed
         public DateTime MinAuctionDate => DateTime.Today;
-        
-        public string? AuctionUrl
-        {
-            get => _auctionUrl;
-            private set => Set(ref _auctionUrl, value);
-        }
-        private string? _auctionUrl;
 
         #endregion
 
         #region Constructor
 
-        public RealAuctionDataViewModel(RealAuctionDataService dataService, IRealAuctionSettings settings)
+        public RealAuctionCalendarDataViewModel(RealAuctionDataService dataService, IRealAuctionSettings settings)
         {
             _dataService = dataService;
             _settings = settings;
@@ -100,7 +100,9 @@ namespace AstroValleyAssistant.ViewModels
 
         #region Methods
 
-        public async Task InitializeAsync()
+        public void Initialize() => Task.Run(InitializeAsync);
+
+        private async Task InitializeAsync()
         {
             await _dataService.InitializeAsync();
 
@@ -117,7 +119,7 @@ namespace AstroValleyAssistant.ViewModels
 
             OnPropertyChanged(nameof(States));
 
-            // restore state
+            // Restore state
             if (!string.IsNullOrWhiteSpace(_settings.State))
             {
                 SelectedState = States.FirstOrDefault(s => s.Code == _settings.State);
@@ -138,11 +140,7 @@ namespace AstroValleyAssistant.ViewModels
             _initialCountyName = SelectedCounty?.Name;
             _initialDate = SelectedDate?.Date;
 
-            if (CanUpdateUrl())
-            {
-            }
-                UpdateAuctionUrl();
-
+            UpdateAuctionUrl();
             NotifyAuctionUrlIfValid();
         }
 
@@ -160,19 +158,10 @@ namespace AstroValleyAssistant.ViewModels
                 Counties.Add(county);
         }
 
-        // Call this from a button command if you want explicit “Generate”,
-        // or leave it private to update automatically when selections change.
         private void UpdateAuctionUrl()
         {
-            // Must have county + date to build URL.
-            if (SelectedCounty is null || SelectedDate is null)
-            {
-                AuctionUrl = null;
-                return;
-            }
-
-            // Only allow today or future dates.
-            if (SelectedDate.Value.Date < DateTime.Today)
+            // Must have county + date to build URL or pass minimum date.
+            if (SelectedCounty is null || SelectedDate is null || SelectedDate.Value.Date < MinAuctionDate)
             {
                 AuctionUrl = null;
                 return;
@@ -181,7 +170,7 @@ namespace AstroValleyAssistant.ViewModels
             // Format date as MM/dd/yyyy (e.g., 12/02/2025).
             var dateString = SelectedDate.Value.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
 
-            // County.Auction is the template like
+            // County.Auction is the real auction URL for a given county
             AuctionUrl = string.Format(CultureInfo.InvariantCulture, SelectedCounty.Auction, dateString);
 
             SaveSettings();
