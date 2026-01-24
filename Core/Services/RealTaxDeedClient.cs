@@ -1,5 +1,6 @@
 ﻿using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Models;
+using AstroValleyAssistant.Models.Domain;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;

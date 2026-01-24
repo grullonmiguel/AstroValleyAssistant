@@ -44,6 +44,7 @@ namespace AstroValleyAssistant
             services.AddSingleton<IBrowserService, BrowserService>();
             services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<IThemeService, ThemeService>();
+            services.AddSingleton<IRegridService, RegridService>();
 
             services.AddSingleton<GeographyDataService>();
             services.AddSingleton<RealAuctionDataService>();

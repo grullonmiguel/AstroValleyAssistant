@@ -1,6 +1,7 @@
 ﻿using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Extensions;
 using AstroValleyAssistant.Models;
+using AstroValleyAssistant.Models.Domain;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
@@ -57,7 +58,7 @@ namespace AstroValleyAssistant.Core.Services
             }
         }
 
-        public async Task<RegridSearchResult?> GetPropertyDetailsAsync(string query, CancellationToken ct = default)
+        public async Task<RegridParcelResult?> GetPropertyDetailsAsync(string query, CancellationToken ct = default)
         {
             try
             {
@@ -71,13 +72,13 @@ namespace AstroValleyAssistant.Core.Services
 
                 // Default is NotFound
                 if (matchCount == 0)
-                    return new RegridSearchResult();
+                    return new RegridParcelResult();
 
                 // Multiple matches Found
                 if (matchCount > 1)
                 {
                     var matches = ParseRegridMatchesAsync(searchHtml);
-                    return new RegridSearchResult { IsMultiple = true, Matches = matches.Result };
+                    return new RegridParcelResult { IsMultiple = true, Matches = matches.Result };
                 }
 
                 // Extract the parcel path from the 'hits' JS variable
@@ -93,7 +94,7 @@ namespace AstroValleyAssistant.Core.Services
                 string browserUrl = $"https://app.regrid.com/us#t=property&p={parcelPath}";
 
                 var returnRecord = ParseRegridJson(detailJson, browserUrl);
-                return new RegridSearchResult { Record = returnRecord };
+                return new RegridParcelResult { Record = returnRecord };
             }
             catch (Exception ex)
             {

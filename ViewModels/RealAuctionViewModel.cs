@@ -2,6 +2,7 @@
 using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Models;
+using AstroValleyAssistant.Models.Domain;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
@@ -368,7 +369,7 @@ namespace AstroValleyAssistant.ViewModels
                     ((IProgress<int>)progress).Report(i + 1);
 
                     // Polite throttling between requests
-                    await Task.Delay(800, ct).ConfigureAwait(false);
+                    await Task.Delay(500, ct).ConfigureAwait(false);
                 }
 
                 Status = $"Scraping complete. {PropertyRecords.Count} items updated.";

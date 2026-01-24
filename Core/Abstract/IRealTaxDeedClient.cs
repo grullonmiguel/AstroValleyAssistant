@@ -1,4 +1,5 @@
 ﻿using AstroValleyAssistant.Models;
+using AstroValleyAssistant.Models.Domain;
 
 namespace AstroValleyAssistant.Core.Abstract
 {
