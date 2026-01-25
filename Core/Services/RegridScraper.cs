@@ -299,20 +299,37 @@ namespace AstroValleyAssistant.Core.Services
             // Extracts the JSON array assigned to 'var hits' in the script tag
             var match = Regex.Match(htmlSource, @"var hits\s*=\s*(\[.*?\]);", RegexOptions.Singleline);
 
+            // If the regex successfully extracted the JSON array assigned to `var hits`
             if (match.Success)
             {
+                // Extract the raw JSON array text from the regex capture group
                 string jsonArray = match.Groups[1].Value;
 
+                // Parse the JSON array into a DOM we can enumerate
                 using var doc = JsonDocument.Parse(jsonArray);
+
+                // Each element in the array represents a single search hit from Regrid
                 foreach (var element in doc.RootElement.EnumerateArray())
                 {
+                    // The "path" property is the relative URL to the parcel page
                     string path = element.GetProperty("path").GetString() ?? string.Empty;
 
+                    // Build a strongly-typed match object for the UI
                     matches.Add(new RegridMatch(
-                        Headline: element.GetProperty("headline").GetString() ?? string.Empty,
-                        Context: element.GetProperty("context").GetString() ?? string.Empty,
+                        // The "headline" field contains the address
+                        Address: element.GetProperty("headline").GetString() ?? string.Empty,
+
+                        // The "context" field contains the city
+                        City: element.GetProperty("context").GetString() ?? string.Empty,
+
+                        // Owner name as provided by Regrid
                         Owner: element.GetProperty("owner").GetString() ?? string.Empty,
-                        FullUrl: $"https://app.regrid.com{path}"
+
+                        // URL to the parcel page
+                        FullUrl: $"https://app.regrid.com{path}",
+
+                        // Parcel number identifier for display
+                        ParcelId: element.GetProperty("parcelnumb").GetString() ?? string.Empty
                     ));
                 }
             }

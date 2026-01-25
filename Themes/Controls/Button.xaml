@@ -164,7 +164,43 @@
         </Setter>
     </Style>
 
-    <!-- Custome Style for Icon Button -->
+    <!-- Hyperlink-like Button style -->
+    <Style x:Key="Theme.Button.Hyperlink" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="TextBlock.TextDecorations" Value="None"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Subtle}"/>
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <TextBlock Text="{TemplateBinding Content}"
+                               FontSize="{TemplateBinding FontSize}"
+                               Foreground="{TemplateBinding Foreground}"
+                               TextDecorations="{TemplateBinding TextBlock.TextDecorations}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="TextBlock.TextDecorations" Value="Underline"/>
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Hyperlink.Primary.Foreground}"/>
+            </Trigger>
+
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.3"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Custom Style for Icon Button -->
     <Style TargetType="{x:Type local:IconTextButton}">
         <Setter Property="Padding" Value="10,6"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -231,11 +267,87 @@
                         </Trigger>
 
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.5"/>
+                            <Setter Property="Opacity" Value="0.3"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
+
+    <Style x:Key="Theme.Button.IconText.Sidebar" TargetType="{x:Type local:IconTextButton}">
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="{DynamicResource Brush.IconText.Background}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.IconText.Foreground}"/>
+        <Setter Property="Foreground"  Value="{DynamicResource Brush.IconText.Foreground}"/>
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:IconTextButton}">
+                    <Border x:Name="Bd"
+                            CornerRadius="0"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <!-- Center everything by default -->
+                        <StackPanel x:Name="Layout"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center">
+
+                            <Path x:Name="IconPath"
+                                  Width="12" Height="12"
+                                  Stretch="Uniform"
+                                  Data="{TemplateBinding Icon}"
+                                  Fill="{TemplateBinding Foreground}"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,8,0"/>
+
+                            <TextBlock x:Name="TextBlock"
+                                       Text="{TemplateBinding Text}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <!-- Icon missing => collapse it; text stays centered because Layout is centered -->
+                        <Trigger Property="Icon" Value="{x:Null}">
+                            <Setter TargetName="IconPath" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="IconPath" Property="Margin" Value="0"/>
+                        </Trigger>
+
+                        <!-- Text missing/empty => collapse it; icon stays centered -->
+                        <Trigger Property="Text" Value="{x:Static sys:String.Empty}">
+                            <Setter TargetName="TextBlock" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+
+                        <Trigger Property="Text" Value="{x:Null}">
+                            <Setter TargetName="TextBlock" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+
+                        <!-- Typical visual states: change Foreground and the icon follows automatically -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.IconText.Background.MouseOver}"/>
+                        </Trigger>
+
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#22000000"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.IconText.Foreground.MouseOver}"/>
+                        </Trigger>
+
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.3"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

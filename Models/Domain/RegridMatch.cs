@@ -1,9 +1,10 @@
 ﻿namespace AstroValleyAssistant.Models.Domain
 {
     public record RegridMatch(
-        string Headline,
-        string Context,
+        string Address,
+        string City,
         string Owner,
-        string FullUrl
+        string FullUrl,
+        string ParcelId
     );
 }

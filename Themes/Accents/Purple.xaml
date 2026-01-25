@@ -44,6 +44,9 @@
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Control.Primary.Disabled" Color="#252135"/>
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Control.Primary.Disabled.Foreground" Color="#6E6985"/>
 
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Border.Light" Color="#40FFFFFF"/>
+
+
     <SolidColorBrush x:Key="SecondaryPurpleHover" Color="#3E006B" />
     <SolidColorBrush x:Key="SecondaryPurpleLight" Color="#F0F0F0" />
     <SolidColorBrush x:Key="SecondaryPurpleBorder" Color="#4A0080" />
