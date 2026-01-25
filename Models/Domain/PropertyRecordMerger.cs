@@ -17,6 +17,12 @@
 
             return original with
             {
+                // --- Always get the most recent Regrid Url
+
+                RegridUrl = string.IsNullOrWhiteSpace(regrid.RegridUrl)
+                    ? original.RegridUrl
+                    : regrid.RegridUrl,
+
                 // --- Regrid fields (only overwrite if empty) ---
 
                 City = string.IsNullOrWhiteSpace(original.City)
@@ -56,10 +62,6 @@
                 FloodZone = string.IsNullOrWhiteSpace(original.FloodZone)
                     ? regrid.FloodZone
                     : original.FloodZone,
-
-                RegridUrl = string.IsNullOrWhiteSpace(original.RegridUrl)
-                    ? regrid.RegridUrl
-                    : original.RegridUrl,
 
                 BirdseyeUrl = string.IsNullOrWhiteSpace(original.BirdseyeUrl)
                     ? regrid.BirdseyeUrl

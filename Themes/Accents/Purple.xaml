@@ -7,6 +7,9 @@
     <Color po:Freeze="True" x:Key="Color.Tertiary">#30294B</Color>
     <Color po:Freeze="True" x:Key="Color.Light">#FFFFFF</Color>
 
+
+    <Color po:Freeze="True" x:Key="Color.Tertiary.60">#7030294B</Color>
+
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Accent"                          Color="{StaticResource Color.Primary}" />
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Accent.Hover"                    Color="#3E3175" />
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Accent.Secondary"                Color="{StaticResource Color.Secondary}" />
@@ -25,6 +28,11 @@
 
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Icon.Secondary"                  Color="{StaticResource Color.Secondary}"/>
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Icon.Secondary.MouseOver"        Color="{StaticResource Color.Light}"/>
+
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.IconText.Foreground"             Color="{StaticResource Color.Secondary}"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.IconText.Background"             Color="Transparent"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.IconText.Foreground.MouseOver"   Color="{StaticResource Color.Light}"/>
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.IconText.Background.MouseOver"   Color="{StaticResource Color.Tertiary.60}"/>
     
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Control.Primary.Base" Color="#30294B"/>
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Control.Primary.MouseOver" Color="#433A68"/>

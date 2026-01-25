@@ -119,7 +119,7 @@ namespace AstroValleyAssistant.ViewModels
             {
                 if (!string.IsNullOrWhiteSpace(ParcelId))
                 {
-                    var url = UrlBuilder.BuildRegridSearchUrl(ParcelId);
+                    var url = UrlBuilder.BuildRegridSearchUrl(Record);
                     _browserService.Launch(url);
                 }
             });

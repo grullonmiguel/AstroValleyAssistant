@@ -65,7 +65,6 @@ namespace AstroValleyAssistant
             services.AddSingleton<IRealAuctionSettings>(x => x.GetRequiredService<SettingsService>());
 
             services.AddTransient<RegridSettingsViewModel>();
-            services.AddTransient<RealAuctionSettingsViewModel>();
             services.AddTransient<RealAuctionCalendarDataViewModel>();
         }
         

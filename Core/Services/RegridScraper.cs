@@ -104,7 +104,12 @@ namespace AstroValleyAssistant.Core.Services
                 if (matchCount == 0)
                 {
                     Debug.WriteLine($"[REGRID] No matches found for '{query}'.");
-                    return new RegridParcelResult();
+                    return new RegridParcelResult
+                    {
+                        Query = query,
+                        NotFound = true,
+                        Record = new PropertyRecord { RegridUrl = searchUrl }
+                    };
                 }
 
                 // No matches
@@ -119,7 +124,8 @@ namespace AstroValleyAssistant.Core.Services
                     {
                         Query = query,
                         IsMultiple = true,
-                        Matches = parsedMatches
+                        Matches = parsedMatches,
+                        Record = new PropertyRecord { RegridUrl = searchUrl }
                     };
                 }
 
@@ -137,10 +143,10 @@ namespace AstroValleyAssistant.Core.Services
                 Debug.WriteLine($"[REGRID] Detail JSON fetched for '{query}' → {detailUrl}");
 
                 // Construct browser-friendly URL
-                string browserUrl = $"https://app.regrid.com/us#t=property&p={parcelPath}";
+                string regridUrl = $"https://app.regrid.com/us#t=property&p={parcelPath}";
 
                 // 5. Parse JSON into PropertyRecord
-                var record = ParseRegridJson(detailJson, browserUrl);
+                var record = ParseRegridJson(detailJson, regridUrl);
                 
                 if (record == null)
                     return new RegridParcelResult { Query = query, Error = new Exception("Failed to parse JSON.") };

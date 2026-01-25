@@ -243,6 +243,56 @@ namespace AstroValleyAssistant.ViewModels
             vm.Matches.Clear();
             vm.HasMultipleMatches = false;
 
+            // Error case
+            if (result.Error != null)
+            {
+                vm.Status = ScrapeStatus.Error;
+                return;
+            }
+
+            // Not Found case
+            if (result.NotFound)
+            {
+                // If scraper provided a record with a RegridUrl (search URL), merge just that
+                if (!string.IsNullOrWhiteSpace(result.Record?.RegridUrl))
+                {
+                    var existing = vm.Record ?? new PropertyRecord();
+                    vm.Record = existing with { RegridUrl = result.Record.RegridUrl };
+                }
+
+                vm.Status = ScrapeStatus.NotFound;
+                return;
+            }
+
+            // Multiple Matches case
+            if (result.IsMultiple)
+            {
+                foreach (var match in result.Matches)
+                    vm.Matches.Add(match);
+
+                vm.HasMultipleMatches = true;
+
+                // If scraper provided a record with a RegridUrl (search URL), merge just that
+                if (!string.IsNullOrWhiteSpace(result.Record?.RegridUrl))
+                {
+                    var existing = vm.Record ?? new PropertyRecord();
+                    vm.Record = existing with { RegridUrl = result.Record.RegridUrl };
+                }
+
+                vm.Status = ScrapeStatus.MultipleMatches;
+                return;
+            }
+
+            // Success case: full merge
+            vm.Record = PropertyRecordMerger.Merge(vm.Record, result.Record!);
+            vm.Status = ScrapeStatus.Success;
+        }
+
+        private void ApplyRegridResults(PropertyDataViewModel vm, RegridParcelResult result)
+        {
+            vm.Matches.Clear();
+            vm.HasMultipleMatches = false;
+
             if (result.Error != null)
             {
                 vm.Status = ScrapeStatus.Error;
@@ -262,6 +312,7 @@ namespace AstroValleyAssistant.ViewModels
 
                 vm.HasMultipleMatches = true;
                 vm.Status = ScrapeStatus.MultipleMatches;
+                
                 return;
             }
 

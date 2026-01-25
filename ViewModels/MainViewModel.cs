@@ -132,13 +132,6 @@ namespace AstroValleyAssistant.ViewModels
         {
             switch (option)
             {
-                case MenuOption.RealAuction:
-                    {
-                        var vm = _serviceProvider.GetRequiredService<RealAuctionSettingsViewModel>();
-                        vm.Saved = CloseDrawer;
-                        return vm;
-                    }
-
                 case MenuOption.Regrid:
                     {
                         var vm = _serviceProvider.GetRequiredService<RegridSettingsViewModel>();

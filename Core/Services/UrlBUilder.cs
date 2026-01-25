@@ -12,8 +12,8 @@ namespace AstroValleyAssistant.Core.Services
         public static string BuildAppraiserUrl(PropertyRecord record)
             => record.AppraiserUrl;
 
-        public static string BuildRegridSearchUrl(string parcelId)
-            => $"https://app.regrid.com/search?query={Uri.EscapeDataString(parcelId)}&context=/us";
+        public static string BuildRegridSearchUrl(PropertyRecord record)
+            => record.RegridUrl;
 
         public static string? BuildGoogleMapsUrl(PropertyRecord record)
         {
@@ -22,7 +22,7 @@ namespace AstroValleyAssistant.Core.Services
                 ? Uri.EscapeDataString(record.Address)
                 : null);
 
-            return query == null
+            return string.IsNullOrWhiteSpace(query)
                 ? null
                 : $"https://www.google.com/maps/search/?api=1&query={query}";
         }
@@ -34,7 +34,7 @@ namespace AstroValleyAssistant.Core.Services
                 ? Uri.EscapeDataString(record.Address)
                 : null);
 
-            if (query == null)
+            if (string.IsNullOrWhiteSpace(query))
                 return null;
 
             return dms != null

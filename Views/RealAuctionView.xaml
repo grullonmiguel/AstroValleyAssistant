@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:AstroValleyAssistant.Views"
+             xmlns:control="clr-namespace:AstroValleyAssistant.Themes.Controls"
              xmlns:behaviors="clr-namespace:AstroValleyAssistant.Core.Behaviors"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
@@ -172,12 +173,22 @@
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
                                 Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
 
-                        <Button Content="Cancel" Command="{Binding CancelCommand}" Margin="0 0 8 0" 
-                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        <Button Content="Clear" Command="{Binding ClearCommand}" Margin="0 0 8 0" 
-                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
-                        <Button Content="Copy" Command="{Binding CopyRecordCommand}" Margin="0 0 8 0" 
-                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
+                        <!-- Cancel Button -->
+                        <control:IconTextButton Text="Cancel" Icon="{StaticResource Icon.Close}" 
+                                                Command="{Binding CancelCommand}" Margin="0 0 8 0" 
+                                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                        <!-- Clear Button -->
+                        <control:IconTextButton Text="Clear" Icon="{StaticResource Icon.Delete}" 
+                                                Command="{Binding ClearCommand}" Margin="0 0 8 0" 
+                                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
+                        
+                        <!-- Copy Button -->
+                        <control:IconTextButton Text="Copy" Icon="{StaticResource Icon.Copy}" 
+                                                Command="{Binding CopyRecordCommand}" Margin="0 0 8 0" 
+                                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
+
+                        <!-- Scrape Regrid Data Button -->
                         <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}" Command="{Binding LoadRegridDataCommand}" />
                     </StackPanel>
                     

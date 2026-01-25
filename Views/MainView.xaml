@@ -25,9 +25,6 @@
         <DataTemplate DataType="{x:Type dialogs:CountyMapDialogViewModel}">
             <viewDialogs:CountyMapView/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type dialogs:RealAuctionSettingsViewModel}">
-            <viewDialogs:RealAuctionSettingsView/>
-        </DataTemplate>
         <DataTemplate DataType="{x:Type dialogs:RegridSettingsViewModel}">
             <viewDialogs:RegridSettingsView/>
         </DataTemplate>
@@ -58,7 +55,6 @@
                         <Button x:Name="HamburgerMenuButton" Command="{Binding OpenMenuCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}" Style="{StaticResource Theme.Button.HamburgerMenu}" >
                             <Button.ContextMenu>
                                 <ContextMenu Style="{StaticResource Theme.ContextMenu}">
-                                    <MenuItem Header="Real Auction" Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.RealAuction}" />
                                     <MenuItem Header="Regrid"       Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.Regrid}" />
                                     <MenuItem Header="Theme"        Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.Themes}" />
                                 </ContextMenu>
