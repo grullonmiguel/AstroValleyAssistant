@@ -41,9 +41,9 @@
                     CornerRadius="4" 
                     Padding="6 4" 
                     HorizontalAlignment="Center"
-                    Background="#EEEEEE">
+                    Background="Transparent">
                 <TextBlock x:Name="StatusText" 
-                       Text="Pending" 
+                       Text="--" 
                        Foreground="Gray" 
                        FontSize="10" 
                        HorizontalAlignment="Center"/>
@@ -59,7 +59,7 @@
                 <DataTrigger Binding="{Binding Status}" Value="Success">
                     <Setter TargetName="StatusBadge" Property="Background" Value="#3065B5A6"/>
                     <Setter TargetName="StatusText" Property="Foreground" Value="#65B5A6"/>
-                    <Setter TargetName="StatusText" Property="Text" Value="✔ Complete"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="✔ Success"/>
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Status}" Value="MultipleMatches">
@@ -105,6 +105,8 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition />
                 </Grid.RowDefinitions>
+
+                <!-- ========== REAL AUCTION PARAMETERS ========== -->
                 <StackPanel Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
 
                     <!-- Header / Title -->
@@ -135,12 +137,14 @@
                                             Command="{Binding RealAuctionCalendarData.GenerateAuctionUrlCommand}" />
                 </StackPanel>
 
+                <!-- ========== PROPERTY DETAILS AREA ========== -->
                 <Border Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <local:PropertyDetailsControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" Focusable="False"/>                    
                 </Border>
 
+                <!-- ========== MULTIPLE MATCHES AREA ========== -->
                 <Border Grid.Row="1" Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" Margin="0 16 0 0">
-                    <local:MultipleMatchesControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" Focusable="False" />
+                    <local:MultipleMatchesControl Focusable="False" SelectMatchCommand="{Binding SelectMatchCommand}" SelectedItem="{Binding ElementName=AuctionGrid, Path=SelectedItem}"  />
                 </Border>
             </Grid>
         </Border>
@@ -203,7 +207,7 @@
             <FrameworkElement Grid.Row="1" x:Name="FrameWorkElementProxy" Visibility="Collapsed"/>
             <DataGrid Grid.Row="1" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}">
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="Status" Width="90" CellTemplate="{StaticResource StatusBadgeTemplate}"   />
+                    <DataGridTemplateColumn Header="Status" Width="85" CellTemplate="{StaticResource StatusBadgeTemplate}"   />
                     <DataGridTextColumn Header="Parcel ID" Binding="{Binding ParcelId}" Width="Auto"/>
                     <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
                     <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="Auto" />

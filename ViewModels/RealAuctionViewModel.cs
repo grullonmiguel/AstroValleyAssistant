@@ -129,6 +129,10 @@ namespace AstroValleyAssistant.ViewModels
                 Status = "All records copied to clipboard.";
             });
 
+        private ICommand? _selectMatchCommand;
+        public ICommand SelectMatchCommand =>
+            _selectMatchCommand ??= new RelayCommand(match => ScrapeMatch((RegridMatch)match));
+
         // -----------------------------
         // RealAuction Loading
         // -----------------------------
@@ -286,6 +290,44 @@ namespace AstroValleyAssistant.ViewModels
             // Success case: full merge
             vm.Record = PropertyRecordMerger.Merge(vm.Record, result.Record!);
             vm.Status = ScrapeStatus.Success;
+        }
+
+        private async void ScrapeMatch(RegridMatch match)
+        {
+            if (PropertySelected == null)
+                return;
+
+            BeginOperation("Scraping selected Regrid match...");
+
+            try
+            {
+                var ct = _cts!.Token;
+
+                // 1. Show loading state on the selected row
+                PropertySelected.Status = ScrapeStatus.Loading;
+                PropertySelected.Matches.Clear();
+                PropertySelected.HasMultipleMatches = false;
+
+                // 2. Scrape using the final parcel URL
+                var result = await _regridService.ScrapeSingleAsync(match.FullUrl, ct);
+
+                // 3. Apply the result to the selected row
+                ApplyRegridResult(PropertySelected, result);
+
+                // 4. Mark sidebar as resolved
+                PropertySelected.Matches.Clear();
+                PropertySelected.HasMultipleMatches = false;
+
+                SetIdle("Match scraping complete.");
+            }
+            catch (OperationCanceledException)
+            {
+                SetIdle("Operation canceled.");
+            }
+            catch (Exception ex)
+            {
+                SetIdle($"Error: {ex.Message}");
+            }
         }
 
         private void ApplyRegridResults(PropertyDataViewModel vm, RegridParcelResult result)
