@@ -3,20 +3,25 @@ using AstroValleyAssistant.Core.Extensions;
 using AstroValleyAssistant.Models;
 using AstroValleyAssistant.Models.Domain;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace AstroValleyAssistant.Core.Services
 {
-    public class RegridClient : IRegridClient
+    public class RegridScraper : IRegridScraper
     {
         private readonly HttpClient _httpClient;
 
-        public RegridClient(HttpClient httpClient)
+        // Internal delay between search → detail to avoid burst behavior
+        private const int SearchDetailDelayMs = 300;
+
+        public RegridScraper(HttpClient httpClient)
         {
             _httpClient = httpClient;
-           
+
+            // Configure browser-like headers once at construction
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
             _httpClient.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"); 
@@ -24,23 +29,34 @@ namespace AstroValleyAssistant.Core.Services
             _httpClient.DefaultRequestHeaders.Add("Referer", "https://regrid.com/"); 
         }
 
+        /// <summary>
+        /// Performs the login handshake with Regrid.
+        /// Fetches the login page, extracts CSRF token, and posts credentials.
+        /// </summary>
         public async Task<bool> AuthenticateAsync(string email, string password, CancellationToken ct)
         {
             try
             {
-                // 1. Handshake: Get the login page with browser-like headers
-                var response = await _httpClient.GetAsync("https://app.regrid.com/users/sign_in", ct);
+                // 1. Load login page to obtain CSRF token
+                var response = await _httpClient
+                    .GetAsync("https://app.regrid.com/users/sign_in", ct)
+                    .ConfigureAwait(false);
+
                 response.EnsureSuccessStatusCode();
 
-                var loginPageHtml = await response.Content.ReadAsStringAsync(ct);
+                var loginPageHtml = await response.Content
+                    .ReadAsStringAsync(ct)
+                    .ConfigureAwait(false);
 
-                // 2. Extract CSRF token using Regex
+                // 2. Extract authenticity_token
                 var match = Regex.Match(loginPageHtml, "name=\"authenticity_token\" value=\"([^\"]+)\"");
-                if (!match.Success) return false;
+                
+                if (!match.Success) 
+                    return false;
 
                 string csrfToken = match.Groups[1].Value;
 
-                // 3. Post credentials
+                // 3. Submit login for
                 var content = new FormUrlEncodedContent(new[]
                 {
                     new KeyValuePair<string, string>("user[email]", email),
@@ -48,76 +64,126 @@ namespace AstroValleyAssistant.Core.Services
                     new KeyValuePair<string, string>("authenticity_token", csrfToken)
                 });
 
-                var postResponse = await _httpClient.PostAsync("https://app.regrid.com/users/sign_in", content, ct);
+                var postResponse = await _httpClient
+                    .PostAsync("https://app.regrid.com/users/sign_in", content, ct)
+                    .ConfigureAwait(false);
+
                 return postResponse.IsSuccessStatusCode;
             }
             catch (HttpRequestException ex)
             {
-                 Debug.WriteLine($"Auth Network Error: {ex.Message}");
+                Debug.WriteLine($"[REGRID AUTH ERROR] {ex.Message}");
                 return false;
             }
         }
 
+        /// <summary>
+        /// Performs a full scrape: search → match detection → detail fetch → JSON parse.
+        /// Returns null only on unexpected failure.
+        /// </summary>
         public async Task<RegridParcelResult?> GetPropertyDetailsAsync(string query, CancellationToken ct = default)
         {
             try
             {
-                // 1. Initial Search (Replaces browser navigation to the search URL)
+                // 1. Perform search request
                 string searchUrl = $"https://app.regrid.com/search?query={Uri.EscapeDataString(query)}&context=/us";
-                string searchHtml = await GetWithRetryAsync(searchUrl, ct);
 
-                // Check if matches were found using your h4 logic
+                string searchHtml = await GetWithRetryAsync(searchUrl, ct)
+                    .ConfigureAwait(false);
+
+                Debug.WriteLine($"[REGRID] Search completed for '{query}'.");
+
+                // Prevent rapid search → detail burst
+                await Task.Delay(SearchDetailDelayMs, ct).ConfigureAwait(false);
+
+                // 2. Detect match count
                 var match = Regex.Match(searchHtml, @"Found (\d+) matches", RegexOptions.IgnoreCase);
                 int matchCount = match.Success ? int.Parse(match.Groups[1].Value) : 0;
 
                 // Default is NotFound
                 if (matchCount == 0)
-                    return new RegridParcelResult();
-
-                // Multiple matches Found
-                if (matchCount > 1)
                 {
-                    var matches = ParseRegridMatchesAsync(searchHtml);
-                    return new RegridParcelResult { IsMultiple = true, Matches = matches.Result };
+                    Debug.WriteLine($"[REGRID] No matches found for '{query}'.");
+                    return new RegridParcelResult();
                 }
 
-                // Extract the parcel path from the 'hits' JS variable
+                // No matches
+                if (matchCount > 1)
+                {
+                    Debug.WriteLine($"[REGRID] Multiple matches for '{query}'. Count={matchCount}");
+
+                    var parsedMatches = await ParseRegridMatchesAsync(searchHtml)
+                        .ConfigureAwait(false);
+
+                    return new RegridParcelResult
+                    {
+                        Query = query,
+                        IsMultiple = true,
+                        Matches = parsedMatches
+                    };
+                }
+
+                // 3. Extract the parcel path from the 'hits' JS variable
                 string parcelPath = Regex.Match(searchHtml, @"""category"":""parcel"",""path"":""([^""]+)""").Groups[1].Value;
 
-                if (string.IsNullOrEmpty(parcelPath)) return null;
+                if (string.IsNullOrEmpty(parcelPath))
+                    return new RegridParcelResult { Query = query, NotFound = true };
 
-                // THE "CLICK": Adding .json to the path replicates the JS data fetch
+                // 4. Fetch detail JSON
                 string detailUrl = $"https://app.regrid.com{parcelPath}.json";
-                string detailJson = await GetWithRetryAsync(detailUrl, ct);
+                string detailJson = await GetWithRetryAsync(detailUrl, ct)
+                    .ConfigureAwait(false);
 
-                // Construct the browser-friendly URL for the UI record
+                Debug.WriteLine($"[REGRID] Detail JSON fetched for '{query}' → {detailUrl}");
+
+                // Construct browser-friendly URL
                 string browserUrl = $"https://app.regrid.com/us#t=property&p={parcelPath}";
 
-                var returnRecord = ParseRegridJson(detailJson, browserUrl);
-                return new RegridParcelResult { Record = returnRecord };
+                // 5. Parse JSON into PropertyRecord
+                var record = ParseRegridJson(detailJson, browserUrl);
+                
+                if (record == null)
+                    return new RegridParcelResult { Query = query, Error = new Exception("Failed to parse JSON.") };
+
+                Debug.WriteLine($"[REGRID] Successfully parsed parcel for '{query}'.");
+
+                return new RegridParcelResult
+                {
+                    Query = query,
+                    Record = record
+                };
+
+            }
+            catch (RegridRateLimitException)
+            {
+                throw; // Let the service layer handle 429 logic
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Extraction Error: {ex.Message}");
-                return null;
+                Debug.WriteLine($"[REGRID ERROR] Query '{query}' failed: {ex}");
+                return new RegridParcelResult { Query = query, Error = ex };
             }
         }
 
-        private PropertyRecord ParseRegridJson(string json, string regridUrl)
+        /// <summary>
+        /// Parses the Regrid detail JSON into a PropertyRecord.
+        /// </summary>
+        private PropertyRecord? ParseRegridJson(string json, string regridUrl)
         {
             using var doc = JsonDocument.Parse(json);
 
             // Web app internal JSON uses "fields" as the primary data container
-            if (!doc.RootElement.TryGetProperty("fields", out var f)) return null;
+            if (!doc.RootElement.TryGetProperty("fields", out var f)) 
+                return null;
 
             LogAvailableKeys(f);
 
-            // Get formatted address
-            var fullAddress = doc.RootElement.GetFormattedAddress();
-            // If formatted addres was not provided, get it from the address tab
-            if (string.IsNullOrWhiteSpace(fullAddress)) fullAddress = f.GetJsonString("address");
-            // Final fallback to get the address from the 'headline' property
-            if (string.IsNullOrEmpty(fullAddress)) fullAddress = doc.RootElement.GetJsonString("headline");
+            // Address resolution logic
+            var fullAddress = doc.RootElement.GetFormattedAddress();            
+            if (string.IsNullOrWhiteSpace(fullAddress)) 
+                fullAddress = f.GetJsonString("address"); // If formatted addres was not provided, get it from the address tab            
+            if (string.IsNullOrEmpty(fullAddress)) 
+                fullAddress = doc.RootElement.GetJsonString("headline"); // Final fallback to get the address from the 'headline' property
 
             return new PropertyRecord
             {
@@ -139,6 +205,9 @@ namespace AstroValleyAssistant.Core.Services
             };
         }
 
+        // <summary>
+        /// Extracts assessed value using Regrid's inconsistent key patterns.
+        /// </summary>
         private decimal? GetAssessedValue(JsonElement fields)
         {
             // 1. Check if the value type is 'ASSESSED'
@@ -172,36 +241,53 @@ namespace AstroValleyAssistant.Core.Services
             return fields.GetJsonDecimal("total_value", "ll_val_asmt", "total_parcel_value");
         }
 
-        private void LogAvailableKeys(JsonElement fieldsObject)
-        {
-            // This will print every key available for the parcel in the Debug window
-            foreach (var property in fieldsObject.EnumerateObject())
-                Debug.WriteLine($"Found Key: {property.Name} | Value: {property.Value}");
-        }
-
+        /// <summary>
+        /// GET with retry + exponential backoff + 429 detection.
+        /// </summary>
         private async Task<string> GetWithRetryAsync(string url, CancellationToken ct)
         {
-            int retryCount = 0;
-            while (retryCount < 3)
+            Exception? lastException = null;
+
+            for (int retry = 0; retry < 3; retry++)
             {
                 try
                 {
                     var response = await _httpClient.GetAsync(url, ct);
+
+                    if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                        throw new RegridRateLimitException(response);
+
                     response.EnsureSuccessStatusCode();
                     return await response.Content.ReadAsStringAsync(ct);
                 }
-                catch when (retryCount < 3)
+                catch (RegridRateLimitException ex)
                 {
-                    retryCount++;
-                    // Do not spam the server
-                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount)), ct);
+                    Debug.WriteLine($"[REGRID 429] Rate limit hit for URL: {url}. RetryAfter={ex.RetryAfterSeconds ?? -1} seconds.");
+                    // Do NOT retry here — let RegridService handle it
+                    throw;
+                }
+                catch (Exception ex) when (retry < 2)
+                {
+                    lastException = ex;
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retry + 1)), ct);
+                }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    break;
                 }
             }
-            return string.Empty;
+
+            throw new HttpRequestException($"Failed to GET '{url}' after 3 attempts.", lastException);
         }
 
+        /// <summary>
+        /// Parses the "hits" array from the search page into a list of RegridMatch objects.
+        /// </summary>
         public async Task<List<RegridMatch>> ParseRegridMatchesAsync(string htmlSource)
         {
+            await Task.CompletedTask;
+
             var matches = new List<RegridMatch>();
 
             // Extracts the JSON array assigned to 'var hits' in the script tag
@@ -226,6 +312,32 @@ namespace AstroValleyAssistant.Core.Services
             }
 
             return matches;
+        }
+
+        /// <summary>
+        /// Logs all available keys in the "fields" object for debugging.
+        /// </summary>
+        private void LogAvailableKeys(JsonElement fieldsObject)
+        {
+            // This will print every key available for the parcel in the Debug window
+            foreach (var property in fieldsObject.EnumerateObject())
+                Debug.WriteLine($"Found Key: {property.Name} | Value: {property.Value}");
+        }
+    }
+
+    /// <summary>
+    /// Custom exception for handling Regrid 429 responses.
+    /// </summary>
+    public class RegridRateLimitException : Exception
+    {
+        public int? RetryAfterSeconds { get; }
+
+        public RegridRateLimitException(HttpResponseMessage response) : base("Regrid returned 429 Too Many Requests")
+        {
+            if (response.Headers.TryGetValues("Retry-After", out var values) && int.TryParse(values.FirstOrDefault(), out int seconds))
+            {
+                RetryAfterSeconds = seconds;
+            }
         }
     }
 }

@@ -1,50 +1,25 @@
 ﻿using AstroValleyAssistant.Core;
 using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
+using AstroValleyAssistant.Core.Utilities;
 using AstroValleyAssistant.Models;
 using AstroValleyAssistant.Models.Domain;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace AstroValleyAssistant.ViewModels
 {
     public class RealAuctionViewModel : ViewModelBase
     {
-        private CancellationTokenSource? _cts;
-        private readonly IRegridClient? _regridScraper;
-        private readonly IRealTaxDeedClient? _realScraper;
-        private readonly IRegridSettings _regridSettings;
+        private readonly IRealTaxDeedClient _realScraper;
+        private readonly IRegridService _regridService;
         private readonly IBrowserService _browserService;
-        private bool _isRegridAuthenticated = false;
 
-        #region Commands
+        private CancellationTokenSource? _cts;
 
-        // Command to open the AppraiserUrl
-        private ICommand? _openRealAuctionCommand;
-        public ICommand OpenRealAuctiomCommand => _openRealAuctionCommand ??= new RelayCommand<Button>(OpenRealAuctionUrl);
+        public ObservableCollection<PropertyDataViewModel> PropertyRecords { get; } = new();
 
-        // Command to open the AppraiserUrl
-        private ICommand? _scrapeRealAuction;
-        public ICommand ScrapeRealAuctionCommand => _scrapeRealAuction ??= new RelayCommand(_ => ScrapeRealAuction(), _ => CanScrapeRealAuction());
-
-        private ICommand? _clearCommand;
-        public ICommand ClearCommand => _clearCommand ??= new RelayCommand(_ => Clear());
-
-        private ICommand? _scrapeRegridCommand;
-        public ICommand ScrapeRegridCommand => _scrapeRegridCommand ??= new AsyncRelayCommand(_ => ScrapeRegridDataAsync(), _ => CanScrapeRegrid());
-
-        #endregion
-
-        #region Properties
-
-        // Holds a Real Auction Calendar Data
         public RealAuctionCalendarDataViewModel RealAuctionCalendarData { get; }
-
-        // The collection your WPF DataGrid binds to
-        public ObservableCollection<PropertyDataViewModel> PropertyRecords { get; set; } = new();
 
         public PropertyDataViewModel? PropertySelected
         {
@@ -59,549 +34,509 @@ namespace AstroValleyAssistant.ViewModels
         }
         private PropertyDataViewModel? _propertySelected;
 
+        // -----------------------------
+        // UI State
+        // -----------------------------
+        private bool _isScraping;
+        public bool IsScraping
+        {
+            get => _isScraping;
+            set => Set(ref _isScraping, value);
+        }
+
+        private string? _status;
         public string? Status
         {
             get => _status;
             set => Set(ref _status, value);
         }
-        private string? _status;
 
-        public string? CurrentAuctionUrl
-        {
-            get => _currentAuctionUrl;
-            private set => Set(ref _currentAuctionUrl, value);
-        }
-        private string? _currentAuctionUrl;
-
-        public string? CurrentAuctionAlias
-        {
-            get => _currentAuctionAlias;
-            private set => Set(ref _currentAuctionAlias, value);
-        }
-        private string? _currentAuctionAlias;
-
-        public bool? IsScraping
-        {
-            get => _isScraping;
-            set => Set(ref _isScraping, value);
-        }
-        private bool? _isScraping = false;
-
+        private bool _isScrapeVisible = true;
         public bool IsScrapeVisible
         {
             get => _isScrapeVisible;
             set => Set(ref _isScrapeVisible, value);
         }
-        private bool _isScrapeVisible;
 
+        private bool _isResultButtonsVisible;
         public bool IsResultButtonsVisible
         {
             get => _isResultButtonsVisible;
             set => Set(ref _isResultButtonsVisible, value);
         }
-        private bool _isResultButtonsVisible;
 
+        private bool _isRegridDataLoaded;
         public bool IsRegridDataLoaded
         {
             get => _isRegridDataLoaded;
             set => Set(ref _isRegridDataLoaded, value);
         }
-        private bool _isRegridDataLoaded = false;
 
-        #endregion
-
-        #region Constructor
-
-        public RealAuctionViewModel(IRealTaxDeedClient realScraper, 
-                                    IRegridClient regridScraper, 
-                                    IRegridSettings regridSettings,
-                                    IBrowserService browserService,
-                                    RealAuctionCalendarDataViewModel realAuctionData)
+        private string? _currentAuctionUrl;
+        public string? CurrentAuctionUrl
         {
-            // Run validation
-            ArgumentNullException.ThrowIfNull(browserService);
-            ArgumentNullException.ThrowIfNull(realScraper);
-            ArgumentNullException.ThrowIfNull(regridScraper);
-            ArgumentNullException.ThrowIfNull(regridSettings);
-            ArgumentNullException.ThrowIfNull(realAuctionData);
+            get => _currentAuctionUrl;
+            private set => Set(ref _currentAuctionUrl, value);
+        }
 
-            // initial state
-            IsScrapeVisible = true;
-            IsResultButtonsVisible = false;
+        private string? _currentAuctionAlias;
+        public string? CurrentAuctionAlias
+        {
+            get => _currentAuctionAlias;
+            private set => Set(ref _currentAuctionAlias, value);
+        }
 
+        // -----------------------------
+        // Constructor
+        // -----------------------------
+        public RealAuctionViewModel(
+            IRealTaxDeedClient realScraper,
+            IRegridService regridService,
+            IBrowserService browserService,
+            RealAuctionCalendarDataViewModel realAuctionData)
+        {
             _realScraper = realScraper;
-            _regridScraper = regridScraper;
-            _regridSettings = regridSettings;
+            _regridService = regridService;
             _browserService = browserService;
 
             RealAuctionCalendarData = realAuctionData;
             RealAuctionCalendarData.AuctionUrlAvailable += OnAuctionUrlAvailable;
             RealAuctionCalendarData.Initialize();
-
-            //LoadDummyData(); // Add Dummy Data for Styling
         }
 
-        #endregion
+        // -----------------------------
+        // Commands
+        // -----------------------------
+        public ICommand LoadRealAuctionCommand =>
+            new RelayCommand(async _ => await LoadRealAuctionAsync(), _ => !IsScraping);
 
-        #region Methods
+        public ICommand LoadRegridDataCommand =>
+            new RelayCommand(async _ => await EnrichWithRegridAsync(), _ => PropertyRecords.Count > 0 && !IsScraping);
 
-        // =============== REAL AUCTION ===============
+        public ICommand CancelCommand =>
+            new RelayCommand(_ => CancelOperation(), _ => IsScraping);
 
-        private void ScrapeRealAuction() => Task.Run(ScrapeRealAuctionAsync);
+        public ICommand ClearCommand =>
+            new RelayCommand(_ => Clear());
 
-        private async Task ScrapeRealAuctionAsync()
-        {
-            // Create a fresh cancellation token for this run
-            _cts = new CancellationTokenSource();
+        public ICommand OpenRealAuctionCommand =>
+            new RelayCommand(_ => _browserService.Launch(CurrentAuctionUrl));
 
-            IsScraping = true;
-            Status = "Scraping started...";
-
-            // Progress handler updates the UI thread automatically (SynchronizationContext)
-            var progressHandler = new Progress<int>(count =>
+        public ICommand CopyRecordCommand =>
+            new RelayCommand<PropertyDataViewModel>(vm =>
             {
-                Status = $"Items Found: {count}";
+                ClipboardFormatter.CopyAllToClipboard(PropertyRecords.Select(vm => vm.Record));
+                Status = "All records copied to clipboard.";
             });
+
+        // -----------------------------
+        // RealAuction Loading
+        // -----------------------------
+        public async Task LoadRealAuctionAsync()
+        {
+            BeginOperation("Loading RealAuction data...");
 
             try
             {
-                // Fetch auction records asynchronously
-                var records = await _realScraper!.GetAuctionRecordsAsync(
-                    CurrentAuctionUrl,
-                    _cts.Token,
-                    progressHandler
-                ).ConfigureAwait(false);
+                var ct = _cts!.Token;
 
-                // Update UI-bound collection on the UI thread
-                await Application.Current.Dispatcher.InvokeAsync(() =>
+                var progress = new Progress<int>(count =>
+                {
+                    Status = $"Items Found: {count}";
+                });
+
+                var records = await _realScraper
+                    .GetAuctionRecordsAsync(CurrentAuctionUrl, ct, progress)
+                    .ConfigureAwait(false);
+
+                App.Current.Dispatcher.Invoke(() =>
                 {
                     PropertyRecords.Clear();
-
                     foreach (var record in records)
                         PropertyRecords.Add(new PropertyDataViewModel(record, _browserService));
                 });
 
-                Status = $"Process completed! {records.Count} records retrieved.";
+                SetIdle($"Loaded {PropertyRecords.Count} properties.");
+                IsScrapeVisible = false;
+                IsResultButtonsVisible = true;
             }
             catch (OperationCanceledException)
             {
-                Status = "Scrape cancelled by user.";
+                SetIdle("Scrape canceled.");
             }
             catch (Exception ex)
             {
-                Status = $"Error: {ex.Message}";
-            }
-            finally
-            {
-                _cts.Dispose();
-                _cts = null;
-
-                IsScraping = false;
-                IsScrapeVisible = false;
-                IsResultButtonsVisible = true;
+                SetIdle($"Error: {ex.Message}");
             }
         }
 
-        private async Task ScrapeRealAuctionAsyncs()
+        // -----------------------------
+        // Regrid Enrichment
+        // -----------------------------
+        public async Task EnrichWithRegridAsync()
         {
-            _cts = new CancellationTokenSource();
-            IsScraping = true;
-            Status = "Scraping started...";
-
-            // Updates the UI thread whenever progress is reported
-            var progressHandler = new Progress<int>(count =>
+            if (PropertyRecords.Count == 0)
             {
-                Status = $"Items Found: {count}";
-            });
+                Status = "No properties to scrape.";
+                return;
+            }
+
+            BeginOperation("Begin Regrid Scraping...");
 
             try
             {
-                // 1. Get raw records from the service
-                var records = await _realScraper!.GetAuctionRecordsAsync(CurrentAuctionUrl, _cts.Token, progressHandler);
+                var ct = _cts!.Token;
 
-                // 2. Clear old data and wrap new data in ItemViewModels
-                Application.Current.Dispatcher.Invoke(() =>
+                // 1. Build list of parcel queries
+                var queries = PropertyRecords
+                    .Select(vm => !string.IsNullOrWhiteSpace(vm.ParcelId) ? vm.ParcelId : vm.Address)
+                    .ToList();
+
+                var progress = new Progress<int>(count =>
                 {
-                    PropertyRecords.Clear();
-                    foreach (var record in records)
-                    {
-                        PropertyRecords.Add(new PropertyDataViewModel(record, _browserService));
-                    }
+                    Status = $"Processed {count} of {PropertyRecords.Count}";
                 });
 
-                // Final UI update
-                Status = $"Process completed! {records.Count} records retrieved.";
+                int index = 0;
+
+                foreach (var query in queries)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    var vm = PropertyRecords[index];
+
+                    // 2. Show "Loading" BEFORE scraping begins
+                    vm.Status = ScrapeStatus.Loading;
+                    vm.Matches.Clear();
+                    vm.HasMultipleMatches = false;
+
+                    // 3. Scrape a single parcel
+                    var result = await _regridService.ScrapeSingleAsync(query, ct);
+
+                    // 4. Apply result to the row
+                    ApplyRegridResult(vm, result);
+
+                    // 5. Update progress text
+                    ((IProgress<int>)progress).Report(index + 1);
+
+                    // 6. External throttling between parcels
+                    await Task.Delay(500, ct);
+
+                    index++;
+                }
+
+                IsRegridDataLoaded = true;
+                SetIdle("Regrid scraping complete.");
             }
             catch (OperationCanceledException)
             {
-                Status = "Scrape cancelled by user.";
+                SetIdle("Operation canceled.");
             }
             catch (Exception ex)
             {
-                Status = $"Error: {ex.Message}";
+                SetIdle($"Error: {ex.Message}");
             }
-            finally
+        }
+
+        private void ApplyRegridResult(PropertyDataViewModel vm, RegridParcelResult result)
+        {
+            vm.Matches.Clear();
+            vm.HasMultipleMatches = false;
+
+            if (result.Error != null)
             {
-                _cts.Dispose();
-                IsScraping = false;
-                IsScrapeVisible = false;
-                IsResultButtonsVisible = true;
+                vm.Status = ScrapeStatus.Error;
+                return;
             }
+
+            if (result.NotFound)
+            {
+                vm.Status = ScrapeStatus.NotFound;
+                return;
+            }
+
+            if (result.IsMultiple)
+            {
+                foreach (var match in result.Matches)
+                    vm.Matches.Add(match);
+
+                vm.HasMultipleMatches = true;
+                vm.Status = ScrapeStatus.MultipleMatches;
+                return;
+            }
+
+            // Success
+            vm.Record = PropertyRecordMerger.Merge(vm.Record, result.Record!);
+            vm.Status = ScrapeStatus.Success;
+        }
+
+        // -----------------------------
+        // Helpers
+        // -----------------------------
+        private void BeginOperation(string message)
+        {
+            CancelOperation();
+            _cts = new CancellationTokenSource();
+            IsScraping = true;
+            Status = message;
+        }
+
+        private void CancelOperation()
+        {
+            if (_cts != null && !_cts.IsCancellationRequested)
+            {
+                try
+                {
+                    // Trigger cancellation
+                    _cts?.Cancel();
+
+                    // Update UI immediately
+                    Status = "Canceling...";
+                }
+                catch
+                {
+                    // No-op: cancellation is best-effort
+                }
+            }
+
+        }
+
+        private void SetIdle(string message)
+        {
+            IsScraping = false;
+            Status = message;
+        }
+
+        private void Clear()
+        {
+            PropertyRecords.Clear();
+            Status = string.Empty;
+            IsRegridDataLoaded = false;
+            IsScrapeVisible = true;
+            IsResultButtonsVisible = false;
         }
 
         private void OnAuctionUrlAvailable(string url, DateTime date)
         {
             CurrentAuctionUrl = url;
-
             var countyName = RealAuctionCalendarData.SelectedCounty?.Name ?? "Auction";
             CurrentAuctionAlias = $"{countyName} - {date:M/d/yyyy}";
-
-            (_scrapeRealAuction as RelayCommand)?.RaiseCanExecuteChanged();
         }
-
-        private bool CanScrapeRealAuction()
-        {
-            // require a non-empty, well-formed absolute URL
-            if (string.IsNullOrWhiteSpace(CurrentAuctionUrl) && 
-                !Uri.IsWellFormedUriString(CurrentAuctionUrl, UriKind.Absolute))
-                return false;
-
-            // require a valid, non-past date from the data VM
-            var date = RealAuctionCalendarData.SelectedDate;
-            if (date is null || date.Value.Date < RealAuctionCalendarData.MinAuctionDate)
-                return false;
-
-            return true;
-        }
-
-        private void Clear()
-        {
-            // clear results (collection, text, etc.)
-            PropertyRecords.Clear();
-            Status = string.Empty;
-            IsRegridDataLoaded = false;
-
-            // show ScrapeRealAuction again, hide result buttons
-            IsScrapeVisible = true;
-            IsResultButtonsVisible = false;
-        }
-        
-        private void OpenRealAuctionUrl(object? obj)
-        {
-            _browserService.Launch(CurrentAuctionUrl);
-        }
-
-        // =============== REGRID ===============
-
-        private async Task<bool> EstablishRegridAuthentication(CancellationToken ct)
-        {
-            if (_regridScraper == null) return false;
-
-            // 1. Check if we already have a valid session in memory
-            if (_isRegridAuthenticated)
-            {
-                Status = "Reusing existing Regrid session...";
-                return true;
-            }
-
-            Status = "Authenticating with Regrid...";
-
-            string email = _regridSettings.RegridUserName;
-            string password = _regridSettings.RegridPassword;
-
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-            {
-                Status = "Regrid credentials missing.";
-                return false;
-            }
-
-            // 2. Perform the initial handshake only once
-            _isRegridAuthenticated = await _regridScraper.AuthenticateAsync(email, password, ct);
-
-            if (!_isRegridAuthenticated)
-            {
-                Status = "Authentication failed. Check credentials.";
-            }
-
-            return _isRegridAuthenticated;
-        }
-
-        private async Task ScrapeRegridDataAsync()
-        {
-            // Reset any previous scraping operation and create a fresh token
-            ResetCancellationToken();
-            _cts = new CancellationTokenSource();
-            var ct = _cts.Token;
-
-            IsScraping = true;
-            Status = "Initializing Regrid session...";
-
-            try
-            {
-                // Authenticate before scraping
-                bool isAuthenticated = await EstablishRegridAuthentication(ct).ConfigureAwait(false);
-                if (!isAuthenticated)
-                {
-                    Status = "Authentication failed.";
-                    return;
-                }
-
-                // Progress handler automatically marshals updates to the UI thread
-                Progress<int> progress = new(count =>
-                {
-                    Status = $"Processed {count} of {PropertyRecords.Count} parcels";
-                });
-
-
-                // Mark data as loading once, not inside the loop
-                IsRegridDataLoaded = true;
-
-                // Loop through parcels with cancellation support
-                for (int i = 0; i < PropertyRecords.Count; i++)
-                {
-                    ct.ThrowIfCancellationRequested();
-
-                    var item = PropertyRecords[i];
-                    string query = GetParcelQuery(item);
-
-                    await ProcessSingleParcelAsync(item, query, ct).ConfigureAwait(false);
-
-                    ((IProgress<int>)progress).Report(i + 1);
-
-                    // Polite throttling between requests
-                    await Task.Delay(500, ct).ConfigureAwait(false);
-                }
-
-                Status = $"Scraping complete. {PropertyRecords.Count} items updated.";
-            }
-            catch (OperationCanceledException)
-            {
-                Status = "Canceled by user.";
-            }
-            catch (Exception ex)
-            {
-                Status = $"Error: {ex.Message}";
-            }
-            finally
-            {
-                _cts?.Dispose();
-                _cts = null;
-
-                IsScraping = false;
-            }
-        }
-
-        public async Task ProcessSingleParcelAsync(PropertyDataViewModel item, string queryOrUrl, CancellationToken ct)
-        {
-            try
-            {
-                item.Status = ScrapeStatus.Loading;
-
-                var result = await _regridScraper.GetPropertyDetailsAsync(queryOrUrl, ct);
-
-                // Always reset match state before applying new results
-                item.Matches.Clear();
-                item.HasMultipleMatches = false;
-
-                if (result.NotFound)
-                {
-                    item.Status = ScrapeStatus.NotFound;
-                    return;
-                }
-
-                if (result.IsMultiple)
-                {
-                    foreach (var match in result.Matches)
-                        item.Matches.Add(match);
-
-                    item.HasMultipleMatches = true;
-                    item.Status = ScrapeStatus.MultipleMatches;
-                    return;
-                }
-
-                // Success case
-                item.Record = result.Record;
-                item.Status = ScrapeStatus.Success;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error processing parcel {queryOrUrl}: {ex}");
-                item.Status = ScrapeStatus.Error;
-            }
-        }
-
-        private bool CanScrapeRegrid() => PropertyRecords.Count() > 0;
-
-        private static string GetParcelQuery(PropertyDataViewModel item) => !string.IsNullOrWhiteSpace(item.ParcelId)
-                ? item.ParcelId
-                : item.Address;
-
-        private void ResetCancellationToken()
-        {
-            if (_cts != null)
-            {
-                try { _cts.Cancel(); }
-                catch (ObjectDisposedException) { } // Already disposed — safe to ignore
-                finally { _cts.Dispose(); }
-            }
-        }
-
-        private void LoadDummyData()
-        {
-            PropertyRecords.Clear();
-
-            var record1 = new PropertyRecord
-            {
-                ParcelId = "04-3002-026-1440",
-                Address = "00 UNASSIGNED LOCATION RE",
-                OpeningBid = 775.22m,
-                AssessedValue = 600.00m,
-                AuctionDate = DateTime.Now,
-                PageNumber = 1,
-                AppraiserUrl = "https://example.com"
-            };
-
-            PropertyRecords.Add(new PropertyDataViewModel(record1, _browserService));
-
-            var record2 = new PropertyRecord
-            {
-                ParcelId = "11-10-24-4075-2390-0270",
-                Address = "456 OAK ST, INTERLACHEN, FL",
-                OpeningBid = 635.72m,
-                AssessedValue = 800.00m,
-                AuctionDate = DateTime.Now,
-                PageNumber = 1,
-                AppraiserUrl = "https://example.com"
-            };
-            PropertyRecords.Add(new PropertyDataViewModel(record2, _browserService));
-
-            var record3 = new PropertyRecord
-            {
-                ParcelId = "09-08-22-1100-0010-0050",
-                Address = "789 PINE RD, SATSUMA, FL",
-                OpeningBid = 1041.13m,
-                AssessedValue = 3100.00m,
-                AuctionDate = DateTime.Now,
-                PageNumber = 1,
-                AppraiserUrl = "https://example.com"
-            };
-            PropertyRecords.Add(new PropertyDataViewModel(record3, _browserService));
-
-            var record4 = new PropertyRecord
-            {
-                ParcelId = "10-10-24-4075-2390-0110",
-                Address = "321 RIVER RD, WELAKA, FL",
-                OpeningBid = 582.97m,
-                AssessedValue = 700.00m,
-                AuctionDate = DateTime.Now,
-                PageNumber = 1,
-                AppraiserUrl = "https://example.com"
-            };
-            PropertyRecords.Add(new PropertyDataViewModel(record4, _browserService));
-        }
-
-        #endregion
     }
 }
 
-//private async Task ScrapeRegridAsync()
+
+//public async Task EnrichWithRegridAsync2()
 //{
-//    // 1. Signal cancellation to any running tasks 
-//    if (_cts != null)
+//    if (PropertyRecords.Count == 0)
 //    {
-//        try
-//        {
-//            _cts.Cancel(); 
-//        }
-//        catch (ObjectDisposedException)
-//        {
-//            // Already disposed, we can safely ignore this and move on
-//        }
-//        finally
-//        {
-//            _cts.Dispose();
-//        }
+//        Status = "No properties to scrape.";
+//        return;
 //    }
 
-//    _cts = new CancellationTokenSource();
-//    var ct = _cts.Token;
-
-//    IsScraping = true;
-//    Status = "Initializing Regrid session...";
+//    BeginOperation("Start scraping with Regrid...");
 
 //    try
 //    {
-//        // 2. "When Needed" Initialization
-//        bool isAuthenticated = await InitializeRegridAsync(ct);
-//        if (!isAuthenticated)
-//        {
-//            Status = "Authentication failed. Check credentials.";
-//            return;
-//        }
+//        var ct = _cts!.Token;
 
-//        Status = "Processing parcels...";
+//        var queries = PropertyRecords
+//            .Select(vm => !string.IsNullOrWhiteSpace(vm.ParcelId) ? vm.ParcelId : vm.Address)
+//            .ToList();
 
-//        // Use IProgress to update the UI count safely from the background thread 
 //        var progress = new Progress<int>(count =>
 //        {
-//            Status = $"Processed {count} of {PropertyRecords.Count} parcels";
+//            Status = $"Processed {count} of {PropertyRecords.Count}";
 //        });
 
-//        int processedCount = 0;
+//        int index = 0;
 
-//        foreach (var item in PropertyRecords)
+//        foreach (var query in queries)
 //        {
-//            if (!IsRegridDataLoaded) IsRegridDataLoaded = true;
-
-//            // Check for user cancellation before each network call
 //            ct.ThrowIfCancellationRequested();
-//            item.Status = ScrapeStatus.Loading;
 
-//            string query = !string.IsNullOrWhiteSpace(item.ParcelId) ? item.ParcelId : item.Address;
+//            var parcel = PropertyRecords[index];
 
-//            // 1. Get the Wrapper Result
-//            var result = await _regridScraper!.GetPropertyDetailsAsync(query, ct);
+//            // 🔥 Show loading BEFORE scraping
+//            parcel.Status = ScrapeStatus.Loading;
+//            parcel.Matches.Clear();
+//            parcel.HasMultipleMatches = false;
 
-//            // 2. Evaluate the outcome
-//            if (result.NotFound)
+//            // 🔥 Scrape ONE parcel at a time
+//            var result = await _regridService.ScrapeSingleAsync(query, ct);
+
+//            // Apply result
+//            if (result.Error != null)
 //            {
-//                item.Status = ScrapeStatus.NotFound;
+//                parcel.Status = ScrapeStatus.Error;
+//            }
+//            else if (result.NotFound)
+//            {
+//                parcel.Status = ScrapeStatus.NotFound;
 //            }
 //            else if (result.IsMultiple)
 //            {
-//                item.Status = ScrapeStatus.MultipleMatches;
 //                foreach (var match in result.Matches)
-//                {
-//                    item.Matches.Add(match);
-//                }
-//                item.HasMultipleMatches = true;
+//                    parcel.Matches.Add(match);
+
+//                parcel.HasMultipleMatches = true;
+//                parcel.Status = ScrapeStatus.MultipleMatches;
 //            }
 //            else
 //            {
-//                // 3. Success: Hand the record to the ViewModel
-//                item.Record = result.Record;
-//                item.Status = ScrapeStatus.Success;
+//                parcel.Record = PropertyRecordMerger.Merge(parcel.Record, result.Record!);
+//                parcel.Status = ScrapeStatus.Success;
 //            }
 
-//            processedCount++;
-//            ((IProgress<int>)progress).Report(processedCount);
+//            ((IProgress<int>)progress).Report(index + 1);
 
-//            // Polite Throttling to remain polite to server firewalls
-//            await Task.Delay(800, ct);
+//            // 🔥 External delay between parcels
+//            await Task.Delay(500, ct);
+
+//            index++;
 //        }
 
-//        Status = $"Scraping complete. {processedCount} items updated.";
+//        IsRegridDataLoaded = true;
+//        SetIdle("Regrid scraping complete.");
 //    }
 //    catch (OperationCanceledException)
 //    {
-//        Status = "Scraping process canceled by user.";
+//        SetIdle("Operation canceled.");
 //    }
 //    catch (Exception ex)
 //    {
-//        Status = $"Unexpected error: {ex.Message}";
+//        SetIdle($"Error: {ex.Message}");
 //    }
-//    finally
+//}
+
+//public async Task EnrichWithRegridAsyncs()
+//{
+//    if (PropertyRecords.Count == 0)
 //    {
-//        IsScraping = false;
+//        Status = "No properties to enrich.";
+//        return;
+//    }
+
+//    BeginOperation("Enriching with Regrid...");
+
+//    try
+//    {
+//        var ct = _cts!.Token;
+
+//        var queries = PropertyRecords
+//            .Select(vm => vm.ParcelId)
+//            .ToList();
+
+//        var progress = new Progress<int>(count =>
+//        {
+//            Status = $"Processed {count} of {PropertyRecords.Count}";
+//        });
+
+//        var results = await _regridService
+//            .ScrapeBatchAsync(queries, ct, progress)
+//            .ConfigureAwait(false);
+
+//        for (int i = 0; i < results.Count; i++)
+//        {
+//            var vm = PropertyRecords[i];
+//            var result = results[i];
+
+//            vm.Matches.Clear();
+//            vm.HasMultipleMatches = false;
+
+//            if (result.Error != null)
+//            {
+//                vm.Status = ScrapeStatus.Error;
+//                continue;
+//            }
+
+//            if (result.NotFound)
+//            {
+//                vm.Status = ScrapeStatus.NotFound;
+//                continue;
+//            }
+
+//            if (result.IsMultiple)
+//            {
+//                foreach (var match in result.Matches)
+//                    vm.Matches.Add(match);
+
+//                vm.HasMultipleMatches = true;
+//                vm.Status = ScrapeStatus.MultipleMatches;
+//                continue;
+//            }
+
+//            vm.Record = PropertyRecordMerger.Merge(vm.Record, result.Record!);
+//            vm.Status = ScrapeStatus.Success;
+//        }
+
+//        IsRegridDataLoaded = true;
+//        SetIdle("Regrid enrichment complete.");
+//    }
+//    catch (OperationCanceledException)
+//    {
+//        SetIdle("Operation canceled.");
+//    }
+//    catch (Exception ex)
+//    {
+//        SetIdle($"Error: {ex.Message}");
+//    }
+//}
+
+// -----------------------------
+// Single Parcel Refresh
+// -----------------------------
+//public async Task RefreshParcelFromRegridAsync(PropertyDataViewModel item, string query)
+//{
+//    BeginOperation("Refreshing parcel...");
+
+//    try
+//    {
+//        var ct = _cts!.Token;
+
+//        var result = await _regridService
+//            .ScrapeSingleAsync(query, ct)
+//            .ConfigureAwait(false);
+
+//        item.Matches.Clear();
+//        item.HasMultipleMatches = false;
+
+//        if (result.Error != null)
+//        {
+//            item.Status = ScrapeStatus.Error;
+//            SetIdle("Error refreshing parcel.");
+//            return;
+//        }
+
+//        if (result.NotFound)
+//        {
+//            item.Status = ScrapeStatus.NotFound;
+//            SetIdle("Parcel not found.");
+//            return;
+//        }
+
+//        if (result.IsMultiple)
+//        {
+//            foreach (var match in result.Matches)
+//                item.Matches.Add(match);
+
+//            item.HasMultipleMatches = true;
+//            item.Status = ScrapeStatus.MultipleMatches;
+//            SetIdle("Multiple matches found.");
+//            return;
+//        }
+
+//        item.Record = PropertyRecordMerger.Merge(item.Record, result.Record!);
+//        item.Status = ScrapeStatus.Success;
+
+//        SetIdle("Parcel refreshed.");
+//    }
+//    catch (OperationCanceledException)
+//    {
+//        SetIdle("Operation canceled.");
+//    }
+//    catch (Exception ex)
+//    {
+//        SetIdle($"Error: {ex.Message}");
 //    }
 //}

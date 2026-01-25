@@ -78,6 +78,13 @@
                     <Setter TargetName="StatusText" Property="Foreground" Value="#FF1744"/>
                     <Setter TargetName="StatusText" Property="Text" Value="✘ Failed"/>
                 </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="RateLimited">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#30FFD700"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#FFD700"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="⏱ Rate Limited"/>
+                </DataTrigger>
+
             </DataTemplate.Triggers>
         </DataTemplate>
 
@@ -153,20 +160,25 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <Button Content="{Binding CurrentAuctionAlias}" Style="{StaticResource VibrantButtonStyle}" Command="{Binding OpenRealAuctiomCommand}"/>
+                    <Button Command="{Binding OpenRealAuctionCommand}" Content="{Binding CurrentAuctionAlias}" Style="{StaticResource VibrantButtonStyle}"/>
 
-                    <Button Grid.Column="2" Content="Scrape" VerticalAlignment="Center"
-                            Command="{Binding ScrapeRealAuctionCommand}" 
+                    
+                    <Button Grid.Column="3" Content="Scrape" VerticalAlignment="Center"
+                            Command="{Binding LoadRealAuctionCommand}" 
                             Style="{StaticResource Theme.Button.Primary}"
                             IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}"
                             Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
-                                IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}"
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
                                 Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Button Content="Clear" Command="{Binding ClearCommand}" />
-                        <Button Content="Copy" />
-                        <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}" Command="{Binding ScrapeRegridCommand}" />
+
+                        <Button Content="Cancel" Command="{Binding CancelCommand}" Margin="0 0 8 0" 
+                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <Button Content="Clear" Command="{Binding ClearCommand}" Margin="0 0 8 0" 
+                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
+                        <Button Content="Copy" Command="{Binding CopyRecordCommand}" Margin="0 0 8 0" 
+                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
+                        <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}" Command="{Binding LoadRegridDataCommand}" />
                     </StackPanel>
                     
                 </Grid>

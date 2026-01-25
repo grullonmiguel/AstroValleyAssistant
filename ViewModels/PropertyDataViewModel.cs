@@ -27,7 +27,14 @@ namespace AstroValleyAssistant.ViewModels
         public PropertyRecord Record
         {
             get => _record;
-            set => Set(ref _record, value);
+            set
+            {
+                // Call your Set method
+                Set(ref _record, value);
+
+                // Now notify all dependent properties
+                RaiseRecordDependentProperties();
+            }
         }
 
         // -----------------------------
@@ -73,6 +80,29 @@ namespace AstroValleyAssistant.ViewModels
         public string ElevationHigh => Record.ElevationHigh;
         public string GeoCoordinates => Record.GeoCoordinates;
         public string RegridUrl => Record.RegridUrl;
+
+        public bool HasGoogleUrl => UrlBuilder.BuildGoogleMapsUrl(Record) != null;
+        public bool HasFemaUrl => UrlBuilder.BuildFemaFloodUrl(Record) != null;
+
+        // -----------------------------
+        // Update Properties
+        // -----------------------------
+        private void RaiseRecordDependentProperties()
+        {
+            OnPropertyChanged(nameof(Acres));
+            OnPropertyChanged(nameof(Owner));
+            OnPropertyChanged(nameof(City));
+            OnPropertyChanged(nameof(Zip));
+            OnPropertyChanged(nameof(ZoningCode));
+            OnPropertyChanged(nameof(ZoningType));
+            OnPropertyChanged(nameof(FloodZone));
+            OnPropertyChanged(nameof(ElevationLow));
+            OnPropertyChanged(nameof(ElevationHigh));
+            OnPropertyChanged(nameof(GeoCoordinates));
+            OnPropertyChanged(nameof(RegridUrl));
+            OnPropertyChanged(nameof(HasFemaUrl));
+            OnPropertyChanged(nameof(HasGoogleUrl));
+        }
 
         // -----------------------------
         // Commands

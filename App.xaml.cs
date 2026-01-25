@@ -55,7 +55,7 @@ namespace AstroValleyAssistant
             {
                 client.Timeout = TimeSpan.FromSeconds(30);
             });
-            services.AddHttpClient<IRegridClient, RegridClient>(client =>
+            services.AddHttpClient<IRegridScraper, RegridScraper>(client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(30);
             });

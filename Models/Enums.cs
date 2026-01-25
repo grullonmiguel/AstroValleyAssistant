@@ -31,7 +31,8 @@ namespace AstroValleyAssistant.Models
         Success,
         NotFound,       // No parcel found for that ID/Address
         MultipleMatches, // Ambiguous results from Regrid
-        Error           // Network or server issues (like the 423 Locked)
+        Error,           // Network or server issues (like the 423 Locked)
+        RateLimited     // Used for when the Regrid limits the request 429
     }
 
 }

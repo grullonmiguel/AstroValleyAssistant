@@ -3,23 +3,15 @@
 namespace AstroValleyAssistant.Core.Abstract
 {
     /// <summary>
-    /// High-level service that orchestrates Regrid scraping.
-    /// It wraps the low-level scraper and provides batch + single scrape operations.
+    /// Provides authenticated access to Regrid and exposes a single-parcel scrape operation.
+    /// The ViewModel controls sequencing, throttling, and UI updates.
     /// </summary>
     public interface IRegridService
     {
         /// <summary>
-        /// Scrapes a single parcel using a ParcelId, Address, or direct Regrid URL.
+        /// Scrapes a single parcel (search + detail) and returns a structured result.
+        /// Authentication is handled automatically on first use.
         /// </summary>
-        Task<RegridParcelResult> ScrapeSingleAsync(string queryOrUrl, CancellationToken ct);
-
-        /// <summary>
-        /// Scrapes a list of parcels sequentially with throttling and progress reporting.
-        /// </summary>
-        Task<IReadOnlyList<RegridParcelResult>> ScrapeBatchAsync(
-            IEnumerable<string> queries,
-            CancellationToken ct,
-            IProgress<int> progress,
-            int throttleDelayMs = 300);
+        Task<RegridParcelResult> ScrapeSingleAsync(string query, CancellationToken ct);
     }
 }

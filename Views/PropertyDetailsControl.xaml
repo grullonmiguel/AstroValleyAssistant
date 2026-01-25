@@ -19,11 +19,11 @@
         <Button Content="Flood Map" Margin="0 4"
                 Command="{Binding OpenFloodCommand}" 
                 Style="{StaticResource VibrantButtonStyle}" 
-                IsEnabled="{Binding FemaUrl, Converter={StaticResource IsNotNullOrEmptyConverter}, FallbackValue=False}"/>
+                IsEnabled="{Binding HasFemaUrl, FallbackValue=False}"/>
 
         <Button Content="Google Map" Margin="0 4"
                 Command="{Binding OpenMapsCommand}" 
                 Style="{StaticResource VibrantButtonStyle}" 
-                IsEnabled="{Binding GoogleUrl, Converter={StaticResource IsNotNullOrEmptyConverter}, FallbackValue=False}"/>
+                IsEnabled="{Binding HasGoogleUrl, FallbackValue=False}"/>
     </StackPanel>
 </UserControl>

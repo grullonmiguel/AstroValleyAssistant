@@ -8,68 +8,78 @@ namespace AstroValleyAssistant.Core.Services
     /// </summary>
     public class RegridService : IRegridService
     {
-        private readonly IRegridClient _scraper;
+        private readonly IRegridScraper _scraper;
+        private readonly IRegridSettings _settings;
 
-        public RegridService(IRegridClient scraper)
+        private bool _isAuthenticated;
+
+        public RegridService(IRegridScraper scraper, IRegridSettings settings)
         {
             _scraper = scraper;
+            _settings = settings;
+        }
+
+        /// <summary>
+        /// Ensures authenticated Regrid session called automatically before any scrape.
+        /// </summary>
+        private async Task<bool> EnsureAuthenticatedAsync(CancellationToken ct)
+        {
+            if (_isAuthenticated)
+                return true;
+
+            string email = _settings.RegridUserName;
+            string password = _settings.RegridPassword;
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                return false;
+
+            _isAuthenticated = await _scraper.AuthenticateAsync(email, password, ct);
+            return _isAuthenticated;
         }
 
         /// <summary>
         /// Scrapes a single parcel from Regrid.
+        /// Handles authentication, error wrapping, and null safety.
+        /// The ViewModel handles throttling and UI updates.
         /// </summary>
-        public async Task<RegridParcelResult> ScrapeSingleAsync(string queryOrUrl, CancellationToken ct)
+        public async Task<RegridParcelResult> ScrapeSingleAsync(string query, CancellationToken ct)
         {
-            try
+            // Ensure we have a valid session
+            if (!await EnsureAuthenticatedAsync(ct).ConfigureAwait(false))
             {
-                var result = await _scraper.GetPropertyDetailsAsync(queryOrUrl, ct).ConfigureAwait(false);
-
                 return new RegridParcelResult
                 {
-                    Query = queryOrUrl,
-                    NotFound = result.NotFound,
-                    IsMultiple = result.IsMultiple,
-                    Matches = result.Matches?.ToList() ?? new(),
-                    Record = result.Record
+                    Query = query,
+                    Error = new Exception("Regrid authentication failed.")
                 };
+            }
+
+            try
+            {
+                // Perform the actual scrape (search + detail)
+                var result = await _scraper.GetPropertyDetailsAsync(query, ct).ConfigureAwait(false);
+
+                // Normalize null result
+                if (result == null)
+                {
+                    return new RegridParcelResult
+                    {
+                        Query = query,
+                        NotFound = true
+                    };
+                }
+
+                // Ensure the result always carries the original query
+                return result with { Query = query };
             }
             catch (Exception ex)
             {
                 return new RegridParcelResult
                 {
-                    Query = queryOrUrl,
+                    Query = query,
                     Error = ex
                 };
             }
-        }
-
-        /// <summary>
-        /// Scrapes a list of parcels sequentially with throttling.
-        /// </summary>
-        public async Task<IReadOnlyList<RegridParcelResult>> ScrapeBatchAsync(
-            IEnumerable<string> queries,
-            CancellationToken ct,
-            IProgress<int> progress,
-            int throttleDelayMs = 300)
-        {
-            var results = new List<RegridParcelResult>();
-            int count = 0;
-
-            foreach (var query in queries)
-            {
-                ct.ThrowIfCancellationRequested();
-
-                var result = await ScrapeSingleAsync(query, ct).ConfigureAwait(false);
-                results.Add(result);
-
-                count++;
-                progress.Report(count);
-
-                // Respect Regrid rate limits
-                await Task.Delay(throttleDelayMs, ct).ConfigureAwait(false);
-            }
-
-            return results;
         }
     }
 }

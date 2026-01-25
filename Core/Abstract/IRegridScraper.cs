@@ -2,7 +2,7 @@
 
 namespace AstroValleyAssistant.Core.Abstract
 {
-    public interface IRegridClient
+    public interface IRegridScraper
     {
         Task<RegridParcelResult?> GetPropertyDetailsAsync(string data,  CancellationToken ct = default);
         
