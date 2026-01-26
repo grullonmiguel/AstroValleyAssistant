@@ -3,10 +3,196 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:enum="clr-namespace:AstroValleyAssistant.Models"
              xmlns:local="clr-namespace:AstroValleyAssistant.Views"
+             xmlns:control="clr-namespace:AstroValleyAssistant.Themes.Controls"
+             xmlns:behaviors="clr-namespace:AstroValleyAssistant.Core.Behaviors"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid Style="{StaticResource ViewSlideInFromTopStyle}">
-        <TextBlock Text="Regrid View" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+    <UserControl.Resources>
+
+        <DataTemplate x:Key="StatusBadgeTemplate">
+            <Border x:Name="StatusBadge" 
+                    CornerRadius="4" 
+                    Padding="6 4" 
+                    HorizontalAlignment="Center"
+                    Background="Transparent">
+                <TextBlock x:Name="StatusText" 
+                       Text="--" 
+                       Foreground="Gray" 
+                       FontSize="10" 
+                       HorizontalAlignment="Center"/>
+            </Border>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="Loading">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#3000AEEF"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#00AEEF"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="● Loading"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="Success">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#3065B5A6"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#65B5A6"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="✔ Success"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="MultipleMatches">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#30FFB74D"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#FFB74D"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="⚠ Multiple"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="NotFound">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#30EF5350"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#EF5350"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="? Not Found"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="Error">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#30FF1744"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#FF1744"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="✘ Failed"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="RateLimited">
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#30FFD700"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="#FFD700"/>
+                    <Setter TargetName="StatusText" Property="Text" Value="⏱ Rate Limited"/>
+                </DataTrigger>
+
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+    </UserControl.Resources>
+    <Grid Style="{StaticResource ViewSlideInFromTopStyle}" Margin="0 0 16 16" >
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+
+        <!-- Sidebar -->
+        <Border Background="{StaticResource Brush.Accent}" Padding="16 10" 
+                IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <!-- ========== PROPERTY DETAILS AREA ========== -->
+                <Border>
+                    <local:PropertyDetailsControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" Focusable="False"/>
+                </Border>
+
+                <!-- ========== MULTIPLE MATCHES AREA ========== -->
+                <Border Grid.Row="1" Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" Margin="0 16 0 0">
+                    <local:MultipleMatchesControl Focusable="False" SelectMatchCommand="{Binding SelectMatchCommand}" SelectedItem="{Binding ElementName=AuctionGrid, Path=SelectedItem}"  />
+                </Border>
+            </Grid>
+        </Border>
+        
+        <!-- Regrid Data -->
+        <Grid Grid.Column="1" Margin="16 0 0 0 ">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition />
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+
+            <Border Background="{StaticResource Brush.Accent}" Padding="16 0" Height="50">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Grid VerticalAlignment="Center">
+                    </Grid>
+
+                    <control:IconTextButton Grid.Column="3" Text="Paste from Clipboard" 
+                                            Icon="{StaticResource Icon.Paste}"
+                                            Click="PasteButton_OnClick" VerticalAlignment="Center"
+                                            Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Address" Command="{Binding PasteAddressesCommand}" />
+                                <MenuItem Header="Parcel ID" Command="{Binding PasteParcelsCommand}" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </control:IconTextButton>
+
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
+                                Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                        <!-- Cancel Button -->
+                        <control:IconTextButton Text="Cancel" Icon="{StaticResource Icon.Cancel}" 
+                                                Command="{Binding CancelCommand}" Margin="0 0 8 0" 
+                                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                        <!-- Clear Button -->
+                        <control:IconTextButton Text="Clear" Icon="{StaticResource Icon.Delete}" 
+                                                Command="{Binding ClearCommand}" Margin="0 0 8 0" 
+                                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
+
+                        <!-- Copy Button -->
+                        <control:IconTextButton Text="Copy" Icon="{StaticResource Icon.Copy}" 
+                                                Command="{Binding CopyRecordCommand}" Margin="0 0 8 0" 
+                                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
+
+                        <!-- Scrape Regrid Data Button -->
+                        <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}" Command="{Binding LoadRegridDataCommand}" />
+
+                        <!--<Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}">
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Scrape by Parcel ID"
+                                          Command="{Binding SetScrapeModeCommand}"
+                                          CommandParameter="{x:Static enum:RegridScrapeMode.ParcelId}" />
+
+                                                                    <MenuItem Header="Scrape by Address"
+                                          Command="{Binding SetScrapeModeCommand}"
+                                          CommandParameter="{x:Static enum:RegridScrapeMode.Address}" />
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>-->
+                    </StackPanel>
+
+                </Grid>
+            </Border>
+
+
+            <!-- Parcel List -->
+            <FrameworkElement Grid.Row="1" x:Name="FrameWorkElementProxy" Visibility="Collapsed"/>
+            <DataGrid Grid.Row="1" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Status" Width="85" CellTemplate="{StaticResource StatusBadgeTemplate}"   />
+                    <DataGridTextColumn Header="Parcel ID" Binding="{Binding ParcelId}" Width="Auto"/>
+                    <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="Auto" />
+                    <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="100"/>
+                    <DataGridTextColumn Header="Opening Bid" Binding="{Binding Bid, StringFormat={}{0:C}}" Width="100"/>
+                    <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="100"  />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Grid Grid.Row="2" Margin="0 8 0 0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource Brush.Accent}" />
+
+                <ProgressBar IsIndeterminate="True" Height="16" Grid.Column="2"
+                             Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            </Grid>
+        </Grid>
+
     </Grid>
 </UserControl>

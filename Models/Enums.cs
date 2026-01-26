@@ -9,6 +9,12 @@ namespace AstroValleyAssistant.Models
         Themes
     }
 
+    public enum RegridScrapeMode
+    {
+        ParcelId,
+        Address
+    }
+
     public enum TaxSaleType
     {
         [Description("Tax Lien")]

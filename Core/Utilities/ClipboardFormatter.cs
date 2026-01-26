@@ -43,19 +43,21 @@ namespace AstroValleyAssistant.Core.Utilities
             // Header row
             sb.AppendLine(string.Join("\t", new[]
             {
-            "Parcel ID",
-            "Address",
-            "Owner",
-            "Acres",
-            "City",
-            "Zip",
-            "Zoning Code",
             "Zoning Type",
-            "Flood Zone",
-            "Coordinates",
+            "Zoning Code",
+            "City",
+            "Parcel ID",
             "Regrid URL",
+            "Owner",
+            "Appraiser",
+            "Assessed",
+            "Starting Bid",
+            "Acres",
+            "Address",
+            "Flood Zone",
+            "FEMA Flood",
             "Google Maps",
-            "FEMA Flood"
+            "Coordinates"
         }));
 
             // Data rows
@@ -63,19 +65,20 @@ namespace AstroValleyAssistant.Core.Utilities
             {
                 sb.AppendLine(string.Join("\t", new[]
                 {
-                r.ParcelId,
-                r.Address,
-                r.Owner,
-                r.Acres?.ToString() ?? "",
-                r.City,
-                r.Zip,
-                r.ZoningCode,
                 r.ZoningType,
-                r.FloodZone,
+                r.ZoningCode,
+                r.City,
+                r.ParcelId,
+                FormatGoogleSheetsUrRL(r.RegridUrl, "Regrid"),
+                r.Owner,
+                FormatGoogleSheetsUrRL(r.AppraiserUrl, "Appraiser"),
+                r.AssessedValue?.ToString() ?? "",
+                r.OpeningBid.ToString() ?? "",
+                r.Acres?.ToString() ?? "",
+                FormatGoogleSheetsUrRL(UrlBuilder.BuildGoogleMapsUrl(r) ?? "", r.Address),
+                r.Address,
+                FormatGoogleSheetsUrRL(UrlBuilder.BuildFemaFloodUrl(r) ?? "" ?? "",r.FloodZone),
                 r.GeoCoordinates,
-                r.RegridUrl,
-                UrlBuilder.BuildGoogleMapsUrl(r) ?? "",
-                UrlBuilder.BuildFemaFloodUrl(r) ?? ""
             }));
             }
 
@@ -89,5 +92,12 @@ namespace AstroValleyAssistant.Core.Utilities
         {
             Clipboard.SetText(FormatAllForGoogleSheets(records));
         }
+
+
+        /// <summary>
+        /// Creates a Google Sheets compatible hyperlink
+        /// </summary>
+        private static string FormatGoogleSheetsUrRL(string url, string alias) => string.IsNullOrWhiteSpace(url)
+            ? string.Empty : $"=HYPERLINK(\"{url.Replace("\"", "\"\"")}\", \"{alias}\")";
     }
 }

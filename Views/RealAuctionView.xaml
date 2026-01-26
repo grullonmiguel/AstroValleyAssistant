@@ -103,11 +103,18 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition />
                 </Grid.RowDefinitions>
 
+
+                <control:IconTextButton Text="{Binding CurrentAuctionAlias}"
+                                        Icon="{StaticResource Icon.Web.Search}"
+                                        Command="{Binding OpenRealAuctionCommand}" />
+                
                 <!-- ========== REAL AUCTION PARAMETERS ========== -->
-                <StackPanel Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                <StackPanel Grid.Row="1" Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
 
                     <!-- Header / Title -->
                     <TextBlock Text="Auction Filters" Style="{StaticResource Theme.TextBlock.Sidebar.Title}" />
@@ -138,12 +145,12 @@
                 </StackPanel>
 
                 <!-- ========== PROPERTY DETAILS AREA ========== -->
-                <Border Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Border Grid.Row="2" Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <local:PropertyDetailsControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" Focusable="False"/>                    
                 </Border>
 
                 <!-- ========== MULTIPLE MATCHES AREA ========== -->
-                <Border Grid.Row="1" Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" Margin="0 16 0 0">
+                <Border Grid.Row="3" Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" Margin="0 16 0 0">
                     <local:MultipleMatchesControl Focusable="False" SelectMatchCommand="{Binding SelectMatchCommand}" SelectedItem="{Binding ElementName=AuctionGrid, Path=SelectedItem}"  />
                 </Border>
             </Grid>
@@ -164,13 +171,6 @@
                         <ColumnDefinition />
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-
-                    <Grid VerticalAlignment="Center">
-                        <control:IconTextButton Text="{Binding CurrentAuctionAlias}" FontSize="14"
-                                            Icon="{StaticResource Icon.Web.Search}"
-                                            Command="{Binding OpenRealAuctionCommand}" />
-                    </Grid>
-
 
                     <Button Grid.Column="3" Content="Scrape" VerticalAlignment="Center"
                             Command="{Binding LoadRealAuctionCommand}" 

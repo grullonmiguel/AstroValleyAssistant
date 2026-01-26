@@ -88,6 +88,9 @@ namespace AstroValleyAssistant.ViewModels
         // -----------------------------
         private void RaiseRecordDependentProperties()
         {
+            OnPropertyChanged(nameof(ParcelId));
+            OnPropertyChanged(nameof(Address));
+            OnPropertyChanged(nameof(AssessedValue));
             OnPropertyChanged(nameof(Acres));
             OnPropertyChanged(nameof(Owner));
             OnPropertyChanged(nameof(City));

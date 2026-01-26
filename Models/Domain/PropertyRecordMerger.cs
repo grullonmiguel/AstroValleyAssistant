@@ -25,6 +25,10 @@
 
                 // --- Regrid fields (only overwrite if empty) ---
 
+                Address = string.IsNullOrWhiteSpace(original.Address)
+                    ? regrid.Address
+                    : original.Address,
+
                 City = string.IsNullOrWhiteSpace(original.City)
                     ? regrid.City
                     : original.City,
