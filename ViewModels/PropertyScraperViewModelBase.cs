@@ -157,7 +157,7 @@ namespace AstroValleyAssistant.ViewModels
                     vm.HasMultipleMatches = false;
 
                     // 3. Scrape a single parcel
-                    var result = await _regridService.ScrapeSingleAsync(query, ct);
+                    var result = await _regridService!.ScrapeSingleAsync(query, ct);
 
                     // 4. Apply result to the row
                     ApplyRegridResult(vm, result);
@@ -172,7 +172,7 @@ namespace AstroValleyAssistant.ViewModels
                 }
 
                 IsRegridDataLoaded = true;
-                SetIdle("Regrid scraping complete.");
+                SetIdle($"Regrid complete. Processed {PropertyRecords.Count} properties.");
             }
             catch (OperationCanceledException)
             {

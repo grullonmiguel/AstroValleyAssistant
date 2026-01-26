@@ -18,7 +18,8 @@
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Background.Primary"              Color="#EDEBF2" />
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Background.Secondary"            Color="{StaticResource Color.Light}" />
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Background.Dialog"               Color="#80000000" />
-
+    
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Text.Light"                     Color="{StaticResource Color.Light}"/>
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Text.Subtle"                     Color="{StaticResource Color.Secondary}"/>
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Accent.Foreground"               Color="#EDEBF2"/>
 

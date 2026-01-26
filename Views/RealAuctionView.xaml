@@ -98,7 +98,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <Border Background="{StaticResource Brush.Accent}" Padding="16 10" 
+        <Border Background="{StaticResource Brush.Accent}"  
                 IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}">
             <Grid>
                 <Grid.RowDefinitions>
@@ -108,51 +108,64 @@
                     <RowDefinition />
                 </Grid.RowDefinitions>
 
+                <Border Background="{StaticResource Brush.Accent.Tertiary}" Padding="8 10">
+                    <control:IconTextButton Text="{Binding CurrentAuctionAlias}" FontSize="14"
+                                            Icon="{StaticResource Icon.Web.Search}"
+                                            Command="{Binding OpenRealAuctionCommand}" 
+                                            Style="{StaticResource Theme.Button.IconText.Sidebar}" />                    
+                </Border>
 
-                <control:IconTextButton Text="{Binding CurrentAuctionAlias}"
-                                        Icon="{StaticResource Icon.Web.Search}"
-                                        Command="{Binding OpenRealAuctionCommand}" />
-                
-                <!-- ========== REAL AUCTION PARAMETERS ========== -->
-                <StackPanel Grid.Row="1" Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                <Border Grid.Row="1" Padding="16 8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
 
-                    <!-- Header / Title -->
-                    <TextBlock Text="Auction Filters" Style="{StaticResource Theme.TextBlock.Sidebar.Title}" />
+                    <!-- ========== REAL AUCTION PARAMETERS ========== -->
+                    <StackPanel Grid.Row="0" Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
 
-                    <TextBlock  Style="{StaticResource Theme.TextBlock.Sidebar.Label}" Text="State" Margin="4 0 0 4" />
-                    <ComboBox DisplayMemberPath="Name"
-                              ItemsSource="{Binding RealAuctionCalendarData.States}" 
-                              SelectedItem="{Binding RealAuctionCalendarData.SelectedState}"                           
-                              Style="{StaticResource Theme.ComboBox.Secondary}"/>
+                        <!-- Header / Title -->
+                        <TextBlock Text="Auction Filters" Style="{StaticResource Theme.TextBlock.Sidebar.Title}" />
 
-                    <TextBlock Style="{StaticResource Theme.TextBlock.Sidebar.Label}" Text="County" Margin="4 16 0 4"/>
-                    <ComboBox ItemsSource="{Binding RealAuctionCalendarData.Counties}"
-                              SelectedItem="{Binding RealAuctionCalendarData.SelectedCounty}"
-                              Style="{StaticResource Theme.ComboBox.Secondary}"
-                              ItemTemplateSelector="{StaticResource CountyTemplateSelector}" />
+                        <TextBlock  Style="{StaticResource Theme.TextBlock.Sidebar.Label}" Text="State" Margin="4 0 0 4" />
+                        <ComboBox DisplayMemberPath="Name"
+                                  ItemsSource="{Binding RealAuctionCalendarData.States}" 
+                                  SelectedItem="{Binding RealAuctionCalendarData.SelectedState}"                           
+                                  Style="{StaticResource Theme.ComboBox.Secondary}"/>
 
-                    <TextBlock Style="{StaticResource Theme.TextBlock.Sidebar.Label}" Text="Date" Margin="4 16 0 4" />
-                    <DatePicker Style="{StaticResource Theme.DatePicker.Primary}" 
-                                SelectedDate="{Binding RealAuctionCalendarData.SelectedDate}" 
-                                DisplayDateStart="{Binding RealAuctionCalendarData.MinAuctionDate, Mode=OneWay}" />
-            
-                    <!-- Button to update URL -->
-                    <control:IconTextButton Text="Update"  
+                        <TextBlock Style="{StaticResource Theme.TextBlock.Sidebar.Label}" Text="County" Margin="4 16 0 4"/>
+                        <ComboBox ItemsSource="{Binding RealAuctionCalendarData.Counties}"
+                                  SelectedItem="{Binding RealAuctionCalendarData.SelectedCounty}"
+                                  Style="{StaticResource Theme.ComboBox.Secondary}"
+                                  ItemTemplateSelector="{StaticResource CountyTemplateSelector}" />
+
+                        <TextBlock Style="{StaticResource Theme.TextBlock.Sidebar.Label}" Text="Date" Margin="4 16 0 4" />
+                        <DatePicker Style="{StaticResource Theme.DatePicker.Primary}" 
+                                    SelectedDate="{Binding RealAuctionCalendarData.SelectedDate}" 
+                                    DisplayDateStart="{Binding RealAuctionCalendarData.MinAuctionDate, Mode=OneWay}" />
+
+                        <!-- Button to update URL -->
+                        <control:IconTextButton Text="Update"  
                                             Margin="0 8 0 0"
                                             HorizontalAlignment="Right"
                                             Icon="{StaticResource Icon.Save}"
                                             Command="{Binding RealAuctionCalendarData.GenerateAuctionUrlCommand}" />
-                </StackPanel>
+                    </StackPanel>
 
-                <!-- ========== PROPERTY DETAILS AREA ========== -->
-                <Border Grid.Row="2" Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <local:PropertyDetailsControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" Focusable="False"/>                    
+                    <!-- ========== PROPERTY DETAILS AREA ========== -->
+                    <Border Grid.Row="1" Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <local:PropertyDetailsControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" Focusable="False"/>
+                    </Border>
+
+                    <!-- ========== MULTIPLE MATCHES AREA ========== -->
+                    <Border Grid.Row="2" Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" Margin="0 16 0 0">
+                        <local:MultipleMatchesControl Focusable="False" SelectMatchCommand="{Binding SelectMatchCommand}" SelectedItem="{Binding ElementName=AuctionGrid, Path=SelectedItem}"  />
+                        </Border>
+                    </Grid>
                 </Border>
 
-                <!-- ========== MULTIPLE MATCHES AREA ========== -->
-                <Border Grid.Row="3" Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" Margin="0 16 0 0">
-                    <local:MultipleMatchesControl Focusable="False" SelectMatchCommand="{Binding SelectMatchCommand}" SelectedItem="{Binding ElementName=AuctionGrid, Path=SelectedItem}"  />
-                </Border>
             </Grid>
         </Border>
 
@@ -171,7 +184,13 @@
                         <ColumnDefinition />
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Text="{Binding Status}" Foreground="{StaticResource Brush.Text.Light}" VerticalAlignment="Center" />
 
+
+                    <ProgressBar IsIndeterminate="True" Height="16" Grid.Column="1" Width="200"
+                             Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    
                     <Button Grid.Column="3" Content="Scrape" VerticalAlignment="Center"
                             Command="{Binding LoadRealAuctionCommand}" 
                             Style="{StaticResource Theme.Button.Primary}"
@@ -216,19 +235,6 @@
                     <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="100"  />
                 </DataGrid.Columns>
             </DataGrid>
-
-            <Grid Grid.Row="2" Margin="0 8 0 0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Status}" Foreground="{StaticResource Brush.Accent}" />
-
-                <ProgressBar IsIndeterminate="True" Height="16" Grid.Column="2"
-                             Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-            </Grid>
         </Grid>
     </Grid>
 </UserControl>

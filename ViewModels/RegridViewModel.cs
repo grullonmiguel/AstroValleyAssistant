@@ -15,16 +15,10 @@ namespace AstroValleyAssistant.ViewModels
         // -----------------------------
 
         private ICommand? _pasteParcelsCommand;
-        public ICommand PasteParcelsCommand =>
-            _pasteParcelsCommand ??= new RelayCommand(_ => PasteParcels());
+        public ICommand PasteParcelsCommand => _pasteParcelsCommand ??= new RelayCommand(_ => PasteParcels());
 
         private ICommand? _pasteAddressesCommand;
-        public ICommand PasteAddressesCommand =>
-            _pasteAddressesCommand ??= new RelayCommand(_ => PasteAddresses());
-
-
-
-
+        public ICommand PasteAddressesCommand => _pasteAddressesCommand ??= new RelayCommand(_ => PasteAddresses());
 
         // -----------------------------
         // Constructor
@@ -85,57 +79,6 @@ namespace AstroValleyAssistant.ViewModels
         // -----------------------------
         // Scrape Logic
         // -----------------------------
-
-        //protected override async Task ScrapeAsync()
-        //{
-        //    if (PropertyRecords.Count == 0)
-        //    {
-        //        Status = "No records to scrape.";
-        //        return;
-        //    }
-
-        //    BeginOperation("Scraping Regrid...");
-
-        //    try
-        //    {
-        //        _cts = new CancellationTokenSource();
-        //        var ct = _cts.Token;
-
-        //        int index = 0;
-
-        //        foreach (var vm in PropertyRecords)
-        //        {
-        //            ct.ThrowIfCancellationRequested();
-
-        //            vm.Status = ScrapeStatus.Loading;
-        //            vm.Matches.Clear();
-        //            vm.HasMultipleMatches = false;
-
-        //            string query = ScrapeMode == RegridScrapeMode.ParcelId
-        //                ? vm.ParcelId
-        //                : vm.Address;
-
-        //            var result = await _regridService.ScrapeSingleAsync(query, ct);
-
-        //            ApplyRegridResult(vm, result);
-
-        //            index++;
-        //            Status = $"Processed {index} of {PropertyRecords.Count}";
-
-        //            await Task.Delay(500, ct);
-        //        }
-
-        //        SetIdle("Regrid scraping complete.");
-        //    }
-        //    catch (OperationCanceledException)
-        //    {
-        //        SetIdle("Operation canceled.");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        SetIdle($"Error: {ex.Message}");
-        //    }
-        //}
 
     }
 }

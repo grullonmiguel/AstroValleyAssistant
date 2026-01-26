@@ -72,7 +72,6 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-
         <!-- Sidebar -->
         <Border Background="{StaticResource Brush.Accent}" Padding="16 10" 
                 IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}">
@@ -102,7 +101,6 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-
             <Border Background="{StaticResource Brush.Accent}" Padding="16 0" Height="50">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -111,8 +109,13 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <Grid VerticalAlignment="Center">
-                    </Grid>
+                    <!-- Status -->
+                    <TextBlock Text="{Binding Status}" Foreground="{StaticResource Brush.Text.Light}" VerticalAlignment="Center" />
+
+                    <!-- Progress Bar -->
+                    <ProgressBar IsIndeterminate="True" Height="16" Grid.Column="1" Width="200"
+                                 Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
 
                     <control:IconTextButton Grid.Column="3" Text="Paste from Clipboard" 
                                             Icon="{StaticResource Icon.Paste}"
@@ -165,7 +168,6 @@
                 </Grid>
             </Border>
 
-
             <!-- Parcel List -->
             <FrameworkElement Grid.Row="1" x:Name="FrameWorkElementProxy" Visibility="Collapsed"/>
             <DataGrid Grid.Row="1" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}">
@@ -179,20 +181,6 @@
                     <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="100"  />
                 </DataGrid.Columns>
             </DataGrid>
-
-            <Grid Grid.Row="2" Margin="0 8 0 0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Status}" Foreground="{StaticResource Brush.Accent}" />
-
-                <ProgressBar IsIndeterminate="True" Height="16" Grid.Column="2"
-                             Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-            </Grid>
         </Grid>
-
     </Grid>
 </UserControl>

@@ -203,8 +203,11 @@
 
     <Style x:Key="Theme.TextBlock.Base" TargetType="TextBlock">
         <Setter Property="IsHitTestVisible" Value="False"/>
-        <Setter Property="FontFamily" Value="Montserrat, Arial, Helvetica"/>
-        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+        <Setter Property="FontFamily" Value="Segoe UI, Montserrat, Arial"/>
+    </Style>
+
+    <Style TargetType="TextBlock" BasedOn="{StaticResource Theme.TextBlock.Base}">
+
     </Style>
 
     <Style x:Key="Theme.TextBlock.Sidebar.Title" TargetType="TextBlock" BasedOn="{StaticResource Theme.TextBlock.Base}">
