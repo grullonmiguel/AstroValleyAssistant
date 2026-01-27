@@ -3,6 +3,7 @@ using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Models;
 using AstroValleyAssistant.Models.Domain;
+using AstroValleyAssistant.ViewModels.Dialogs;
 using System.Windows;
 using System.Windows.Input;
 
@@ -10,6 +11,8 @@ namespace AstroValleyAssistant.ViewModels
 {
     public class RegridViewModel : PropertyScraperViewModelBase
     {
+        private readonly IDialogService _dialogService;
+
         // -----------------------------
         // Commands
         // -----------------------------
@@ -20,13 +23,17 @@ namespace AstroValleyAssistant.ViewModels
         private ICommand? _pasteAddressesCommand;
         public ICommand PasteAddressesCommand => _pasteAddressesCommand ??= new RelayCommand(_ => PasteAddresses());
 
+        private ICommand? _openImportCommand;
+        public ICommand OpenImportCommand => _openImportCommand ??= new RelayCommand(_ => ShowImportView());
+
         // -----------------------------
         // Constructor
         // -----------------------------
-        public RegridViewModel(IRegridService regridService, IBrowserService browserService)
+        public RegridViewModel(IRegridService regridService, IBrowserService browserService, IDialogService dialogService)
         {
             _regridService = regridService;
-            _browserService = browserService;   
+            _browserService = browserService;
+            _dialogService = dialogService;
         }
 
         // -----------------------------
@@ -80,5 +87,41 @@ namespace AstroValleyAssistant.ViewModels
         // Scrape Logic
         // -----------------------------
 
+        private void ShowImportView()
+        {
+            var vm = new ImportViewModel(records =>
+            {
+                LoadImportedRecords(records);
+            });
+
+            // Opens the county map dialog for a given state.
+            _dialogService?.ShowDialog(vm);
+        }
+
+        public void LoadImportedRecords(List<PropertyRecord> records)
+        {
+            if (records == null || records.Count == 0)
+            {
+                Status = "No records imported.";
+                return;
+            }
+
+            PropertyRecords.Clear();
+
+            foreach (var record in records)
+                PropertyRecords.Add(new PropertyDataViewModel(record, _browserService));
+
+            // Auto-detect scrape mode based on what the imported file contains
+            if (records.All(r => !string.IsNullOrWhiteSpace(r.ParcelId)))
+                ScrapeMode = RegridScrapeMode.ParcelId;
+            else if (records.All(r => !string.IsNullOrWhiteSpace(r.Address)))
+                ScrapeMode = RegridScrapeMode.Address;
+
+            IsScrapeVisible = !PropertyRecords.Any();
+            IsResultButtonsVisible = PropertyRecords.Count > 0;
+            SetIdle($"Import complete. {records.Count} records loaded.");
+
+            _dialogService.CloseDialog();
+        }
     }
 }

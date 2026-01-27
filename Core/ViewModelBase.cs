@@ -15,13 +15,14 @@ namespace AstroValleyAssistant.Core
         /// <summary>
         /// Sets the value of a property and raises the PropertyChanged event if the value changes.
         /// </summary>
-        protected void Set<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
+        protected bool Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
-            if (Equals(storage, value))
-                return;
+            if (EqualityComparer<T>.Default.Equals(field, value))
+                return false;
 
-            storage = value;
+            field = value;
             OnPropertyChanged(propertyName ?? string.Empty); // Ensure propertyName is never null
+            return true;
         }
 
         /// <summary>

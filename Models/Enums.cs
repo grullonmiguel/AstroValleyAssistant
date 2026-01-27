@@ -2,6 +2,12 @@
 
 namespace AstroValleyAssistant.Models
 {
+    public enum DialogOption
+    {
+        Default,
+        Sidebar
+    }
+
     public enum MenuOption
     {
         RealAuction,

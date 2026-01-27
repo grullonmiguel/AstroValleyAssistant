@@ -1,4 +1,5 @@
 ﻿using AstroValleyAssistant.Core.Abstract;
+using AstroValleyAssistant.Models;
 
 namespace AstroValleyAssistant.Core.Services
 {
@@ -7,14 +8,18 @@ namespace AstroValleyAssistant.Core.Services
         // This Action will be set by the MainViewModel.
         // It holds a reference to the method that can show a dialog.
         public Action<ViewModelDialogBase> ShowDialogAction { get; set; }
+        public Action<ViewModelDialogBase> ShowDrawerDialogAction { get; set; }
 
         // This Action will be set by the MainViewModel for closing.
         public Action CloseDialogAction { get; set; }
 
-        public void ShowDialog(ViewModelDialogBase viewModel)
+        public void ShowDialog(ViewModelDialogBase viewModel, DialogOption dialogType = DialogOption.Default)
         {
             // When a viewmodel calls ShowDialog, we invoke the action.
-            ShowDialogAction?.Invoke(viewModel);
+            if (dialogType == DialogOption.Default) 
+                ShowDialogAction?.Invoke(viewModel);
+            else 
+                ShowDrawerDialogAction?.Invoke(viewModel);
         }
 
         public void CloseDialog()

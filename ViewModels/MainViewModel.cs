@@ -81,6 +81,7 @@ namespace AstroValleyAssistant.ViewModels
             if (dialogService is DialogService dialog)
             {
                 dialog.ShowDialogAction = vm => CurrentDialogViewModel = vm;
+                dialog.ShowDrawerDialogAction = vm => CurrentDrawerViewModel = vm;
                 dialog.CloseDialogAction = CloseDialog;
             }
         }
@@ -108,9 +109,12 @@ namespace AstroValleyAssistant.ViewModels
             };
         }
 
-        public void ShowDialog(ViewModelDialogBase viewModel) => CurrentDialogViewModel = viewModel;
+        public void ShowDialog(ViewModelDialogBase viewModel, DialogOption dialogType = DialogOption.Default)
+        {
+            CurrentDialogViewModel = viewModel;
+        }
 
-        private void CloseDialog() => CurrentDialogViewModel = null;
+        public void CloseDialog() => CurrentDialogViewModel = null;
 
         public void OpenDrawer(ViewModelDialogBase drawerViewModel) => CurrentDrawerViewModel = drawerViewModel;
 

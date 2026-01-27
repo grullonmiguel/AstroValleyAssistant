@@ -1,7 +1,11 @@
-﻿namespace AstroValleyAssistant.Core.Abstract
+﻿using AstroValleyAssistant.Models;
+
+namespace AstroValleyAssistant.Core.Abstract
 {
     public interface IDialogService
     {
-        void ShowDialog(ViewModelDialogBase viewModel);
+        void CloseDialog();
+
+        void ShowDialog(ViewModelDialogBase viewModel, DialogOption dialogType = DialogOption.Default);
     }
 }

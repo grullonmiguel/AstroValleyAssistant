@@ -117,17 +117,26 @@
                                  Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
 
-                    <control:IconTextButton Grid.Column="3" Text="Paste from Clipboard" 
-                                            Icon="{StaticResource Icon.Paste}"
-                                            Click="PasteButton_OnClick" VerticalAlignment="Center"
-                                            Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Button.ContextMenu>
-                            <ContextMenu>
-                                <MenuItem Header="Address" Command="{Binding PasteAddressesCommand}" />
-                                <MenuItem Header="Parcel ID" Command="{Binding PasteParcelsCommand}" />
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                    </control:IconTextButton>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
+                                Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                        <!-- Import Button -->
+                        <control:IconTextButton Text="Import" 
+                                                Icon="{StaticResource Icon.Excel}" 
+                                                Command="{Binding OpenImportCommand}" Margin="0 0 8 0"  />
+
+                        <!-- Paste Button -->
+                        <control:IconTextButton Text="Paste from Clipboard" 
+                                                Icon="{StaticResource Icon.Paste}"
+                                                Click="PasteButton_OnClick" >
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Address" Command="{Binding PasteAddressesCommand}" />
+                                    <MenuItem Header="Parcel ID" Command="{Binding PasteParcelsCommand}" />
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </control:IconTextButton>
+                    </StackPanel>
 
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
                                 Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -150,19 +159,6 @@
                         <!-- Scrape Regrid Data Button -->
                         <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}" Command="{Binding LoadRegridDataCommand}" />
 
-                        <!--<Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}">
-                            <Button.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="Scrape by Parcel ID"
-                                          Command="{Binding SetScrapeModeCommand}"
-                                          CommandParameter="{x:Static enum:RegridScrapeMode.ParcelId}" />
-
-                                                                    <MenuItem Header="Scrape by Address"
-                                          Command="{Binding SetScrapeModeCommand}"
-                                          CommandParameter="{x:Static enum:RegridScrapeMode.Address}" />
-                                </ContextMenu>
-                            </Button.ContextMenu>
-                        </Button>-->
                     </StackPanel>
 
                 </Grid>

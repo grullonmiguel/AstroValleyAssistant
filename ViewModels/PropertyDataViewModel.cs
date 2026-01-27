@@ -60,7 +60,7 @@ namespace AstroValleyAssistant.ViewModels
         // -----------------------------
         public string ParcelId => Record.ParcelId;
         public string Address => Record.Address;
-        public decimal Bid => Record.OpeningBid;
+        public decimal? Bid => Record.OpeningBid;
         public string AppraiserUrl => Record.AppraiserUrl;
         public decimal? AssessedValue => Record.AssessedValue;
         public string DateDisplay => Record.AuctionDate.ToShortDateString();

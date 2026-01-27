@@ -5,7 +5,7 @@
         // --- Auction Data ---
         public string ParcelId { get; init; } = string.Empty;
         public string Address { get; init; } = string.Empty;
-        public decimal OpeningBid { get; init; }
+        public decimal? OpeningBid { get; init; }
         public decimal? AssessedValue { get; init; }
         public DateTime AuctionDate { get; init; }
         public int PageNumber { get; init; }
