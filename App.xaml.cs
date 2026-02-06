@@ -1,6 +1,8 @@
 ﻿using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Data;
+using AstroValleyAssistant.Core.Export;
 using AstroValleyAssistant.Core.Services;
+using AstroValleyAssistant.Models.Domain;
 using AstroValleyAssistant.ViewModels;
 using AstroValleyAssistant.ViewModels.Dialogs;
 using AstroValleyAssistant.Views;
@@ -53,6 +55,10 @@ namespace AstroValleyAssistant
             services.AddSingleton<GeographyDataService>();
             services.AddSingleton<RealAuctionDataService>();
             services.AddSingleton<SettingsService>();
+
+            // Register Exporters
+            services.AddTransient<IExporter<IEnumerable<PropertyRecord>, string?>, ClipboardExporter>();
+            //services.AddTransient<IExporter<IEnumerable<PropertyRecord>, string?>, ExcelPropertyExporter>();
 
             // Typed Client registration for the Scraper
             services.AddHttpClient<IRealTaxDeedClient, RealTaxDeedClient>(client =>

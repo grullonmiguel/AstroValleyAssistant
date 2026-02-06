@@ -153,7 +153,7 @@
 
                         <!-- Copy Button -->
                         <control:IconTextButton Text="Copy" Icon="{StaticResource Icon.Copy}" 
-                                                Command="{Binding CopyRecordCommand}" Margin="0 0 8 0" 
+                                                Command="{Binding CopyRecordsToClipboardCommand}" Margin="0 0 8 0" 
                                                 Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
 
                         <!-- Scrape Regrid Data Button -->

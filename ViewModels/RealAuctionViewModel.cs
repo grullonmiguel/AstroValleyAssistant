@@ -1,5 +1,7 @@
 ﻿using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
+using AstroValleyAssistant.Core.Export;
+using AstroValleyAssistant.Models.Domain;
 using System.Windows.Input;
 
 namespace AstroValleyAssistant.ViewModels
@@ -31,14 +33,17 @@ namespace AstroValleyAssistant.ViewModels
         // -----------------------------
         // Constructor
         // -----------------------------
-        public RealAuctionViewModel(IRegridService regridService,
-                                    IRealTaxDeedClient realScraper,
-                                    IBrowserService browserService,
-                                    RealAuctionCalendarDataViewModel realAuctionData)
+        public RealAuctionViewModel(
+            IRegridService regridService,
+            IRealTaxDeedClient realScraper,
+            IBrowserService browserService,
+            RealAuctionCalendarDataViewModel realAuctionData,
+            IExporter<IEnumerable<PropertyRecord>, string> clipboardExporter)
         {
             _realScraper = realScraper;
             _regridService = regridService;
             _browserService = browserService;
+            _clipboardExporter = clipboardExporter;
 
             RealAuctionCalendarData = realAuctionData;
             RealAuctionCalendarData.AuctionUrlAvailable += OnAuctionUrlAvailable;

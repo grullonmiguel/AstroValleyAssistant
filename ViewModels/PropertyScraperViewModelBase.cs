@@ -1,6 +1,7 @@
 ﻿using AstroValleyAssistant.Core;
 using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
+using AstroValleyAssistant.Core.Export;
 using AstroValleyAssistant.Core.Utilities;
 using AstroValleyAssistant.Models;
 using AstroValleyAssistant.Models.Domain;
@@ -11,6 +12,8 @@ namespace AstroValleyAssistant.ViewModels
 {
     public abstract class PropertyScraperViewModelBase : ViewModelBase
     {
+        protected IExporter<IEnumerable<PropertyRecord>, string> _clipboardExporter;
+
         protected CancellationTokenSource? _cts;
         protected IRegridService? _regridService;
         protected IBrowserService? _browserService;
@@ -27,13 +30,9 @@ namespace AstroValleyAssistant.ViewModels
         public ICommand ClearCommand => 
             _clearCommand ??= new RelayCommand(_ => Clear());
 
-        private ICommand? _copyRecordCommand;
-        public ICommand CopyRecordCommand => _copyRecordCommand ??=
-            new RelayCommand<PropertyDataViewModel>(vm =>
-            {
-                ClipboardFormatter.CopyAllToClipboard(PropertyRecords.Select(vm => vm.Record));
-                Status = "All records copied to clipboard.";
-            });
+        private ICommand? _copyRecordsToClipboardCommand;
+        public ICommand CopyRecordsToClipboardCommand => _copyRecordsToClipboardCommand ??=
+            new AsyncRelayCommand(vm=> CopyToClipboardAsync());
 
         private AsyncRelayCommand? _selectMatchCommand;
         public ICommand SelectMatchCommand => 
@@ -136,6 +135,27 @@ namespace AstroValleyAssistant.ViewModels
                 {
                     IsScraping = false;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Orchestrates the transformation and export of property records to the clipboard.
+        /// </summary>
+        private async Task CopyToClipboardAsync()
+        {
+            try
+            {
+                // Extract the underlying Model from your ViewModels
+                var records = PropertyRecords.Select(pvm => pvm.Record);
+
+                // Execute the export using the injected service
+                await _clipboardExporter.ExportAsync(records, null);
+
+                Status = "All records copied to clipboard.";
+            }
+            catch (Exception ex)
+            {
+                Status = $"Export failed: {ex.Message}";
             }
         }
 

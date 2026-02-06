@@ -1,6 +1,7 @@
 ﻿using AstroValleyAssistant.Core;
 using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
+using AstroValleyAssistant.Core.Export;
 using AstroValleyAssistant.Models;
 using AstroValleyAssistant.Models.Domain;
 using AstroValleyAssistant.ViewModels.Dialogs;
@@ -30,11 +31,16 @@ namespace AstroValleyAssistant.ViewModels
         // -----------------------------
         // Constructor
         // -----------------------------
-        public RegridViewModel(IRegridService regridService, IBrowserService browserService, IDialogService dialogService)
+        public RegridViewModel(
+            IRegridService regridService, 
+            IBrowserService browserService, 
+            IDialogService dialogService,
+            IExporter<IEnumerable<PropertyRecord>, string> clipboardExporter)
         {
             _regridService = regridService;
             _browserService = browserService;
             _dialogService = dialogService;
+            _clipboardExporter = clipboardExporter;
         }
 
         // -----------------------------
