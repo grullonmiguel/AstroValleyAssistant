@@ -1,5 +1,4 @@
-﻿using AstroValleyAssistant.Core;
-using AstroValleyAssistant.Core.Abstract;
+﻿using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Core.Export;
 using AstroValleyAssistant.Models;
@@ -15,25 +14,24 @@ namespace AstroValleyAssistant.ViewModels
     {
         private readonly IDialogService _dialogService;
 
-        // -----------------------------
-        // Commands
-        // -----------------------------
+        #region Commands
 
         private ICommand? _pasteParcelsCommand;
-        public ICommand PasteParcelsCommand => _pasteParcelsCommand ??= new RelayCommand(_ => PasteParcels());
+        public ICommand PasteParcelsCommand => _pasteParcelsCommand ??= new RelayCommand(_ => PasteFromClipboard(RegridScrapeMode.ParcelId));
 
         private ICommand? _pasteAddressesCommand;
-        public ICommand PasteAddressesCommand => _pasteAddressesCommand ??= new RelayCommand(_ => PasteAddresses());
+        public ICommand PasteAddressesCommand => _pasteAddressesCommand ??= new RelayCommand(_ => PasteFromClipboard(RegridScrapeMode.Address));
 
         private ICommand? _openImportCommand;
         public ICommand OpenImportCommand => _openImportCommand ??= new RelayCommand(_ => ShowImportView());
 
-        // -----------------------------
-        // Constructor
-        // -----------------------------
+        #endregion
+
+        #region Constructor
+
         public RegridViewModel(
-            IRegridService regridService, 
-            IBrowserService browserService, 
+            IRegridService regridService,
+            IBrowserService browserService,
             IDialogService dialogService,
             IExporter<IEnumerable<PropertyRecord>, string> clipboardExporter)
         {
@@ -43,56 +41,42 @@ namespace AstroValleyAssistant.ViewModels
             _clipboardExporter = clipboardExporter;
         }
 
-        // -----------------------------
-        // Paste Logic
-        // -----------------------------
+        #endregion
 
-        private void PasteParcels()
+        #region Private Methods
+
+        /// <summary>
+        /// Generic clipboard processing logic to avoid code duplication.
+        /// </summary>
+        private void PasteFromClipboard(RegridScrapeMode mode)
         {
-            if (!Clipboard.ContainsText())
-                return;
+            if (!Clipboard.ContainsText()) return;
 
-            string text = Clipboard.GetText();
-            var lines = text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = Clipboard.GetText()
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrWhiteSpace(line));
 
             PropertyRecords.Clear();
 
             foreach (var line in lines)
             {
-                var record = new PropertyRecord{ ParcelId = line.Trim() };
+                // Initialize the record based on the selected mode
+                var record = mode switch
+                {
+                    RegridScrapeMode.ParcelId => new PropertyRecord { ParcelId = line },
+                    RegridScrapeMode.Address => new PropertyRecord { Address = line },
+                    _ => new PropertyRecord()
+                };
+
                 PropertyRecords.Add(new PropertyDataViewModel(record, _browserService));
             }
 
-            ScrapeMode = RegridScrapeMode.ParcelId;
-
+            // Update state once
+            ScrapeMode = mode;
             IsScrapeVisible = PropertyRecords.Count == 0;
             IsResultButtonsVisible = PropertyRecords.Count > 0;
         }
-
-        private void PasteAddresses()
-        {
-            if (!Clipboard.ContainsText())
-                return;
-
-            string text = Clipboard.GetText();
-            var lines = text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-            PropertyRecords.Clear();
-
-            foreach (var line in lines)
-            {
-                var record = new PropertyRecord { Address = line.Trim() };
-                PropertyRecords.Add(new PropertyDataViewModel(record, _browserService));
-            }
-
-            ScrapeMode = RegridScrapeMode.Address;
-            IsScrapeVisible = PropertyRecords.Count == 0;
-            IsResultButtonsVisible = PropertyRecords.Count > 0;
-        }
-
-        // -----------------------------
-        // Scrape Logic
-        // -----------------------------
 
         private void ShowImportView()
         {
@@ -104,12 +88,12 @@ namespace AstroValleyAssistant.ViewModels
             {
                 LoadImportedRecords(records);
             };
-            
+
             // 3. Show the dialog
             _dialogService?.ShowDialog(vm);
         }
 
-        public void LoadImportedRecords(List<PropertyRecord> records)
+        private void LoadImportedRecords(List<PropertyRecord> records)
         {
             if (records == null || records.Count == 0)
             {
@@ -134,5 +118,7 @@ namespace AstroValleyAssistant.ViewModels
 
             _dialogService.CloseDialog();
         }
+
+        #endregion
     }
 }
