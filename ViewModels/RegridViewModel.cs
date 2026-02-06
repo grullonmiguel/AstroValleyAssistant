@@ -4,6 +4,7 @@ using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Models;
 using AstroValleyAssistant.Models.Domain;
 using AstroValleyAssistant.ViewModels.Dialogs;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Windows.Input;
 
@@ -89,12 +90,16 @@ namespace AstroValleyAssistant.ViewModels
 
         private void ShowImportView()
         {
-            var vm = new ImportViewModel(records =>
+            // 1. Resolve the ViewModel from the DI container to inject IFileService automatically
+            var vm = App.Current.Services.GetRequiredService<ImportViewModel>();
+
+            // 2. Set the callback specifically for this instanceCompleted = records =>
+            vm.OnImportCompleted = records =>
             {
                 LoadImportedRecords(records);
-            });
-
-            // Opens the county map dialog for a given state.
+            };
+            
+            // 3. Show the dialog
             _dialogService?.ShowDialog(vm);
         }
 

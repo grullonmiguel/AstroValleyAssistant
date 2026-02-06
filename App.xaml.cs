@@ -12,6 +12,9 @@ namespace AstroValleyAssistant
 {
     public partial class App : Application
     {
+        // Static helper to avoid casting throughout the app
+        public static new App Current => (App)Application.Current;
+
         private readonly IHost _host;
         public IServiceProvider Services => _host.Services;
 
@@ -43,6 +46,7 @@ namespace AstroValleyAssistant
             // Register other services
             services.AddSingleton<IBrowserService, BrowserService>();
             services.AddSingleton<IDialogService, DialogService>();
+            services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IThemeService, ThemeService>();
             services.AddSingleton<IRegridService, RegridService>();
 
@@ -64,6 +68,7 @@ namespace AstroValleyAssistant
             services.AddSingleton<IRegridSettings>(x => x.GetRequiredService<SettingsService>());
             services.AddSingleton<IRealAuctionSettings>(x => x.GetRequiredService<SettingsService>());
 
+            services.AddTransient<ImportViewModel>();
             services.AddTransient<RegridSettingsViewModel>();
             services.AddTransient<RealAuctionCalendarDataViewModel>();
         }

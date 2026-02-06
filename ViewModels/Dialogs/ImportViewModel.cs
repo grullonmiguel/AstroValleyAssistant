@@ -1,9 +1,9 @@
 ﻿using AstroValleyAssistant.Core;
+using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Core.Extensions;
 using AstroValleyAssistant.Models.Domain;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Windows.Input;
 
@@ -11,7 +11,7 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
 {
     public class ImportViewModel : ViewModelDialogBase
     {
-        private readonly Action<List<PropertyRecord>> _onImportCompleted;
+        private readonly IFileService _fileService;
         private readonly List<Dictionary<string, string>> _allRows = new();
         private static readonly Dictionary<string, string[]> ColumnAliases = new()
         {
@@ -22,6 +22,8 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             ["Assessed"] = new[] {"assessed", "assessedvalue", "appraised", "appraisedvalue" },
             ["Acres"] = new[] { "acres", "lotsize",  "acreage", "areaacres" }
         };
+
+        public Action<List<PropertyRecord>>? OnImportCompleted { get; set; }
 
         // -----------------------------
         // Commands
@@ -112,9 +114,9 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
 
         #region Constructor
 
-        public ImportViewModel(Action<List<PropertyRecord>> onImportCompleted)
+        public ImportViewModel(IFileService fileService)
         {
-            _onImportCompleted = onImportCompleted;
+            _fileService = fileService;
         }
 
         #endregion
@@ -125,62 +127,50 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
         // Public API (called from View / code-behind)
         // -----------------------------
 
-        public void LoadFile(string? filePath)
+        public async void LoadFile(string? filePath)
         {
-            if (string.IsNullOrWhiteSpace(filePath))
-                return;
+            if (string.IsNullOrWhiteSpace(filePath)) return;
 
+            // Reset state
+            ErrorMessage = null;
             SelectedFilePath = filePath;
-            Status = $"Loading {System.IO.Path.GetFileName(filePath)}...";
-
+            Status = $"Loading {Path.GetFileName(filePath)}...";
             IsBusy = true;
+
             DetectedColumns.Clear();
             PreviewRows.Clear();
+            _allRows.Clear();
 
             try
             {
-                // --- Detect file type (CSV vs Excel)
                 var ext = Path.GetExtension(filePath).ToLowerInvariant();
 
-                try
+                // Offload heavy parsing to background thread
+                await Task.Run(() =>
                 {
                     if (ext == ".csv")
                         LoadCsv(filePath);
                     else if (ext == ".xlsx")
                         LoadExcel(filePath);
                     else
-                    {
-                        Status = "Unsupported file type.";
-                        return;
-                    }
-
-                    Debug.WriteLine("DetectedColumns:");
-                    foreach (var d in DetectedColumns)
-                        Debug.WriteLine("  " + d);
-
-                    Debug.WriteLine("PreviewRows:");
-                    foreach (var r in PreviewRows)
-                        Debug.WriteLine("  Row count: " + r.Count);
-
-                }
-                catch (Exception ex)
-                {
-                    ErrorMessage = $"Error loading file: {ex.Message}";
-                    return;
-                }                
+                        throw new NotSupportedException("Unsupported file type.");
+                });
 
                 Status = $"Imported {PreviewRows.Count} records. Press SAVE to continue.";
             }
             catch (Exception ex)
             {
-                Status = $"Error loading file: {ex.Message}";
+                ErrorMessage = $"Error loading file: {ex.Message}";
+                Status = "Load failed.";
             }
             finally
             {
                 IsBusy = false;
+                // Refresh all dependent UI properties
                 OnPropertyChanged(nameof(HasPreview));
                 OnPropertyChanged(nameof(CanLoadIntoGrid));
                 OnPropertyChanged(nameof(IsEmpty));
+                OnPropertyChanged(nameof(CanBrowse));
             }
         }
 
@@ -190,15 +180,11 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
 
         private void Browse()
         {
-            var dialog = new Microsoft.Win32.OpenFileDialog
+            var path = _fileService.OpenFile("Select Excel or CSV File", "Data Files (*.xlsx;*.csv)|*.xlsx;*.csv");
+            if (path != null)
             {
-                Title = "Select Excel or CSV File",
-                Filter = "Excel Files (*.xlsx)|*.xlsx|CSV Files (*.csv)|*.csv",
-                Multiselect = false
-            };
-
-            if (dialog.ShowDialog() == true)
-                LoadFile(dialog.FileName);
+                LoadFile(path);
+            }
         }
 
         private void ClearDataGrid()
@@ -211,25 +197,31 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             OnPropertyChanged(nameof(IsEmpty));
         }
 
-        private void LoadIntoGrid()
+        private async void LoadIntoGrid()
         {
-            if (!CanLoadIntoGrid)
-                return;
+            if (!CanLoadIntoGrid) return;
 
             IsBusy = true;
-            Status = "Importing records...";
+            Status = "Processing records...";
+            ErrorMessage = null;
 
             try
             {
-                var records = BuildRecordsFromAllRows();
-                _onImportCompleted?.Invoke(records);
+                // Offload the mapping/transformation logic to a background thread
+                var records = await Task.Run(() => BuildRecordsFromAllRows());
 
-                Status = $"Imported {records.Count} records.";
-                
+                // Invoke the callback (usually updates a main collection or DB)
+                OnImportCompleted?.Invoke(records);
+
+                Status = $"Successfully imported {records.Count} records.";
+
+                // Optional: Prevent double-execution if the UI doesn't close immediately
+                OnImportCompleted = null;
             }
             catch (Exception ex)
             {
-                Status = $"Error importing records: {ex.Message}";
+                ErrorMessage = $"Import failed: {ex.Message}";
+                Status = "Error during import.";
             }
             finally
             {
@@ -271,36 +263,36 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             parser.SetDelimiters(",");
             parser.HasFieldsEnclosedInQuotes = true;
 
-            // Read header
             if (!parser.EndOfData)
             {
-                var headers = parser.ReadFields()!;
-                DetectedColumns.Clear();
-
-                foreach (var h in headers)
-                    DetectedColumns.Add(h.NormalizeHeaders());
+                var headers = parser.ReadFields()?.Select(h => h.NormalizeHeaders()).ToList();
+                if (headers != null)
+                {
+                    // Marshal UI updates back to the main thread
+                    App.Current.Dispatcher.Invoke(() => {
+                        foreach (var h in headers) DetectedColumns.Add(h);
+                    });
+                }
             }
 
-            // Read preview rows
-            PreviewRows.Clear();
             int count = 0;
-
             while (!parser.EndOfData)
             {
-                var fields = parser.ReadFields()!;
-                var row = new Dictionary<string, string>();
+                var fields = parser.ReadFields();
+                if (fields == null) continue;
 
+                var row = new Dictionary<string, string>();
                 for (int i = 0; i < fields.Length; i++)
                 {
-                    var col = DetectedColumns[i];
-                    row[col] = fields[i];
+                    if (i < DetectedColumns.Count)
+                        row[DetectedColumns[i]] = fields[i];
                 }
 
                 _allRows.Add(row);
-
                 if (count < 50)
-                    PreviewRows.Add(row);
-
+                {
+                    App.Current.Dispatcher.Invoke(() => PreviewRows.Add(row));
+                }
                 count++;
             }
         }
@@ -314,18 +306,20 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             var headerRow = ws.Row(1);
             var headerCells = headerRow.CellsUsed().ToList();
 
-            DetectedColumns.Clear();
+            // Marshal collection clearing to UI thread
+            App.Current.Dispatcher.Invoke(() => DetectedColumns.Clear());
+
             foreach (var cell in headerCells)
             {
                 var hdr = cell.GetString().NormalizeHeaders();
-                DetectedColumns.Add(hdr);
+                App.Current.Dispatcher.Invoke(() => DetectedColumns.Add(hdr));
             }
 
-            PreviewRows.Clear();
             int rowIndex = 2;
             int previewLimit = 50;
+            var lastRow = ws.LastRowUsed().RowNumber();
 
-            while (rowIndex <= ws.LastRowUsed().RowNumber())
+            while (rowIndex <= lastRow)
             {
                 var row = new Dictionary<string, string>();
                 var excelRow = ws.Row(rowIndex);
@@ -340,8 +334,12 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
 
                 _allRows.Add(row);
 
-                if (previewLimit-- > 0)
-                    PreviewRows.Add(row);
+                if (previewLimit > 0)
+                {
+                    var captureRow = row; // Capture for closure
+                    App.Current.Dispatcher.Invoke(() => PreviewRows.Add(captureRow));
+                    previewLimit--;
+                }
 
                 rowIndex++;
             }

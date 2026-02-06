@@ -111,6 +111,34 @@ namespace AstroValleyAssistant.ViewModels
         // Shared collection
         public ObservableCollection<PropertyDataViewModel> PropertyRecords { get; } = new();
 
+        private async void ExportData()
+        {
+            var saveDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                FileName = "PropertyExport.xlsx"
+            };
+
+            if (saveDialog.ShowDialog() == true)
+            {
+                IsScraping = true;
+                Status = "Generating Excel file with images...";
+                try
+                {
+                    await ClipboardFormatter.ExportToExcelWithImagesAsync(PropertyRecords.Select(vm => vm.Record), saveDialog.FileName);
+                    Status = "Export successful!";
+                }
+                catch (Exception ex)
+                {
+                    Status = $"Export failed: {ex.Message}";
+                }
+                finally
+                {
+                    IsScraping = false;
+                }
+            }
+        }
+
         // -----------------------------
         // Regrid Scraping
         // -----------------------------
