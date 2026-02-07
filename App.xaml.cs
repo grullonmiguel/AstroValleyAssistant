@@ -1,6 +1,7 @@
 ﻿using AstroValleyAssistant.Core.Data;
 using AstroValleyAssistant.Core.Export;
 using AstroValleyAssistant.Core.Services;
+using AstroValleyAssistant.Models;
 using AstroValleyAssistant.Models.Domain;
 using AstroValleyAssistant.ViewModels;
 using AstroValleyAssistant.ViewModels.Dialogs;
@@ -37,45 +38,41 @@ namespace AstroValleyAssistant
             services.AddSingleton<MainView>();
             services.AddSingleton<MainViewModel>();
 
-            // Register Page ViewModels as Singletons to preserve their state
+            // Register Page ViewModels as
+            // Singletons to preserve their state
             services.AddSingleton<RegridViewModel>();
             services.AddSingleton<RealAuctionViewModel>();
             services.AddSingleton<MapViewModel>();
 
             // Register ViewModels
+            services.AddTransient<ImportViewModel>();
+            services.AddTransient<RegridSettingsViewModel>();
+            services.AddTransient<RealAuctionCalendarDataViewModel>();
 
-            // Register other services
+            // Register Services
             services.AddSingleton<IBrowserService, BrowserService>();
             services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<IFileService, FileService>();
-            services.AddSingleton<IThemeService, ThemeService>();
             services.AddSingleton<IRegridService, RegridService>();
+            services.AddSingleton<IThemeService, ThemeService>();
 
             services.AddSingleton<GeographyDataService>();
             services.AddSingleton<RealAuctionDataService>();
             services.AddSingleton<SettingsService>();
 
+            services.AddTransient<IMarkerMapParserService, MarkerMapParserService>();
+
             // Register Exporters
             services.AddTransient<IExporter<IEnumerable<PropertyRecord>, string?>, ClipboardExporter>();
-            //services.AddTransient<IExporter<IEnumerable<PropertyRecord>, string?>, ExcelPropertyExporter>();
+            services.AddTransient<IExporter<IEnumerable<MarkerLocation>, string?>, HtmlMarkerMapExporter>();
 
             // Typed Client registration for the Scraper
-            services.AddHttpClient<IRealTaxDeedClient, RealTaxDeedClient>(client =>
-            {
-                client.Timeout = TimeSpan.FromSeconds(30);
-            });
-            services.AddHttpClient<IRegridScraper, RegridScraper>(client =>
-            {
-                client.Timeout = TimeSpan.FromSeconds(30);
-            });
+            services.AddHttpClient<IRealTaxDeedClient, RealTaxDeedClient>(client => { client.Timeout = TimeSpan.FromSeconds(30); });
+            services.AddHttpClient<IRegridScraper, RegridScraper>(client => { client.Timeout = TimeSpan.FromSeconds(30); });
 
             // Point the interfaces to that same singleton instance
             services.AddSingleton<IRegridSettings>(x => x.GetRequiredService<SettingsService>());
             services.AddSingleton<IRealAuctionSettings>(x => x.GetRequiredService<SettingsService>());
-
-            services.AddTransient<ImportViewModel>();
-            services.AddTransient<RegridSettingsViewModel>();
-            services.AddTransient<RealAuctionCalendarDataViewModel>();
         }
         
         protected override async void OnStartup(StartupEventArgs e)
