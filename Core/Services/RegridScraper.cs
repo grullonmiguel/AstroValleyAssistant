@@ -1,5 +1,4 @@
-﻿using AstroValleyAssistant.Core.Abstract;
-using AstroValleyAssistant.Core.Extensions;
+﻿using AstroValleyAssistant.Core.Extensions;
 using AstroValleyAssistant.Models;
 using AstroValleyAssistant.Models.Domain;
 using System.Diagnostics;

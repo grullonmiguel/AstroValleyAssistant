@@ -1,6 +1,6 @@
 ﻿using AstroValleyAssistant.Models;
 
-namespace AstroValleyAssistant.Core.Abstract
+namespace AstroValleyAssistant.Core.Services
 {
     /// <summary>
     /// Provides authenticated access to Regrid and exposes a single-parcel scrape operation.

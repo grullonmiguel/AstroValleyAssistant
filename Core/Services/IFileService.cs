@@ -1,4 +1,4 @@
-﻿namespace AstroValleyAssistant.Core.Abstract
+﻿namespace AstroValleyAssistant.Core.Services
 {
     public interface IFileService
     {

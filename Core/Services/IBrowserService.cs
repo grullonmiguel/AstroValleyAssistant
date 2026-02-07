@@ -1,4 +1,4 @@
-﻿namespace AstroValleyAssistant.Core.Abstract
+﻿namespace AstroValleyAssistant.Core.Services
 {
     /// <summary>
     /// Defines a contract for launching URLs in the system browser.

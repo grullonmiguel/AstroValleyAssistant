@@ -32,7 +32,7 @@ namespace AstroValleyAssistant.Core.Data
                 return;
             }
 
-            string filePath = "Themes/Assets/Geography/Counties.json";
+            string filePath = "Core/Data/Counties.json";
             if (!File.Exists(filePath))
             {
                 _countyDataCache = new Dictionary<string, List<CountyInfo>>();

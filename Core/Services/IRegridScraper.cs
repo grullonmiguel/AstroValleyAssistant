@@ -1,10 +1,10 @@
 ﻿using AstroValleyAssistant.Models;
 
-namespace AstroValleyAssistant.Core.Abstract
+namespace AstroValleyAssistant.Core.Services
 {
     public interface IRegridScraper
     {
-        Task<RegridParcelResult?> GetPropertyDetailsAsync(string data,  CancellationToken ct = default);
+        Task<RegridParcelResult?> GetPropertyDetailsAsync(string data, CancellationToken ct = default);
 
         Task<RegridParcelResult?> ScrapeParcelFromUrlAsync(string fullUrl, CancellationToken ct = default);
 

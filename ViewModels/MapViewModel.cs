@@ -1,7 +1,7 @@
 ﻿using AstroValleyAssistant.Core;
-using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Core.Data;
+using AstroValleyAssistant.Core.Services;
 using AstroValleyAssistant.Models;
 using AstroValleyAssistant.ViewModels.Dialogs;
 using System.Collections.ObjectModel;

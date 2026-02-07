@@ -1,6 +1,6 @@
 ﻿using AstroValleyAssistant.Models;
 
-namespace AstroValleyAssistant.Core.Abstract
+namespace AstroValleyAssistant.Core.Services
 {
     public interface IDialogService
     {

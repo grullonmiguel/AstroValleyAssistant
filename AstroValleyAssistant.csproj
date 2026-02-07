@@ -31,10 +31,10 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Update="Themes\Assets\Geography\Counties.json">
+    <None Update="Core\Data\Counties.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Themes\Assets\Geography\Counties_RealAuction.json">
+    <None Update="Core\Data\Counties_RealAuction.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

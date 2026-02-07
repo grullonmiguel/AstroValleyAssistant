@@ -1,6 +1,4 @@
-﻿using AstroValleyAssistant.Core.Abstract;
-
-namespace AstroValleyAssistant.Core.Services
+﻿namespace AstroValleyAssistant.Core.Services
 {
     public class SettingsService : IRegridSettings, IRealAuctionSettings
     {        

@@ -1,7 +1,7 @@
 ﻿using AstroValleyAssistant.Models;
 using AstroValleyAssistant.Models.Domain;
 
-namespace AstroValleyAssistant.Core.Abstract
+namespace AstroValleyAssistant.Core.Services
 {
     public interface IRealTaxDeedClient
     {

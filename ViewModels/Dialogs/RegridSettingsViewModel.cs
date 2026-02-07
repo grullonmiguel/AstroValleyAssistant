@@ -1,6 +1,6 @@
 ﻿using AstroValleyAssistant.Core;
-using AstroValleyAssistant.Core.Abstract;
 using AstroValleyAssistant.Core.Commands;
+using AstroValleyAssistant.Core.Services;
 
 namespace AstroValleyAssistant.ViewModels.Dialogs
 {

@@ -1,5 +1,4 @@
-﻿using AstroValleyAssistant.Core.Abstract;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace AstroValleyAssistant.Core.Services
 {
