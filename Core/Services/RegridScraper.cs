@@ -282,7 +282,7 @@ namespace AstroValleyAssistant.Core.Services
             if (string.IsNullOrWhiteSpace(fullAddress)) fullAddress = f.GetJsonString("address");
             if (string.IsNullOrEmpty(fullAddress)) fullAddress = doc.RootElement.GetJsonString("headline");
 
-            return new PropertyRecord
+            var parcel = new PropertyRecord
             {
                 RegridUrl = regridUrl,
                 ParcelId = f.GetJsonString("parcelnumb", "parcelid", "lowparcelid"),
@@ -293,13 +293,18 @@ namespace AstroValleyAssistant.Core.Services
                 Owner = f.GetJsonString("owner", "eo_owner"),
                 ZoningCode = f.GetJsonString("zoning", "zoning_description"),
                 ZoningType = f.GetJsonString("zoning_type", "zoning_subtype", "usedesc"),
+                Latitude = $"{f.GetJsonString("lat")}",
+                Longitude = $"{f.GetJsonString("lon")}",
                 GeoCoordinates = $"{f.GetJsonString("lat")}, {f.GetJsonString("lon")}",
                 ElevationHigh = f.GetJsonString("highest_parcel_elevation"),
                 ElevationLow = f.GetJsonString("lowest_parcel_elevation"),
                 FloodZone = f.GetJsonString("fema_flood_zone", "fema_flood_zone_subtype", "fema_nri_risk_rating"),
                 AssessedValue = GetAssessedValue(f),
-                BirdseyeUrl = doc.RootElement.GetJsonString("birdseye")
+                BirdseyeUrl = doc.RootElement.GetJsonString("birdseye"),
+                ParcelLines = doc.RootElement.GetJsonString("geometry")
             };
+
+            return parcel;
         }
 
         // -------------------------------------------------------------------------

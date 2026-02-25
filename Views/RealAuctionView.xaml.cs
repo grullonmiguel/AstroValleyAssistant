@@ -4,9 +4,6 @@ using System.Windows.Navigation;
 
 namespace AstroValleyAssistant.Views
 {
-    /// <summary>
-    /// Interaction logic for RealAuctionView.xaml
-    /// </summary>
     public partial class RealAuctionView : UserControl
     {
         public RealAuctionView()

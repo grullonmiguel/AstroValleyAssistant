@@ -5,10 +5,13 @@
     /// </summary>
     public record MarkerLocation
     {
-        public string Name { get; init; } = "Unknown Location";
+        public string? ParcelID { get; init; }
+        public string Address { get; init; } = "N/A";
         public double Latitude { get; init; }
         public double Longitude { get; init; }
-        public string? Description { get; init; }
+        public string? Acres { get; init; }
+        public string? ParcelLines { get; init; }
+        public Dictionary<string, string> ExtraDetails { get; init; }
 
         /// <summary>
         /// Validates that the coordinates are within valid geographic bounds.

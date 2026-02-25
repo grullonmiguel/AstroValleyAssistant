@@ -51,6 +51,14 @@
                     ? regrid.ZoningType
                     : original.ZoningType,
 
+                Latitude = string.IsNullOrWhiteSpace(original.Latitude)
+                    ? regrid.Latitude
+                    : original.Latitude,
+
+                Longitude = string.IsNullOrWhiteSpace(original.Longitude)
+                    ? regrid.Longitude
+                    : original.Longitude,
+
                 GeoCoordinates = string.IsNullOrWhiteSpace(original.GeoCoordinates)
                     ? regrid.GeoCoordinates
                     : original.GeoCoordinates,
@@ -62,6 +70,10 @@
                 ElevationLow = string.IsNullOrWhiteSpace(original.ElevationLow)
                     ? regrid.ElevationLow
                     : original.ElevationLow,
+
+                ParcelLines = string.IsNullOrWhiteSpace(original.ParcelLines)
+                    ? regrid.ParcelLines
+                    : original.ParcelLines,
 
                 FloodZone = string.IsNullOrWhiteSpace(original.FloodZone)
                     ? regrid.FloodZone

@@ -12,7 +12,8 @@ namespace AstroValleyAssistant.Models
     {
         RealAuction,
         Regrid,
-        Themes
+        Themes,
+        PinMap
     }
 
     public enum RegridScrapeMode

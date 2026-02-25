@@ -3,9 +3,6 @@ using System.Windows.Controls;
 
 namespace AstroValleyAssistant.Views
 {
-    /// <summary>
-    /// Interaction logic for RegridView.xaml
-    /// </summary>
     public partial class RegridView : UserControl
     {
         public RegridView()

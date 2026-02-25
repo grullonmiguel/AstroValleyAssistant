@@ -147,11 +147,12 @@
                                     DisplayDateStart="{Binding RealAuctionCalendarData.MinAuctionDate, Mode=OneWay}" />
 
                         <!-- Button to update URL -->
-                        <control:IconTextButton Text="Update"  
-                                            Margin="0 8 0 0"
-                                            HorizontalAlignment="Right"
-                                            Icon="{StaticResource Icon.Save}"
-                                            Command="{Binding RealAuctionCalendarData.GenerateAuctionUrlCommand}" />
+                        <control:IconTextButton 
+                            Text="Update"  
+                            Margin="0 8 0 0"
+                            HorizontalAlignment="Right"
+                            Icon="{StaticResource Icon.Save}"
+                            Command="{Binding RealAuctionCalendarData.GenerateAuctionUrlCommand}" />
                     </StackPanel>
 
                     <!-- ========== PROPERTY DETAILS AREA ========== -->
@@ -191,11 +192,14 @@
                     <ProgressBar IsIndeterminate="True" Height="16" Grid.Column="1" Width="200"
                              Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     
-                    <Button Grid.Column="3" Content="Scrape" VerticalAlignment="Center"
-                            Command="{Binding LoadRealAuctionCommand}" 
-                            Style="{StaticResource Theme.Button.Primary}"
-                            IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}"
-                            Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <Button 
+                        Grid.Column="3" 
+                        Content="Get Real Auction List" 
+                        VerticalAlignment="Center"
+                        Command="{Binding LoadRealAuctionCommand}" 
+                        Style="{StaticResource Theme.Button.Primary}"
+                        IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}"
+                        Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
                                 Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -204,6 +208,11 @@
                         <control:IconTextButton Text="Cancel" Icon="{StaticResource Icon.Cancel}" 
                                                 Command="{Binding CancelCommand}" Margin="0 0 8 0" 
                                                 Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        
+                        <!-- Map Button -->
+                        <control:IconTextButton Text="Map" Icon="{StaticResource Icon.MapOutline}" 
+                                                Command="{Binding MapCommand}" Margin="0 0 8 0" 
+                                                Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
 
                         <!-- Clear Button -->
                         <control:IconTextButton Text="Clear" Icon="{StaticResource Icon.Delete}" 

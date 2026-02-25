@@ -10,7 +10,7 @@ namespace AstroValleyAssistant.Core.Services
     /// </summary>
     public class MarkerMapParserService : IMarkerMapParserService
     {
-        // Regex to match: Optional Name, then Latitude, then Longitude (comma or tab separated)
+        // Regex to match: Optional Address, then Latitude, then Longitude (comma or tab separated)
         // Matches patterns like: "Main St, 40.712, -74.006" or just "40.712 -74.006"
         private static readonly Regex LatLonRegex = new(
             @"(?:(?<name>.+?)[,\t])?\s*(?<lat>-?\d+\.\d+)\s*[,\t\s]\s*(?<lon>-?\d+\.\d+)",
@@ -32,7 +32,7 @@ namespace AstroValleyAssistant.Core.Services
                 {
                     yield return new MarkerLocation
                     {
-                        Name = match.Groups["name"].Success ? match.Groups["name"].Value.Trim() : "Manual Entry",
+                        Address = match.Groups["name"].Success ? match.Groups["name"].Value.Trim() : "Manual Entry",
                         Latitude = double.Parse(match.Groups["lat"].Value),
                         Longitude = double.Parse(match.Groups["lon"].Value)
                     };
@@ -76,16 +76,43 @@ namespace AstroValleyAssistant.Core.Services
 
                 foreach (var row in rows)
                 {
-                    // Basic assumption: Col 1 = Name, Col 2 = Lat, Col 3 = Lon
-                    if (double.TryParse(row.Cell(2).GetString(), out double lat) &&
-                        double.TryParse(row.Cell(3).GetString(), out double lon))
+                    // Extract raw values first to allow for clean debugging/inspections
+                    // Cell 1: Expected to be a String (e.g., "Main Street Office")
+                    var rawName = row.Cell(1).GetString();
+
+                    // Cell 2: Expected to be a Double or Numeric String (e.g., 40.7128)
+                    var rawLat = row.Cell(2).GetString();
+
+                    // Cell 3: Expected to be a Double or Numeric String (e.g., -74.0060)
+                    var rawLon = row.Cell(3).GetString();
+                    
+                    // Cell 4: Expected to be a Double or Numeric String (e.g., -74.0060)
+                    var rawAcre = row.Cell(4).GetString();
+
+                    // Cell 5: Expected to be a Double or Numeric String (e.g., -74.0060)
+                    var rawLines = row.Cell(5).GetString();
+
+                    // Parse coordinates with local variables to verify conversion logic during step-through
+                    bool isLatValid = double.TryParse(rawLat, out double lat);
+                    bool isLonValid = double.TryParse(rawLon, out double lon);
+
+                    if (isLatValid && isLonValid)
                     {
-                        locations.Add(new MarkerLocation
+                        var location = new MarkerLocation
                         {
-                            Name = row.Cell(1).GetString(),
+                            Address = string.IsNullOrWhiteSpace(rawName) ? "Unnamed Location" : rawName,
                             Latitude = lat,
-                            Longitude = lon
-                        });
+                            Longitude = lon,
+                            Acres = rawAcre,
+                            ParcelLines = rawLines,
+                        };
+
+                        locations.Add(location);
+                    }
+                    else
+                    {
+                        // Debugging point: You can place a breakpoint here to catch malformed rows
+                        System.Diagnostics.Debug.WriteLine($"Failed to parse row {row.RowNumber()}: Lat='{rawLat}', Lon='{rawLon}'");
                     }
                 }
                 return (IEnumerable<MarkerLocation>)locations;

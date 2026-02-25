@@ -9,7 +9,7 @@ namespace AstroValleyAssistant.Core.Services
     {
         /// <summary>
         /// Parses raw text input. 
-        /// Supports formats: "Name, Lat, Lon" or just "Lat, Lon".
+        /// Supports formats: "Address, Lat, Lon" or just "Lat, Lon".
         /// </summary>
         /// <param name="text">The raw string to parse.</param>
         /// <returns>A collection of successfully parsed MarkerLocations.</returns>

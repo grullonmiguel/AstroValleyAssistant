@@ -1,10 +1,13 @@
 ﻿using AstroValleyAssistant.Core;
 using AstroValleyAssistant.Core.Commands;
 using AstroValleyAssistant.Core.Export;
+using AstroValleyAssistant.Core.Extensions;
 using AstroValleyAssistant.Core.Services;
 using AstroValleyAssistant.Core.Utilities;
 using AstroValleyAssistant.Models;
 using AstroValleyAssistant.Models.Domain;
+using AstroValleyAssistant.ViewModels.Dialogs;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
@@ -12,6 +15,9 @@ namespace AstroValleyAssistant.ViewModels
 {
     public abstract class PropertyScraperViewModelBase : ViewModelBase
     {
+
+        protected IDialogService _dialogService;
+        protected IServiceProvider _serviceProvider;
         protected IExporter<IEnumerable<PropertyRecord>, string> _clipboardExporter;
 
         protected CancellationTokenSource? _cts;
@@ -23,24 +29,28 @@ namespace AstroValleyAssistant.ViewModels
         // -----------------------------
 
         private ICommand? _cancelCommand;
-        public ICommand CancelCommand => 
+        public ICommand CancelCommand =>
             _cancelCommand ??= new RelayCommand(_ => CancelOperation(), _ => IsScraping);
 
         private ICommand? _clearCommand;
-        public ICommand ClearCommand => 
+        public ICommand ClearCommand =>
             _clearCommand ??= new RelayCommand(_ => Clear());
 
         private ICommand? _copyRecordsToClipboardCommand;
         public ICommand CopyRecordsToClipboardCommand => _copyRecordsToClipboardCommand ??=
-            new AsyncRelayCommand(vm=> CopyToClipboardAsync());
+            new AsyncRelayCommand(vm => CopyToClipboardAsync());
 
         private AsyncRelayCommand? _selectMatchCommand;
-        public ICommand SelectMatchCommand => 
+        public ICommand SelectMatchCommand =>
             _selectMatchCommand ??= new AsyncRelayCommand(match => ScrapeMatch((RegridMatch)match));
 
         private ICommand? _loadRegridDataCommand;
         public ICommand LoadRegridDataCommand =>
             _loadRegridDataCommand ??= new RelayCommand(async _ => await EnrichWithRegridAsync(), _ => PropertyRecords.Count > 0 && !IsScraping);
+
+        private AsyncRelayCommand? _mapCommand;
+        public ICommand MapCommand =>
+            _mapCommand ??= new AsyncRelayCommand(_ => ViewInMap(), _ => PropertyRecords.Count > 0 && !IsScraping && IsRegridDataLoaded);
 
         private ICommand? _scrapeCommand;
         public ICommand ScrapeCommand =>
@@ -72,7 +82,7 @@ namespace AstroValleyAssistant.ViewModels
             get => _isRegridDataLoaded;
             set => Set(ref _isRegridDataLoaded, value);
         }
-       
+
         private bool _isScrapeVisible = true;
         public bool IsScrapeVisible
         {
@@ -86,7 +96,7 @@ namespace AstroValleyAssistant.ViewModels
             get => _isResultButtonsVisible;
             set => Set(ref _isResultButtonsVisible, value);
         }
-       
+
         private RegridScrapeMode _scrapeMode = RegridScrapeMode.ParcelId;
         public RegridScrapeMode ScrapeMode
         {
@@ -324,7 +334,7 @@ namespace AstroValleyAssistant.ViewModels
         {
             ScrapeMode = mode;
             Status = $"Scrape mode set to {mode}";
-            _= EnrichWithRegridAsync();
+            _ = EnrichWithRegridAsync();
         }
 
         // -----------------------------
@@ -352,6 +362,49 @@ namespace AstroValleyAssistant.ViewModels
                     Status = "Canceling...";
                 }
                 catch { } // No-op: cancellation is best-effort
+            }
+        }
+
+        protected async Task ViewInMap()
+        {
+            try
+            {
+                var vm = _serviceProvider.GetRequiredService<MarkerMapViewModel>();
+
+                // Opens the county map dialog for a given state.
+                _dialogService.ShowDialog(vm);
+
+                // Add short delay then load data
+                await Task.Delay(300);
+
+                var mapLocations = new List<MarkerLocation>();
+                foreach (var record in PropertyRecords)
+                {
+                    var details = new Dictionary<string, string>();
+                    if (!string.IsNullOrEmpty(record.FloodZone)) details.Add("Flood Zone", record.FloodZone);
+                    if (!string.IsNullOrEmpty(record.Owner)) details.Add("Owner", record.Owner);
+                    if (!string.IsNullOrEmpty(record.AssessedValue?.ToString() ?? "")) details.Add("Assessed", record.AssessedValue?.ToString() ?? "");
+                    if (!string.IsNullOrEmpty(record.Bid?.ToString() ?? "")) details.Add("Minimum Bid", record.Bid?.ToString() ?? "");
+
+                    if (!string.IsNullOrWhiteSpace(record.Latitude) && !string.IsNullOrEmpty(record.Longitude))
+                        mapLocations.Add(new MarkerLocation
+                        {
+                            ParcelID = record.ParcelId,
+                            Address = record.Address ?? record.Owner,
+                            Acres = record.Acres?.ToString() ?? null,
+                            Latitude = (double)record.Latitude.TryParseDouble(),
+                            Longitude = (double)record.Longitude.TryParseDouble(),
+                            ParcelLines = record.ParcelLines,
+                            ExtraDetails = details
+                        });
+                }
+
+                vm.AddLocations(mapLocations);
+            }
+            catch (Exception ex)
+            {
+
+                throw;
             }
         }
 

@@ -76,7 +76,10 @@ namespace AstroValleyAssistant.ViewModels
         public string FloodZone => Record.FloodZone;
         public string ElevationLow => Record.ElevationLow;
         public string ElevationHigh => Record.ElevationHigh;
+        public string Latitude => Record.Latitude;
+        public string Longitude => Record.Longitude;
         public string GeoCoordinates => Record.GeoCoordinates;
+        public string ParcelLines => Record.ParcelLines;
         public string RegridUrl => Record.RegridUrl;
 
         public bool HasGoogleUrl => UrlBuilder.BuildGoogleMapsUrl(Record) != null;

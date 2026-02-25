@@ -38,12 +38,15 @@ namespace AstroValleyAssistant.ViewModels
             IRealTaxDeedClient realScraper,
             IBrowserService browserService,
             RealAuctionCalendarDataViewModel realAuctionData,
+            IServiceProvider serviceProvider, IDialogService dialogService,
             IExporter<IEnumerable<PropertyRecord>, string> clipboardExporter)
         {
             _realScraper = realScraper;
             _regridService = regridService;
             _browserService = browserService;
             _clipboardExporter = clipboardExporter;
+            _serviceProvider = serviceProvider;
+            _dialogService = dialogService;
 
             RealAuctionCalendarData = realAuctionData;
             RealAuctionCalendarData.AuctionUrlAvailable += OnAuctionUrlAvailable;

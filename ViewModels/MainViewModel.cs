@@ -125,7 +125,33 @@ namespace AstroValleyAssistant.ViewModels
             IsMenuOpen = false;
 
             // Resolve the appropriate drawer view model for the selected option.
-            CurrentDrawerViewModel = CreateDrawerViewModel(option);
+            switch (option)
+            {
+                case MenuOption.Regrid:
+                    {
+                        var vm = _serviceProvider.GetRequiredService<RegridSettingsViewModel>();
+                        vm.Saved = CloseDrawer;
+                        CurrentDrawerViewModel = vm;
+                        break;
+                    }
+
+                case MenuOption.PinMap:
+                    {
+                        var vm = _serviceProvider.GetRequiredService<MarkerMapViewModel>();
+                        CurrentDialogViewModel = vm;
+                        break;
+                    }
+                case MenuOption.Themes:
+                    {
+                        var vm = _serviceProvider.GetRequiredService<ThemeSettingsViewModel>();
+                        CurrentDrawerViewModel = vm;
+                        break;
+                    }
+
+                default:
+                    // Unknown option; no drawer to open.
+                    break;
+            }
         }
 
         /// <summary>
@@ -142,6 +168,12 @@ namespace AstroValleyAssistant.ViewModels
                         return vm;
                     }
 
+                case MenuOption.PinMap:
+                    {
+                        var vm = _serviceProvider.GetRequiredService<MarkerMapViewModel>();
+                        //vm.Saved = CloseDrawer;
+                        return vm;
+                    }
                 case MenuOption.Themes:
                     // This could also be resolved via DI for consistency.
                     return new ThemeSettingsViewModel();
