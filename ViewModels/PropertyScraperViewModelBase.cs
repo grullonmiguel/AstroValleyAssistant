@@ -130,7 +130,7 @@ namespace AstroValleyAssistant.ViewModels
                 var records = PropertyRecords.Select(pvm => pvm.Record);
 
                 // Execute the export using the injected service
-                await _clipboardExporter.ExportAsync(records, null);
+                await _clipboardExporter!.ExportAsync(records, null);
 
                 Status = "All records copied to clipboard.";
             }
@@ -230,7 +230,7 @@ namespace AstroValleyAssistant.ViewModels
                 PropertySelected.HasMultipleMatches = false;
 
                 // 2. Scrape using the final parcel URL
-                var result = await _regridService.ScrapeSingleAsync(match.FullUrl, ct);
+                var result = await _regridService!.ScrapeSingleAsync(match.FullUrl, ct);
 
                 // 3. Apply the result to the selected row
                 ApplyRegridResult(PropertySelected, result);
@@ -340,10 +340,10 @@ namespace AstroValleyAssistant.ViewModels
         {
             try
             {
-                var vm = _serviceProvider.GetRequiredService<MarkerMapViewModel>();
+                var vm = _serviceProvider?.GetRequiredService<MarkerMapViewModel>();
 
                 // Opens the county map dialog for a given state.
-                _dialogService.ShowDialog(vm);
+                _dialogService!.ShowDialog(vm);
 
                 // Add short delay then load data
                 await Task.Delay(300);
@@ -372,9 +372,8 @@ namespace AstroValleyAssistant.ViewModels
 
                 vm.AddLocations(mapLocations);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-
                 throw;
             }
         }

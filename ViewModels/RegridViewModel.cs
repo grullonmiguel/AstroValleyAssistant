@@ -12,8 +12,6 @@ namespace AstroValleyAssistant.ViewModels
 {
     public class RegridViewModel : PropertyScraperViewModelBase
     {
-        private readonly IDialogService _dialogService;
-
         #region Commands
 
         public ICommand PasteParcelsCommand => field ??= new RelayCommand(_ => PasteFromClipboard(RegridScrapeMode.ParcelId));
@@ -111,7 +109,7 @@ namespace AstroValleyAssistant.ViewModels
             IsResultButtonsVisible = PropertyRecords.Count > 0;
             SetIdle($"Import complete. {records.Count} records loaded.");
 
-            _dialogService.CloseDialog();
+            _dialogService?.CloseDialog();
         }
 
         #endregion

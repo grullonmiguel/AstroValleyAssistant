@@ -70,7 +70,7 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             {
                 try
                 {
-                    var imported = await _parserService.ParseFileAsync(openFileDialog.FileName);
+                    var imported = await _parserService!.ParseFileAsync(openFileDialog.FileName);
                     AddLocations(imported);
                 }
                 catch (Exception ex)
@@ -98,7 +98,7 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             {
                 try
                 {
-                    await _htmlExporter.ExportAsync(Markers, saveFileDialog.FileName);
+                    await _htmlExporter!.ExportAsync(Markers, saveFileDialog.FileName);
                     Status = "Map exported successfully.";
                 }
                 catch (Exception ex)

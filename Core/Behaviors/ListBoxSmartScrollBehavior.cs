@@ -50,7 +50,7 @@ namespace AstroValleyAssistant.Core.Behaviors
             // When the user scrolls manually, save the position back to the ViewModel
             if (_isScrolling) return;
             var scrollViewer = sender as ScrollViewer;
-            SetVerticalOffset(scrollViewer, scrollViewer.VerticalOffset);
+            SetVerticalOffset(scrollViewer, scrollViewer!.VerticalOffset);
         }
 
         private static void OnScrollToSelectedItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

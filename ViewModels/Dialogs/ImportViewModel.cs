@@ -50,10 +50,10 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
 
         public string? SelectedFilePath
         {
-            get => _selectedFilePath;
+            get => field;
             set
             {
-                if (Set(ref _selectedFilePath, value))
+                if (Set(ref field, value))
                     OnPropertyChanged(nameof(CanLoadIntoGrid));
             }
         }
@@ -307,7 +307,7 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
 
             int rowIndex = 2;
             int previewLimit = 50;
-            var lastRow = ws.LastRowUsed().RowNumber();
+            var lastRow = ws.LastRowUsed()!.RowNumber();
 
             while (rowIndex <= lastRow)
             {
