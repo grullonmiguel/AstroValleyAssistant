@@ -193,7 +193,7 @@
                              Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     
                     <Button 
-                        Grid.Column="3" 
+                        Grid.Column="3" Height="42"
                         Content="Get Real Auction List" 
                         VerticalAlignment="Center"
                         Command="{Binding LoadRealAuctionCommand}" 
