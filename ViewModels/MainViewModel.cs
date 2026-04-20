@@ -15,20 +15,11 @@ namespace AstroValleyAssistant.ViewModels
 
         #region Commands
 
-        private ICommand? _navigateCommand;
-        public ICommand NavigateCommand => _navigateCommand ??= new RelayCommand(Navigate);
-
-        private ICommand? _closeDialogCommand;
-        public ICommand CloseDialogCommand => _closeDialogCommand ??= new RelayCommand(_ => CloseDialog());
-
-        private ICommand? _openMenuCommand;
-        public ICommand OpenMenuCommand => _openMenuCommand ??= new RelayCommand<Button>(OnOpenContextMenu);
-
-        private ICommand? _openDrawerCommand;
-        public ICommand OpenDrawerCommand => _openDrawerCommand ??= new RelayCommand<MenuOption>(OnMenuOptionSelected);
-
-        private ICommand? _closeDrawerCommand;
-        public ICommand CloseDrawerCommand => _closeDrawerCommand ??= new RelayCommand(_ => CloseDrawer());
+        public ICommand NavigateCommand => field ??= new RelayCommand(Navigate);
+        public ICommand CloseDialogCommand => field ??= new RelayCommand(_ => CloseDialog());
+        public ICommand OpenMenuCommand => field ??= new RelayCommand<Button>(OnOpenContextMenu);
+        public ICommand OpenDrawerCommand => field ??= new RelayCommand<MenuOption>(OnMenuOptionSelected);
+        public ICommand CloseDrawerCommand => field ??= new RelayCommand(_ => CloseDrawer());
 
         #endregion
 
@@ -36,31 +27,27 @@ namespace AstroValleyAssistant.ViewModels
 
         public bool IsMenuOpen
         {
-            get => _isMenuOpen;
-            set => Set(ref _isMenuOpen, value);
+            get => field;
+            set => Set(ref field, value);
         }
-        private bool _isMenuOpen;
 
         public ViewModelBase? CurrentViewModel
         {
-            get => _currentViewModel;
-            set => Set(ref _currentViewModel, value);
+            get => field;
+            set => Set(ref field, value);
         }
-        private ViewModelBase? _currentViewModel;
 
         public ViewModelDialogBase? CurrentDialogViewModel
         {
-            get => _currentDialogViewModel;
-            set => Set(ref _currentDialogViewModel, value);
+            get => field;
+            set => Set(ref field, value);
         }
-        private ViewModelDialogBase? _currentDialogViewModel;
 
         public ViewModelDialogBase? CurrentDrawerViewModel
         {
-            get => _currentDrawerViewModel;
-            set => Set(ref _currentDrawerViewModel, value);
+            get => field;
+            set => Set(ref field, value);
         }
-        private ViewModelDialogBase? _currentDrawerViewModel;
 
         #endregion
 

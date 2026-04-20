@@ -12,8 +12,8 @@
     {
         public static PropertyRecord Merge(PropertyRecord original, PropertyRecord regrid)
         {
-            if (original == null) throw new ArgumentNullException(nameof(original));
-            if (regrid == null) throw new ArgumentNullException(nameof(regrid));
+            ArgumentNullException.ThrowIfNull(original);
+            ArgumentNullException.ThrowIfNull(regrid);
 
             return original with
             {

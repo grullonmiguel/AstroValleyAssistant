@@ -16,36 +16,33 @@ namespace AstroValleyAssistant.ViewModels
         private readonly IDialogService _dialogService;
         private readonly GeographyDataService _geoService;
 
-        private AsyncRelayCommand<StateViewModel>? _showMapCommand;
-        public ICommand ShowCountyMapCommand => _showMapCommand ??= new AsyncRelayCommand<StateViewModel>(ShowCountyMap);
+        public ICommand ShowCountyMapCommand => field ??= new AsyncRelayCommand<StateViewModel>(ShowCountyMap);
 
         public bool IsLoading
         {
-            get => _isLoading;
-            set => Set(ref _isLoading, value);
+            get => field;
+            set => Set(ref field, value);
         }
-        private bool _isLoading;
 
         // Store the state's listbox scroll bar's vertical offset.
         public double ListBoxScrollOffset { get; set; }
 
         public StateViewModel SelectedState
         {
-            get => _selectedState;
+            get => field;
             set
             {
                 // Un-select the previously selected state, if there was one
-                if (_selectedState != null)
-                    _selectedState.IsSelected = false;
+                if (field != null)
+                    field.IsSelected = false;
 
-                Set(ref _selectedState, value);
+                Set(ref field, value);
 
                 // Select the new state, if it's not null
-                if (_selectedState != null)
-                    _selectedState.IsSelected = true;
+                if (field != null)
+                    field.IsSelected = true;
             }
         }
-        private StateViewModel? _selectedState;
 
         public ObservableCollection<StateViewModel> States { get; } = [];
 

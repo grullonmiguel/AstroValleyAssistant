@@ -15,42 +15,28 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
     /// </summary>
     public class MarkerMapViewModel : ViewModelDialogBase
     {
-        private readonly IMarkerMapParserService _parserService;
-        private readonly IExporter<IEnumerable<MarkerLocation>, string> _htmlExporter;
+        private readonly IMarkerMapParserService? _parserService;
+        private readonly IExporter<IEnumerable<MarkerLocation>, string>? _htmlExporter;
 
-        private string? _status;
+        public ICommand ImportFileCommand => field ??= new AsyncRelayCommand(vm => ExecuteImportFileAsync());
+        public ICommand ExportHtmlCommand => field ??= new AsyncRelayCommand(vm => ExecuteExportHtmlAsync());
+        public ICommand ResetCommand => field ??= new RelayCommand(vm => ExecuteReset());
+
+        public ObservableCollection<MarkerLocation> Markers { get; }
+
+        public string? Status
+        {
+            get => field;
+            set => Set(ref field, value);
+        }
 
         public MarkerMapViewModel(IMarkerMapParserService parserService, IExporter<IEnumerable<MarkerLocation>, string> htmlExporter)
         {
             _parserService = parserService;
             _htmlExporter = htmlExporter;
 
-            Markers = new ObservableCollection<MarkerLocation>();
+            Markers = [];
         }
-
-        /// <summary>
-        /// The source of truth for all markers currently on the map.
-        /// </summary>
-        public ObservableCollection<MarkerLocation> Markers { get; }
-
-        public string? Status
-        {
-            get => _status;
-            set => Set(ref _status, value);
-        }
-
-        #region Commands
-
-        private AsyncRelayCommand? _importFileCommand;
-        public ICommand ImportFileCommand => _importFileCommand ??= new AsyncRelayCommand(vm => ExecuteImportFileAsync());
-
-        private AsyncRelayCommand? _exportHtmlCommand;
-        public ICommand ExportHtmlCommand => _exportHtmlCommand ??= new AsyncRelayCommand(vm => ExecuteExportHtmlAsync());
-
-        private ICommand? _resetCommand;
-        public ICommand ResetCommand => _resetCommand ??= new RelayCommand(vm => ExecuteReset());
-
-        #endregion
 
         /// <summary>
         /// Adds a list of locations to the existing map without clearing current data.

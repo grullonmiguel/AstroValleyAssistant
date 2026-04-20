@@ -9,7 +9,7 @@ namespace AstroValleyAssistant.Models
     {
         public bool NotFound { get; init; }
         public bool IsMultiple { get; init; }
-        public List<RegridMatch> Matches { get; init; } = new();
+        public List<RegridMatch> Matches { get; init; } = [];
         public PropertyRecord? Record { get; init; }
         public string Query { get; init; } = string.Empty;
         public Exception? Error { get; init; }

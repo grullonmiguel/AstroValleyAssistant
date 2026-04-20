@@ -31,18 +31,14 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
 
         #region Commands
 
-        private ICommand? _browseCommand;
-        public ICommand BrowseCommand => _browseCommand ??= new RelayCommand(_ => Browse(), _ => CanBrowse);
+        public ICommand BrowseCommand => field ??= new RelayCommand(_ => Browse(), _ => CanBrowse);
 
-        private ICommand? _loadIntoGridCommand;
-        public ICommand LoadIntoGridCommand => _loadIntoGridCommand ??= new RelayCommand(_ => LoadIntoGrid(), _ => CanLoadIntoGrid);
+        public ICommand LoadIntoGridCommand => field ??= new RelayCommand(_ => LoadIntoGrid(), _ => CanLoadIntoGrid);
 
-        private ICommand? _clearCommand;
-        public ICommand ClearCommand => _clearCommand ??= new RelayCommand(_ => ClearDataGrid(), _ => CanClearGrid);
+        public ICommand ClearCommand => field ??= new RelayCommand(_ => ClearDataGrid(), _ => CanClearGrid);
 
         // Optional: if you want to support drag-and-drop via command instead of code-behind
-        private ICommand? _fileDroppedCommand;
-        public ICommand FileDroppedCommand => _fileDroppedCommand ??= new RelayCommand(path => LoadFile(path as string));
+        public ICommand FileDroppedCommand => field ??= new RelayCommand(path => LoadFile(path as string));
 
         #endregion
 
@@ -52,7 +48,6 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
 
         #region Properties
 
-        private string? _selectedFilePath;
         public string? SelectedFilePath
         {
             get => _selectedFilePath;
@@ -63,38 +58,34 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             }
         }
 
-        private bool _isBusy;
         public bool IsBusy
         {
-            get => _isBusy;
-            set => Set(ref _isBusy, value);
+            get => field;
+            set => Set(ref field, value);
         }
 
-        private string? _status;
         public string? Status
         {
-            get => _status;
-            set => Set(ref _status, value);
+            get => field;
+            set => Set(ref field, value);
         }
 
-        private string? _errorMessage;
         public string? ErrorMessage
         {
-            get => _errorMessage;
+            get => field;
             set
             {
-                if (Set(ref _errorMessage, value))
+                if (Set(ref field, value))
                     OnPropertyChanged(nameof(HasError));
             }
         }
 
         public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
 
-        private bool _isDragOver;
         public bool IsDragOver
         {
-            get => _isDragOver;
-            set => Set(ref _isDragOver, value);
+            get => field;
+            set => Set(ref field, value);
         }
         public bool IsEmpty => PreviewRows.Count == 0;
 
@@ -105,7 +96,6 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
         public ObservableCollection<Dictionary<string, string>> PreviewRows { get; } = new();
 
         public bool HasPreview => PreviewRows.Count > 0;
-
         public bool CanLoadIntoGrid => !IsBusy && PreviewRows.Count > 0 && !string.IsNullOrEmpty(SelectedFilePath);
         public bool CanClearGrid => !IsBusy && PreviewRows.Count > 0;
         public bool CanBrowse => !IsBusy && PreviewRows.Count <= 0;

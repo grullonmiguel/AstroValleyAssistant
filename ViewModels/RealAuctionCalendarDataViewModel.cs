@@ -35,8 +35,7 @@ namespace AstroValleyAssistant.ViewModels
 
         #region Commands
 
-        private ICommand? _generateAuctionUrlCommand;
-        public ICommand GenerateAuctionUrlCommand => _generateAuctionUrlCommand ??= new RelayCommand(_ => UpdateAuctionUrl(),_ => CanUpdateUrl());
+        public ICommand GenerateAuctionUrlCommand => field ??= new RelayCommand(_ => UpdateAuctionUrl(),_ => CanUpdateUrl());
 
         #endregion
 
@@ -44,44 +43,39 @@ namespace AstroValleyAssistant.ViewModels
         
         public string? AuctionUrl
         {
-            get => _auctionUrl;
-            private set => Set(ref _auctionUrl, value);
+            get => field;
+            private set => Set(ref field, value);
         }
-        private string? _auctionUrl;
 
         public IReadOnlyList<StateInfo> States { get; private set; } = Array.Empty<StateInfo>();
 
         public DateTime? SelectedDate
         {
-            get => _selectedDate;
-            set => Set(ref _selectedDate, value);
+            get => field;
+            set => Set(ref field, value);
         }
-        private DateTime? _selectedDate;
 
         public StateInfo? SelectedState
         {
-            get => _selectedState;
+            get => field;
             set
             {
-                Set(ref _selectedState, value);
+                Set(ref field, value);
                 _= LoadCountiesForSelectedState();
             }
         }
-        private StateInfo? _selectedState;
                 
         public RealAuctionDataService.RealAuctionCountyInfo? SelectedCounty
         {
-            get => _selectedCounty;
-            set => Set(ref _selectedCounty, value);
+            get => field;
+            set => Set(ref field, value);
         }
-        private RealAuctionDataService.RealAuctionCountyInfo? _selectedCounty;
 
         public ObservableCollection<RealAuctionDataService.RealAuctionCountyInfo> Counties
         {
-            get => _counties;
-            private set => Set(ref _counties, value);
-        }
-        private ObservableCollection<RealAuctionDataService.RealAuctionCountyInfo> _counties = new();
+            get => field;
+            private set => Set(ref field, value);
+        } = [];
 
         // Tells the UI dates prior to today are not allowed
         public DateTime MinAuctionDate => DateTime.Today;

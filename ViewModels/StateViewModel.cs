@@ -14,16 +14,14 @@ namespace AstroValleyAssistant.ViewModels
 
         public bool IsSelected
         {
-            get => _isSelected;
-            set => Set(ref _isSelected, value);
+            get => field;
+            set => Set(ref field, value);
         }
-        private bool _isSelected;
 
         public bool IsHovered
         {
-            get => _isHovered;
-            set => Set(ref _isHovered, value);
+            get => field;
+            set => Set(ref field, value);
         }
-        private bool _isHovered;
     }
 }

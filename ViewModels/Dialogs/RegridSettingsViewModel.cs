@@ -6,12 +6,9 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
 {
     public class RegridSettingsViewModel : ViewModelDialogBase
     {
-        private readonly IRegridSettings _settings;
+        private readonly IRegridSettings? _settings;
 
-        // The parent (MainViewModel) will hook into this
-        public Action Saved { get; set; }
-
-        // Your custom RelayCommand implementation
+        public Action? Saved { get; set; }
         public RelayCommand SaveCommand { get; }
 
         public string UserName
@@ -40,21 +37,21 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
             SaveCommand = new RelayCommand(ExecuteSave, CanSave);
         }
 
-        private void ExecuteSave(object parameter)
+        private void ExecuteSave(object? parameter)
         {
             // 3. Persist local ViewModel state back to the service
-            _settings.RegridUserName = UserName;
-            _settings.RegridPassword = Password;
-            _settings.Save();
+            _settings!.RegridUserName = UserName;
+            _settings!.RegridPassword = Password;
+            _settings!.Save();
 
             // 2. Notify the parent that we are done
             Saved?.Invoke();
         }
 
-        private bool CanSave(object parameter)
+        private bool CanSave(object? parameter)
         {
             // Only enable Save if the data is valid AND different from what's in the settings
-            bool isChanged = UserName != _settings.RegridUserName || Password != _settings.RegridPassword;
+            bool isChanged = UserName != _settings!.RegridUserName || Password != _settings.RegridPassword;
             return !string.IsNullOrWhiteSpace(UserName) && isChanged;
         }
     }

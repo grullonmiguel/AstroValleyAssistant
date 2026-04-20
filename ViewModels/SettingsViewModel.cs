@@ -9,8 +9,7 @@ namespace AstroValleyAssistant.ViewModels
     {
         private readonly IThemeService _themeService;
 
-        private ICommand? _changeThemeCommand;
-        public ICommand ChangeThemeCommand => _changeThemeCommand ??= new RelayCommand(theme => SetNewTheme(theme as string));
+        public ICommand ChangeThemeCommand => field ??= new RelayCommand(theme => SetNewTheme(theme as string));
 
         public SettingsViewModel(IThemeService themeService)
         {

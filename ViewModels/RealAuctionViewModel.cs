@@ -14,18 +14,16 @@ namespace AstroValleyAssistant.ViewModels
         // UI State
         // -----------------------------
 
-        private string? _currentAuctionUrl;
         public string? CurrentAuctionUrl
         {
-            get => _currentAuctionUrl;
-            private set => Set(ref _currentAuctionUrl, value);
+            get => field;
+            private set => Set(ref field, value);
         }
 
-        private string? _currentAuctionAlias;
         public string? CurrentAuctionAlias
         {
-            get => _currentAuctionAlias;
-            private set => Set(ref _currentAuctionAlias, value);
+            get => field;
+            private set => Set(ref field, value);
         }
 
         public RealAuctionCalendarDataViewModel RealAuctionCalendarData { get; }

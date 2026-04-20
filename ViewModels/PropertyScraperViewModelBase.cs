@@ -16,9 +16,9 @@ namespace AstroValleyAssistant.ViewModels
     public abstract class PropertyScraperViewModelBase : ViewModelBase
     {
 
-        protected IDialogService _dialogService;
-        protected IServiceProvider _serviceProvider;
-        protected IExporter<IEnumerable<PropertyRecord>, string> _clipboardExporter;
+        protected IDialogService? _dialogService;
+        protected IServiceProvider? _serviceProvider;
+        protected IExporter<IEnumerable<PropertyRecord>, string>? _clipboardExporter;
 
         protected CancellationTokenSource? _cts;
         protected IRegridService? _regridService;
@@ -28,33 +28,13 @@ namespace AstroValleyAssistant.ViewModels
         // Shared Commands
         // -----------------------------
 
-        private ICommand? _cancelCommand;
-        public ICommand CancelCommand =>
-            _cancelCommand ??= new RelayCommand(_ => CancelOperation(), _ => IsScraping);
-
-        private ICommand? _clearCommand;
-        public ICommand ClearCommand =>
-            _clearCommand ??= new RelayCommand(_ => Clear());
-
-        private ICommand? _copyRecordsToClipboardCommand;
-        public ICommand CopyRecordsToClipboardCommand => _copyRecordsToClipboardCommand ??=
-            new AsyncRelayCommand(vm => CopyToClipboardAsync());
-
-        private AsyncRelayCommand? _selectMatchCommand;
-        public ICommand SelectMatchCommand =>
-            _selectMatchCommand ??= new AsyncRelayCommand(match => ScrapeMatch((RegridMatch)match));
-
-        private ICommand? _loadRegridDataCommand;
-        public ICommand LoadRegridDataCommand =>
-            _loadRegridDataCommand ??= new RelayCommand(async _ => await EnrichWithRegridAsync(), _ => PropertyRecords.Count > 0 && !IsScraping);
-
-        private AsyncRelayCommand? _mapCommand;
-        public ICommand MapCommand =>
-            _mapCommand ??= new AsyncRelayCommand(_ => ViewInMap(), _ => PropertyRecords.Count > 0 && !IsScraping && IsRegridDataLoaded);
-
-        private ICommand? _scrapeCommand;
-        public ICommand ScrapeCommand =>
-            _scrapeCommand ??= new RelayCommand(mode => SetScrapeMode((RegridScrapeMode)mode));
+        public ICommand CancelCommand => field ??= new RelayCommand(_ => CancelOperation(), _ => IsScraping);
+        public ICommand ClearCommand => field ??= new RelayCommand(_ => Clear());
+        public ICommand CopyRecordsToClipboardCommand => field ??= new AsyncRelayCommand(vm => CopyToClipboardAsync());
+        public ICommand SelectMatchCommand => field ??= new AsyncRelayCommand(match => ScrapeMatch((RegridMatch)match));
+        public ICommand LoadRegridDataCommand => field ??= new RelayCommand(async _ => await EnrichWithRegridAsync(), _ => PropertyRecords.Count > 0 && !IsScraping);
+        public ICommand MapCommand => field ??= new AsyncRelayCommand(_ => ViewInMap(), _ => PropertyRecords.Count > 0 && !IsScraping && IsRegridDataLoaded);
+        public ICommand ScrapeCommand => field ??= new RelayCommand(mode => SetScrapeMode((RegridScrapeMode)mode));
 
         //protected abstract Task ScrapeAsync();
 
@@ -62,63 +42,54 @@ namespace AstroValleyAssistant.ViewModels
         // UI State
         // -----------------------------
 
-        private string? _status;
         public string? Status
         {
-            get => _status;
-            set => Set(ref _status, value);
+            get => field;
+            set => Set(ref field, value);
         }
 
-        private bool _isScraping;
         public bool IsScraping
         {
-            get => _isScraping;
-            set => Set(ref _isScraping, value);
+            get => field;
+            set => Set(ref field, value);
         }
 
-        private bool _isRegridDataLoaded;
         public bool IsRegridDataLoaded
         {
-            get => _isRegridDataLoaded;
-            set => Set(ref _isRegridDataLoaded, value);
+            get => field;
+            set => Set(ref field, value);
         }
 
-        private bool _isScrapeVisible = true;
         public bool IsScrapeVisible
         {
-            get => _isScrapeVisible;
-            set => Set(ref _isScrapeVisible, value);
+            get => field;
+            set => Set(ref field, value);
         }
 
-        private bool _isResultButtonsVisible;
         public bool IsResultButtonsVisible
         {
-            get => _isResultButtonsVisible;
-            set => Set(ref _isResultButtonsVisible, value);
+            get => field;
+            set => Set(ref field, value);
         }
 
-        private RegridScrapeMode _scrapeMode = RegridScrapeMode.ParcelId;
         public RegridScrapeMode ScrapeMode
         {
-            get => _scrapeMode;
-            set => Set(ref _scrapeMode, value);
-        }
+            get => field;
+            set => Set(ref field, value);
+        } = RegridScrapeMode.ParcelId; // Initializer for the backing field
 
         public PropertyDataViewModel? PropertySelected
         {
-            get => _propertySelected;
+            get => field;
             set
             {
-                if (_propertySelected != value)
-                {
-                    Set(ref _propertySelected, value);
-                }
+                if (field != value)
+                    Set(ref field, value);
             }
         }
-        private PropertyDataViewModel? _propertySelected;
 
         // Shared collection
-        public ObservableCollection<PropertyDataViewModel> PropertyRecords { get; } = new();
+        public ObservableCollection<PropertyDataViewModel> PropertyRecords { get; } = [];
 
         private async void ExportData()
         {

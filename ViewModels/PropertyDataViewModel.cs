@@ -21,14 +21,13 @@ namespace AstroValleyAssistant.ViewModels
         // -----------------------------
         // Domain Model
         // -----------------------------
-        private PropertyRecord _record;
         public PropertyRecord Record
         {
-            get => _record;
+            get => field;
             set
             {
                 // Call your Set method
-                Set(ref _record, value);
+                Set(ref field, value);
 
                 // Now notify all dependent properties
                 RaiseRecordDependentProperties();
@@ -38,18 +37,16 @@ namespace AstroValleyAssistant.ViewModels
         // -----------------------------
         // UI State
         // -----------------------------
-        private ScrapeStatus _status = ScrapeStatus.Pending;
         public ScrapeStatus Status
         {
-            get => _status;
-            set => Set(ref _status, value);
-        }
+            get => field;
+            set => Set(ref field, value);
+        } = ScrapeStatus.Pending;
 
-        private bool _hasMultipleMatches;
         public bool HasMultipleMatches
         {
-            get => _hasMultipleMatches;
-            set => Set(ref _hasMultipleMatches, value);
+            get => field;
+            set => Set(ref field, value);
         }
 
         public ObservableCollection<RegridMatch> Matches { get; } = new();

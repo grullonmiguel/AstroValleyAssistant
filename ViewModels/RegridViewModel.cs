@@ -16,14 +16,9 @@ namespace AstroValleyAssistant.ViewModels
 
         #region Commands
 
-        private ICommand? _pasteParcelsCommand;
-        public ICommand PasteParcelsCommand => _pasteParcelsCommand ??= new RelayCommand(_ => PasteFromClipboard(RegridScrapeMode.ParcelId));
-
-        private ICommand? _pasteAddressesCommand;
-        public ICommand PasteAddressesCommand => _pasteAddressesCommand ??= new RelayCommand(_ => PasteFromClipboard(RegridScrapeMode.Address));
-
-        private ICommand? _openImportCommand;
-        public ICommand OpenImportCommand => _openImportCommand ??= new RelayCommand(_ => ShowImportView());
+        public ICommand PasteParcelsCommand => field ??= new RelayCommand(_ => PasteFromClipboard(RegridScrapeMode.ParcelId));
+        public ICommand PasteAddressesCommand => field ??= new RelayCommand(_ => PasteFromClipboard(RegridScrapeMode.Address));
+        public ICommand OpenImportCommand => field ??= new RelayCommand(_ => ShowImportView());
 
         #endregion
 
