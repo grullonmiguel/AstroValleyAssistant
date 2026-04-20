@@ -18,32 +18,29 @@ namespace AstroValleyAssistant.ViewModels.Dialogs
 
         public bool IsLoading
         {
-            get => _isLoading;
-            set => Set(ref _isLoading, value);
+            get => field;
+            set => Set(ref field, value);
         }
-        private bool _isLoading;
 
         public double MapWidth => CalculateMapDimensions().Width;        
         public double MapHeight => CalculateMapDimensions().Height;
 
         public StateViewModel State { get; }
 
-        public ObservableCollection<CountyViewModel> Counties { get; } = new();
+        public ObservableCollection<CountyViewModel> Counties { get; } = [];
 
-        public CountyViewModel SelectedCounty
+        public CountyViewModel? SelectedCounty
         {
-            get => _selectedCounty;
+            get => field;
             set
             {
-                if (_selectedCounty != null)
-                    _selectedCounty.IsSelected = false;
+                field?.IsSelected = false;
 
-                Set(ref _selectedCounty, value);
-                if (_selectedCounty != null)
-                    _selectedCounty.IsSelected = true;
+                Set(ref field, value);
+
+                field?.IsSelected = true;
             }
         }
-        private CountyViewModel? _selectedCounty;
 
         #endregion
 
