@@ -11,3 +11,6 @@
 # Other
 *.log
 *.DS_Store
+
+# Kiro specs (local only)
+.kiro/specs/

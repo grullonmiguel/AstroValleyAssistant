@@ -8,6 +8,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+  
+  <ItemGroup>
+	  <Compile Remove="src\**" />
+	  <EmbeddedResource Remove="src\**" />
+	  <None Remove="src\**" />
+	  <Page Remove="src\**" />
+	</ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
