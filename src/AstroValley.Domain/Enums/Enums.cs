@@ -1,0 +1,49 @@
+﻿using System.ComponentModel;
+
+namespace AstroValley.Domain.Enums;
+
+public enum DialogOption
+{
+    Default,
+    Sidebar
+}
+
+public enum MenuOption
+{
+    RealAuction,
+    Regrid,
+    Themes,
+    PinMap
+}
+
+public enum RegridScrapeMode
+{
+    ParcelId,
+    Address
+}
+
+public enum TaxSaleType
+{
+    [Description("Tax Lien")]
+    TaxLien,
+
+    [Description("Tax Deed")]
+    TaxDeed,
+
+    [Description("Redeemable Deed")]
+    RedeemableDeed,
+
+    [Description("Hybrid")]
+    Hybrid
+}
+
+public enum ScrapeStatus
+{
+    Pending,
+    Loading,
+    Success,
+    NotFound,           // No parcel found for that ID/Address
+    MultipleMatches,    // Ambiguous results from Regrid
+    Error,              // Network or server issues (like the 423 Locked)
+    RateLimited         // Used for when the Regrid limits the request 429
+}
