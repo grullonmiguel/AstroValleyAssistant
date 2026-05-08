@@ -1,18 +1,14 @@
-﻿using System.Text.Json;
+﻿using AstroValley.Application.Interfaces.Data;
+using AstroValley.Domain.Models;
+using System.Text.Json;
 
 namespace AstroValley.Infrastructure.Data;
 
-public class RealAuctionDataService
+public class RealAuctionDataService : IRealAuctionDataService
 {
-    public record RealAuctionCountyInfo
-    {
-        public string Name { get; init; } = "";
-        public string Calendar { get; init; } = "";
-        public string Auction { get; init; } = "";
-    }
-
     // This will cache the data after it's loaded from the file once
-    private static Dictionary<string, List<RealAuctionCountyInfo>> _countyDataCache = new(); // never null
+    private static Dictionary<string, List<RealAuctionCountyInfo>> _countyDataCache = []; // never null
+
     private static readonly JsonSerializerOptions CountyJsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     /// <summary>

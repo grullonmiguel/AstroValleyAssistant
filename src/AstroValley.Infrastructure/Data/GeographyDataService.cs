@@ -1,11 +1,13 @@
-﻿using System.Text.Json;
+﻿using AstroValley.Application.Interfaces.Data;
+using AstroValley.Domain.Models;
+using System.Text.Json;
 
 namespace AstroValley.Infrastructure.Data;
 
-public class GeographyDataService
+public class GeographyDataService : IGeographyDataService
 {
     // C# record to match our JSON structure
-    public record CountyInfo(string name, string key);
+    //public record CountyInfo(string name, string key);
 
     // This will cache the data after it's loaded from the file once
     private static Dictionary<string, List<CountyInfo>> _countyDataCache;
