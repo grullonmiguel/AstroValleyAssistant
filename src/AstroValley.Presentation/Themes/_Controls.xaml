@@ -1,0 +1,11 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- This file's only job is to group the individual control styles together. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/Themes/Controls/Button.xaml"/>
+        <ResourceDictionary Source="/Themes/Controls/RadioButton.xaml"/>
+        <ResourceDictionary Source="/Themes/Controls/ListBox.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

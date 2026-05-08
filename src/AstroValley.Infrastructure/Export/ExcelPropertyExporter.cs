@@ -1,10 +1,11 @@
-﻿using AstroValley.Application.Interfaces.Scraping;
+﻿using AstroValley.Application.Interfaces.Export;
+using AstroValley.Application.Interfaces.Scraping;
 using AstroValley.Domain.Entities;
 using ClosedXML.Excel;
 
 namespace AstroValley.Infrastructure.Export;
 
-public class ExcelPropertyExporter : IExporter<IEnumerable<PropertyRecord>, string?>
+public class ExcelPropertyExporter : IExcelExporter
 {
     private readonly IRegridHttpClient _regridClient;
 

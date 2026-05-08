@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
 
-namespace AstroValleyAssistant.ViewModels.Dialogs;
+namespace AstroValley.Presentation.ViewModels.Dialogs;
 
 /// <summary>
 /// Singleton ViewModel responsible for managing marker data, parsing inputs, 

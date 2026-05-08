@@ -1,4 +1,5 @@
-﻿using AstroValley.Domain.Entities;
+﻿using AstroValley.Application.Interfaces.Export;
+using AstroValley.Domain.Entities;
 using AstroValley.Domain.Utilities;
 using AstroValley.Infrastructure.Export;
 using System.Text;
@@ -10,7 +11,7 @@ namespace AstroValley.Presentation.Export;
 /// Formats property data into a tab-separated table with Google Sheets formulas
 /// and copies the resulting string to the system clipboard.
 /// </summary>
-public class ClipboardExporter : IExporter<IEnumerable<PropertyRecord>, string?>
+public class ClipboardExporter : IClipboardExporter
 {
     /// <summary>
     /// Transforms records into a TSV string and updates the clipboard.

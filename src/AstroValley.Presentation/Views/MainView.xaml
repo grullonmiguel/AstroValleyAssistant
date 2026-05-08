@@ -1,0 +1,102 @@
+﻿<Window x:Class="AstroValley.Presentation.Views.MainView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:AstroValley.Presentation"
+        xmlns:views="clr-namespace:AstroValley.Presentation.Views"
+        xmlns:consts="clr-namespace:AstroValley.Domain.Enums;assembly=AstroValley.Domain"
+        xmlns:viewmodels="clr-namespace:AstroValley.Presentation.ViewModels"
+        xmlns:viewDialogs="clr-namespace:AstroValley.Presentation.Views.Dialogs"
+        xmlns:dialogs="clr-namespace:AstroValley.Presentation.ViewModels.Dialogs"
+        Title="Astro Valley Assistant"
+        Height="768" Width="1280"
+        MinHeight="480" MinWidth="640" 
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type viewmodels:RegridViewModel}">
+            <views:RegridView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewmodels:RealAuctionViewModel}">
+            <views:RealAuctionView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewmodels:MapViewModel}">
+            <views:MapView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:CountyMapDialogViewModel}">
+            <viewDialogs:CountyMapView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:RegridSettingsViewModel}">
+            <viewDialogs:RegridSettingsView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:ThemeSettingsViewModel}">
+            <viewDialogs:ThemeSettingsView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:ImportViewModel}">
+            <viewDialogs:ImportView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:MarkerMapViewModel}">
+            <viewDialogs:MarkerMapView/>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid Background="{DynamicResource Brush.Background.Primary}">
+        <DockPanel>
+            <!-- Header -->
+            <Border Style="{StaticResource Theme.Border.Header}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Logo -->
+                    <ContentControl Grid.Column="0" Style="{StaticResource AppLogo}"/>
+
+                    <!-- Navigation Buttons: Regrid | Real Auction | Maps | Menu  -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <RadioButton Content="Regrid" Command="{Binding NavigateCommand}" CommandParameter="Regrid" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
+                        <RadioButton Content="Real Auction" Command="{Binding NavigateCommand}" CommandParameter="RealAuction" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
+                        <RadioButton Content="Maps" Command="{Binding NavigateCommand}" CommandParameter="Map" IsChecked="True" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
+                        <Button x:Name="HamburgerMenuButton" Command="{Binding OpenMenuCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}" Style="{StaticResource Theme.Button.HamburgerMenu}" >
+                            <Button.ContextMenu>
+                                <ContextMenu Style="{StaticResource Theme.ContextMenu}">
+                                    <MenuItem Header="Regrid" Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.Regrid}" />
+                                    <MenuItem Header="Theme"  Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.Themes}" />
+                                    <MenuItem Header="Marker Map"  Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.PinMap}" />
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <ContentControl Content="{Binding CurrentViewModel}" Margin="{StaticResource Margin.Page}" />
+            
+        </DockPanel>
+
+        <!-- Left/Top Accent Lines -->
+        <ContentControl Style="{StaticResource Theme.Decorator.AccentOverlay}"/>
+        
+        <!-- Dialog Host -->
+        <Grid Background="{DynamicResource Brush.Background.Dialog}" 
+              Visibility="{Binding CurrentDialogViewModel, Converter={StaticResource NullToVisibilityConverter}}">
+            <ContentControl 
+                Style="{StaticResource Theme.ContentControl.DialogWindow}"
+                Content="{Binding CurrentDialogViewModel}" 
+                Visibility="{Binding CurrentDialogViewModel, Converter={StaticResource NullToVisibilityConverter}}"/>
+        </Grid>
+
+        <!-- Drawer Dialog Host (Right Side) -->
+        <Grid Background="{DynamicResource Brush.Background.Dialog}" 
+              Visibility="{Binding CurrentDrawerViewModel, Converter={StaticResource NullToVisibilityConverter}}">
+            <ContentControl 
+                Style="{StaticResource Theme.ContentControl.DrawerPanel}"
+                Content="{Binding CurrentDrawerViewModel}"
+                HorizontalAlignment="Right" 
+                Visibility="{Binding CurrentDrawerViewModel, Converter={StaticResource NullToVisibilityConverter}}"/>
+        </Grid>
+    </Grid>
+</Window>

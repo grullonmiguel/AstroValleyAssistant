@@ -1,8 +1,25 @@
 ﻿<Application x:Class="AstroValley.Presentation.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:AstroValley.Presentation">
+             xmlns:local="clr-namespace:AstroValley.Presentation"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:conv="clr-namespace:AstroValley.Presentation.Converters">
     <Application.Resources>
-         
+
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Themes/_Resources.xaml"/>
+                <ResourceDictionary Source="/Themes/_Controls.xaml"/>
+                <ResourceDictionary Source="/Themes/Palettes/Light.xaml"/>
+                <ResourceDictionary Source="/Themes/Accents/Purple.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <conv:BooleanInvertConverter x:Key="BooleanInvertConverter"/>
+            <conv:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
+            <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            <conv:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter"/>
+            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        </ResourceDictionary>
+
     </Application.Resources>
 </Application>

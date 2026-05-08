@@ -1,12 +1,10 @@
 ﻿using AstroValley.Domain.Enums;
 using AstroValley.Presentation.Services;
 using AstroValley.Presentation.ViewModels.Dialogs;
-using AstroValleyAssistant.ViewModels.Dialogs;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows.Controls;
-using System.Windows.Input;
 
 namespace AstroValley.Presentation.ViewModels;
 

@@ -1,8 +1,5 @@
-﻿using AstroValley.Presentation.ViewModels.Dialogs;
+﻿namespace AstroValley.Presentation.ViewModels.Dialogs;
 
-namespace AstroValleyAssistant.ViewModels.Dialogs
+public class ThemeSettingsViewModel : DialogViewModelBase
 {
-    public class ThemeSettingsViewModel : DialogViewModelBase
-    {
-    }
 }
