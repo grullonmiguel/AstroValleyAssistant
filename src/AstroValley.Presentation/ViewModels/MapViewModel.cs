@@ -1,6 +1,5 @@
 ﻿using AstroValley.Application.Interfaces.Data;
 using AstroValley.Domain.Enums;
-using AstroValley.Infrastructure.Data;
 using AstroValley.Presentation.Services;
 using AstroValley.Presentation.ViewModels.Dialogs;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -25,7 +24,7 @@ public partial class MapViewModel : ObservableObject
     // Store the state's listbox scroll bar's vertical offset.
     public double ListBoxScrollOffset { get; set; }
 
-    public StateViewModel SelectedState
+    public StateViewModel? SelectedState
     {
         get => field;
         set

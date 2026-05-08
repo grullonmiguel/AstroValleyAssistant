@@ -24,7 +24,7 @@ public partial class MarkerMapViewModel : DialogViewModelBase
         set => SetProperty(ref field, value);
     }
 
-    public MarkerMapViewModel(IMarkerMapParserService parserService, IExporter<IEnumerable<MarkerLocation>, string> htmlExporter)
+    public MarkerMapViewModel(IMarkerMapParserService parserService, IHtmlMapExporter htmlExporter)
     {
         _parserService = parserService;
         _htmlExporter = htmlExporter;

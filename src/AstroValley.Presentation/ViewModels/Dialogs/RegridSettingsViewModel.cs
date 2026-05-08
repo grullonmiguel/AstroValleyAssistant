@@ -12,13 +12,21 @@ public partial class RegridSettingsViewModel : DialogViewModelBase
     public string UserName
     {
         get;
-        set => SetProperty(ref field, value);
+        set
+        {
+            if (SetProperty(ref field, value))
+                SaveCommand.NotifyCanExecuteChanged();
+        }
     }
 
     public string Password
     {
         get;
-        set => SetProperty(ref field, value);
+        set
+        {
+            if (SetProperty(ref field, value))
+                SaveCommand.NotifyCanExecuteChanged();
+        }
     }
 
     public RegridSettingsViewModel(IRegridSettings settings)

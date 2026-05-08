@@ -38,7 +38,20 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
     public bool IsScraping
     {
         get;
-        set => SetProperty(ref field, value);
+        set
+        {
+            if (SetProperty(ref field, value))
+            {
+                // Notify all commands that depend on IsScraping
+                // Use BeginInvoke for non-blocking dispatch
+                App.Current.Dispatcher.BeginInvoke(() =>
+                {
+                    EnrichWithRegridCommand.NotifyCanExecuteChanged();
+                    ViewInMapCommand.NotifyCanExecuteChanged();
+                    CancelOperationCommand.NotifyCanExecuteChanged();
+                });
+            }
+        }
     }
 
     public bool IsRegridDataLoaded
@@ -51,7 +64,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
     {
         get;
         set => SetProperty(ref field, value);
-    }
+    } = true;
 
     public bool IsResultButtonsVisible
     {
@@ -77,6 +90,12 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
 
     // Shared collection
     public ObservableCollection<PropertyDataViewModel> PropertyRecords { get; } = [];
+
+    protected void OnPropertyRecordsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        EnrichWithRegridCommand.NotifyCanExecuteChanged();
+        ViewInMapCommand.NotifyCanExecuteChanged();
+    }
 
     private async void ExportData()
     {
@@ -132,7 +151,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
     // Regrid Scraping
     // -----------------------------
     [RelayCommand(CanExecute = nameof(CanLoadRegridData))]
-    protected async Task EnrichWithRegridAsync()
+    protected async Task EnrichWithRegrid()
     {
         if (PropertyRecords.Count == 0)
         {
@@ -202,9 +221,11 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
     }
     private bool CanLoadRegridData => PropertyRecords.Count > 0 && !IsScraping;
 
-    [RelayCommand]
-    protected async Task ScrapeMatch(RegridMatch match)
+    [RelayCommand(CanExecute = nameof(CanScrapeMatch))]
+    public async Task ScrapeMatch(RegridMatch match)
     {
+        System.Diagnostics.Debug.WriteLine($"ScrapeMatch INVOKED: match={match?.ParcelId}");
+
         if (PropertySelected == null)
             return;
 
@@ -239,6 +260,11 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         {
             SetIdle($"Error: {ex.Message}");
         }
+    }
+    private bool CanScrapeMatch(RegridMatch? match)
+    {
+        System.Diagnostics.Debug.WriteLine($"CanScrapeMatch called: match={match?.ParcelId}, PropertySelected={PropertySelected?.ParcelId}");
+        return match != null && PropertySelected != null;
     }
 
     protected void ApplyRegridResult(PropertyDataViewModel vm, RegridParcelResult result)
@@ -296,7 +322,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
     {
         ScrapeMode = mode;
         Status = $"Scrape mode set to {mode}";
-        _ = EnrichWithRegridAsync();
+        _ = EnrichWithRegrid();
     }
 
     // -----------------------------

@@ -86,10 +86,9 @@ namespace AstroValley.Presentation
             services.AddTransient<IMarkerMapParserService, MarkerMapParserService>();
 
             // ── Infrastructure: Typed HTTP Clients ───────────────────────────
-            services.AddHttpClient<IRealTaxDeedClient, RealTaxDeedClient>(
-                client => client.Timeout = TimeSpan.FromSeconds(30));
-            services.AddHttpClient<IRegridScraper, RegridScraper>(
-                client => client.Timeout = TimeSpan.FromSeconds(30));
+            services.AddHttpClient<IRegridHttpClient, RegridHttpClient>();
+            services.AddHttpClient<IRealTaxDeedClient, RealTaxDeedClient>(client => client.Timeout = TimeSpan.FromSeconds(30));
+            services.AddHttpClient<IRegridScraper, RegridScraper>(client => client.Timeout = TimeSpan.FromSeconds(30));
         }
 
         protected override async void OnStartup(StartupEventArgs e)

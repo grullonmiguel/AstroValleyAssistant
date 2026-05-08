@@ -82,8 +82,7 @@ public partial class MarkerMapView : UserControl
             };
 
             // 3. Resolve the path to our local HTML asset
-            // Note: Included the 'MarkerMap' subfolder as per our updated hierarchy
-            string htmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Core", "Assets", "markermap.html");
+            string htmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "markermap.html");
 
             if (!File.Exists(htmlPath))
             {

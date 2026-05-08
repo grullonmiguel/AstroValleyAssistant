@@ -12,11 +12,21 @@ public partial class MultipleMatchesControl : UserControl
         InitializeComponent();
     }
 
+    //public ICommand? SelectMatchCommand
+    //{
+    //    get => (ICommand)GetValue(SelectMatchCommandProperty);
+    //    set => SetValue(SelectMatchCommandProperty, value);
+    //}
     public ICommand? SelectMatchCommand
     {
         get => (ICommand)GetValue(SelectMatchCommandProperty);
-        set => SetValue(SelectMatchCommandProperty, value);
+        set
+        {
+            SetValue(SelectMatchCommandProperty, value);
+            System.Diagnostics.Debug.WriteLine($"SelectMatchCommand set: {value != null}, CanExecute: {value?.CanExecute(null)}");
+        }
     }
+
     public static readonly DependencyProperty SelectMatchCommandProperty = DependencyProperty.Register(nameof(SelectMatchCommand), typeof(ICommand), typeof(MultipleMatchesControl));
 
     public PropertyDataViewModel? SelectedItem

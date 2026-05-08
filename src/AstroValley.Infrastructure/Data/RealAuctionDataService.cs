@@ -55,7 +55,7 @@ public class RealAuctionDataService : IRealAuctionDataService
             return;
 
         // Build an absolute path based on the app's base directory.
-        var filePath = Path.Combine(AppContext.BaseDirectory, "Core", "Data", "Counties_RealAuction.json");
+        var filePath = Path.Combine(AppContext.BaseDirectory, "Data", "Counties_RealAuction.json");
 
         // File missing: keep an empty cache but make it obvious during development.
         if (!File.Exists(filePath))
