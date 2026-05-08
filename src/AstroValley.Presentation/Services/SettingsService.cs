@@ -1,55 +1,96 @@
 ﻿using AstroValley.Application.Interfaces.Settings;
+using AstroValley.Domain.Models;
+using System.IO;
+using System.Text.Json;
 
 namespace AstroValley.Presentation.Services;
 
 public class SettingsService : IRegridSettings, IRealAuctionSettings
 {
-    //public string RegridUserName
-    //{
-    //    get => Properties.Settings.Default.Regrid_UserName;
-    //    set => Properties.Settings.Default.Regrid_UserName = value;
-    //}
+    private readonly string _filePath;
+    private AppSettings _settings;
 
-    //public string RegridPassword
-    //{
-    //    get => Properties.Settings.Default.Regrid_Password;
-    //    set => Properties.Settings.Default.Regrid_Password = value;
-    //}
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true
+    };
 
-    //public string Url
-    //{
-    //    get => Properties.Settings.Default.Real_URL;
-    //    set => Properties.Settings.Default.Real_URL = value;
-    //}
+    public SettingsService()
+    {
+        var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AstroValley");
 
-    //public string State
-    //{
-    //    get => Properties.Settings.Default.Real_State;
-    //    set => Properties.Settings.Default.Real_State = value;
-    //}
+        Directory.CreateDirectory(dir);
+        _filePath = Path.Combine(dir, "appsettings.user.json");
+        _settings = Load();
+    }
 
-    //public string County
-    //{
-    //    get => Properties.Settings.Default.Real_County;
-    //    set => Properties.Settings.Default.Real_County = value;
-    //}
+    // ── IRegridSettings ──────────────────────────────────────────────────
+    public string RegridUserName
+    {
+        get => _settings.Regrid.UserName;
+        set => _settings.Regrid.UserName = value;
+    }
 
-    //public string LastAuctionDate
-    //{
-    //    get => Properties.Settings.Default.Real_Date;
-    //    set => Properties.Settings.Default.Real_Date = value;
-    //}
+    public string RegridPassword
+    {
+        get => _settings.Regrid.Password;
+        set => _settings.Regrid.Password = value;
+    }
 
-    //public void Save() => Properties.Settings.Default.Save();
-    public string RegridUserName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    public string RegridPassword { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    public string Url { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    public string State { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    public string County { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    public string LastAuctionDate { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    // ── IRealAuctionSettings ─────────────────────────────────────────────
+    public string Url
+    {
+        get => _settings.RealAuction.Url;
+        set => _settings.RealAuction.Url = value;
+    }
 
+    public string State
+    {
+        get => _settings.RealAuction.State;
+        set => _settings.RealAuction.State = value;
+    }
+
+    public string County
+    {
+        get => _settings.RealAuction.County;
+        set => _settings.RealAuction.County = value;
+    }
+
+    public string LastAuctionDate
+    {
+        get => _settings.RealAuction.LastAuctionDate;
+        set => _settings.RealAuction.LastAuctionDate = value;
+    }
+
+    // ── Theme (used by ThemeService) ─────────────────────────────────────
+    public string ThemeName
+    {
+        get => _settings.Theme.Name;
+        set => _settings.Theme.Name = value;
+    }
+
+    // ── Persistence ──────────────────────────────────────────────────────
     public void Save()
     {
-        throw new NotImplementedException();
+        var json = JsonSerializer.Serialize(_settings, JsonOptions);
+        File.WriteAllText(_filePath, json);
+    }
+
+    private AppSettings Load()
+    {
+        if (!File.Exists(_filePath))
+            return new AppSettings();
+
+        try
+        {
+            var json = File.ReadAllText(_filePath);
+            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions)
+                   ?? new AppSettings();
+        }
+        catch
+        {
+            return new AppSettings();
+        }
     }
 }

@@ -11,8 +11,10 @@ using AstroValley.Presentation.Services;
 using AstroValley.Presentation.ViewModels;
 using AstroValley.Presentation.ViewModels.Dialogs;
 using AstroValley.Presentation.Views;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.IO;
 using System.Windows;
 
 namespace AstroValley.Presentation
@@ -26,11 +28,19 @@ namespace AstroValley.Presentation
         public App()
         {
             _host = Host.CreateDefaultBuilder()
-                .ConfigureServices((_, services) => ConfigureServices(services))
+                .ConfigureAppConfiguration((_, config) =>
+                {
+                    var userSettingsPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AstroValley", "appsettings.user.json");
+
+                    config.AddJsonFile(userSettingsPath, optional: true, reloadOnChange: false);
+                })
+                .ConfigureServices((ctx, services) => ConfigureServices(ctx, services))
                 .Build();
+
         }
 
-        private static void ConfigureServices(IServiceCollection services)
+        private static void ConfigureServices(HostBuilderContext ctx, IServiceCollection services)
         {
             // ── Shell ────────────────────────────────────────────────────────
             services.AddSingleton<MainView>();
