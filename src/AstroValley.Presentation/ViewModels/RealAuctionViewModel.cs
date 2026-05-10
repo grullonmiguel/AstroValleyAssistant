@@ -1,6 +1,7 @@
 ﻿using AstroValley.Application.Interfaces.Export;
 using AstroValley.Application.Interfaces.Scraping;
 using AstroValley.Presentation.Services;
+using AstroValley.Presentation.ViewModels.Dialogs;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -73,6 +74,26 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
         catch (Exception ex)
         {
             SetIdle($"Error: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task OpenWebNavigation()
+    {
+        var dialogVm = new WebNavigationDialogViewModel("https://www.realauction.com/clients");
+        _dialogService!.ShowDialog(dialogVm);
+
+        var selectedUrl = await dialogVm.Result;
+
+        if (selectedUrl != null)
+        {
+            // User selected a URL - do something with it
+            Console.WriteLine($"User selected URL: {selectedUrl}");
+        }
+        else
+        {
+            // User cancelled (pressed X or Cancel button)
+            Console.WriteLine("User cancelled navigation");
         }
     }
 

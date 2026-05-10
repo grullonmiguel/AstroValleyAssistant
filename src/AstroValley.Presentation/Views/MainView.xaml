@@ -41,9 +41,11 @@
         <DataTemplate DataType="{x:Type dialogs:ResolveMatchesViewModel}">
             <viewDialogs:ResolveMatchesView />
         </DataTemplate>
-        <!-- Add this DataTemplate -->
         <DataTemplate DataType="{x:Type viewmodels:DialogWrapper}">
             <views:DialogWrapperView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:WebNavigationDialogViewModel}">
+            <viewDialogs:WebNavigationView />
         </DataTemplate>
     </Window.Resources>
 
