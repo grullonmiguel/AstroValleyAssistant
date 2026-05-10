@@ -1,6 +1,5 @@
 ﻿using AstroValley.Application.Interfaces.Export;
 using AstroValley.Domain.Models;
-using AstroValley.Presentation.ViewModels.Dialogs;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
@@ -11,8 +10,10 @@ namespace AstroValley.Presentation.ViewModels.Dialogs;
 /// Singleton ViewModel responsible for managing marker data, parsing inputs, 
 /// and orchestrating map exports.
 /// </summary>
-public partial class MarkerMapViewModel : DialogViewModelBase
+public partial class MarkerMapViewModel : DialogViewModelBase<bool>
 {
+    public override string Title => "Marker Map";
+
     private readonly IMarkerMapParserService? _parserService;
     private readonly IExporter<IEnumerable<MarkerLocation>, string>? _htmlExporter;
 

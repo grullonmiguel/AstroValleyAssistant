@@ -8,8 +8,9 @@ using System.Windows.Media;
 
 namespace AstroValley.Presentation.ViewModels.Dialogs;
 
-public class CountyMapDialogViewModel : DialogViewModelBase
+public class CountyMapDialogViewModel : DialogViewModelBase<bool>
 {
+    public override string Title => $"{State.Name}: {State.CountyCount} Counties";
     private readonly IGeographyDataService _geoService; 
     
     // Cache the calculated map bounds
@@ -51,7 +52,6 @@ public class CountyMapDialogViewModel : DialogViewModelBase
 
         State = state;
         IsLoading = true;
-        Title = $"{State.Name}: {State.CountyCount} Counties";
     }
 
     private Rect CalculateMapDimensions()

@@ -41,6 +41,10 @@
         <DataTemplate DataType="{x:Type dialogs:ResolveMatchesViewModel}">
             <viewDialogs:ResolveMatchesView />
         </DataTemplate>
+        <!-- Add this DataTemplate -->
+        <DataTemplate DataType="{x:Type viewmodels:DialogWrapper}">
+            <views:DialogWrapperView/>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid Background="{DynamicResource Brush.Background.Primary}">

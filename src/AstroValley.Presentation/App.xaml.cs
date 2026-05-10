@@ -43,8 +43,16 @@ namespace AstroValley.Presentation
         private static void ConfigureServices(HostBuilderContext ctx, IServiceCollection services)
         {
             // ── Shell ────────────────────────────────────────────────────────
-            services.AddSingleton<MainView>();
             services.AddSingleton<MainViewModel>();
+
+            // DialogService (singleton) - registered AFTER MainViewModel
+            services.AddSingleton<IDialogService>(sp =>
+            {
+                var mainViewModel = sp.GetRequiredService<MainViewModel>();
+                return new DialogService(mainViewModel);
+            });
+
+            services.AddSingleton<MainView>();
 
             // ── Page ViewModels (Singleton) ──────────────────────────────────
             services.AddSingleton<RegridViewModel>();
@@ -61,7 +69,6 @@ namespace AstroValley.Presentation
 
             // ── Presentation: WPF Services ───────────────────────────────────
             services.AddSingleton<IBrowserService, BrowserService>();
-            services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IThemeService, ThemeService>();
 
@@ -96,6 +103,12 @@ namespace AstroValley.Presentation
         {
             await _host.StartAsync();
             _host.Services.GetRequiredService<IThemeService>().Initialize();
+
+
+            // Initialize MainViewModel's current view AFTER all services are ready
+            var mainViewModel = _host.Services.GetRequiredService<MainViewModel>();
+            mainViewModel.CurrentViewModel = _host.Services.GetRequiredService<MapViewModel>();
+
             _host.Services.GetRequiredService<MainView>().Show();
             base.OnStartup(e);
         }

@@ -1,29 +1,42 @@
-﻿using AstroValley.Domain.Enums;
+﻿using AstroValley.Presentation.ViewModels;
 using AstroValley.Presentation.ViewModels.Dialogs;
 
 namespace AstroValley.Presentation.Services;
 
 public class DialogService : IDialogService
 {
-    // This Action will be set by the MainViewModel.
-    // It holds a reference to the method that can show a dialog.
-    public Action<DialogViewModelBase> ShowDialogAction { get; set; }
-    public Action<DialogViewModelBase> ShowDrawerDialogAction { get; set; }
+    private readonly MainViewModel _mainViewModel;
 
-    // This Action will be set by the MainViewModel for closing.
-    public Action CloseDialogAction { get; set; }
+    public bool IsDialogOpen => _mainViewModel.CurrentDialogViewModel != null;
 
-    public void ShowDialog(DialogViewModelBase viewModel, DialogOption dialogType = DialogOption.Default)
+    public DialogService(MainViewModel mainViewModel)
     {
-        // When a viewmodel calls ShowDialog, we invoke the action.
-        if (dialogType == DialogOption.Default) 
-            ShowDialogAction?.Invoke(viewModel);
-        else 
-            ShowDrawerDialogAction?.Invoke(viewModel);
+        _mainViewModel = mainViewModel;
+    }
+
+    public void ShowDialog(object dialogViewModel)
+    {
+        // Inject self so the VM can trigger close via CompleteDialog/CancelDialog
+        var vmType = dialogViewModel.GetType();
+        var method = vmType.GetMethod("SetDialogService",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        method?.Invoke(dialogViewModel, [this]);
+
+        // Wrap the dialog ViewModel in a DialogWrapper that provides chrome
+        var wrapper = new DialogWrapper(dialogViewModel, this);
+        _mainViewModel.CurrentDialogViewModel = wrapper;
     }
 
     public void CloseDialog()
     {
-        CloseDialogAction?.Invoke();
+        var currentDialog = _mainViewModel.CurrentDialogViewModel;
+        _mainViewModel.CurrentDialogViewModel = null;
+
+        // Notify ViewModel AFTER clearing, so any re-entrant CloseDialog calls are no-ops
+        if (currentDialog is DialogWrapper wrapper &&
+            wrapper.ContentViewModel is IDialogViewModel dialogVm)
+        {
+            dialogVm.OnDialogClosing();
+        }
     }
 }

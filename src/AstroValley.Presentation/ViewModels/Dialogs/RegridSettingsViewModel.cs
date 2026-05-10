@@ -3,11 +3,11 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace AstroValley.Presentation.ViewModels.Dialogs;
 
-public partial class RegridSettingsViewModel : DialogViewModelBase
+public partial class RegridSettingsViewModel : DialogViewModelBase<bool>
 {
-    private readonly IRegridSettings? _settings;
+    public override string Title => "Regrid Settings";
 
-    public Action? Saved { get; set; }
+    private readonly IRegridSettings? _settings;
 
     public string UserName
     {
@@ -47,7 +47,18 @@ public partial class RegridSettingsViewModel : DialogViewModelBase
         _settings!.Save();
 
         // 2. Notify the parent that we are done
-        Saved?.Invoke();
+        CompleteDialog(true);
+    }
+
+    [RelayCommand]
+    private void Cancel()
+    {
+        CompleteDialog(false); // Signals cancellation
+    }
+
+    public override void OnDialogClosing()
+    {
+        base.OnDialogClosing(); // Cancels task if not completed
     }
 
     private bool CanSave(object? parameter)

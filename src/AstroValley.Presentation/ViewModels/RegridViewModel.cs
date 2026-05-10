@@ -61,19 +61,25 @@ public partial class RegridViewModel : PropertyScraperViewModelBase
         IsResultButtonsVisible = PropertyRecords.Count > 0;
     }
 
-    private void ShowImportView()
+    private async Task ShowImportView()
     {
-        // 1. Resolve the ViewModel from the DI container to inject IFileService automatically
+        // 1. Resolve the ViewModel from the DI container
         var vm = _serviceProvider!.GetRequiredService<ImportViewModel>();
 
-        // 2. Set the callback specifically for this instanceCompleted = records =>
-        vm.OnImportCompleted = records =>
-        {
-            LoadImportedRecords(records);
-        };
-
-        // 3. Show the dialog
+        // 2. Show the dialog
         _dialogService?.ShowDialog(vm);
+
+        // 3. Await the result
+        try
+        {
+            var records = await vm.Result;
+            LoadImportedRecords(records);
+        }
+        catch (TaskCanceledException)
+        {
+            // User closed the dialog without importing
+            Status = "Import cancelled.";
+        }
     }
 
     private void LoadImportedRecords(List<PropertyRecord> records)

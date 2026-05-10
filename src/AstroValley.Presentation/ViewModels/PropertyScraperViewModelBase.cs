@@ -226,27 +226,34 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
                 property.ParcelId,
                 property.Address,
                 property.Owner,
-                property.Matches,
-                _dialogService!);
+                property.Matches);
 
             // Show the dialog
             _dialogService!.ShowDialog(dialogVm);
 
             // Await the result
-            var selectedMatch = await dialogVm.Result;
-
-            // If user selected a match (not cancelled), scrape it
-            if (selectedMatch != null)
+            try
             {
-                await ScrapeMatch(selectedMatch);
+                var selectedMatch = await dialogVm.Result;
+
+                // If user selected a match (not cancelled), scrape it
+                if (selectedMatch != null)
+                {
+                    await ScrapeMatch(selectedMatch);
+                }
+                // If cancelled (selectedMatch == null), do nothing - banner stays visible
             }
-            // If cancelled (selectedMatch == null), do nothing - banner stays visible
+            catch (TaskCanceledException)
+            {
+                // Dialog was closed without selection - do nothing, banner stays visible
+            }
         }
         finally
         {
             _isDialogOpen = false;  // Always reset state
         }
     }
+
 
     [RelayCommand]
     private void SetScrapeMode(RegridScrapeMode mode)

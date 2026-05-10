@@ -7,8 +7,10 @@ using System.IO;
 
 namespace AstroValley.Presentation.ViewModels.Dialogs;
 
-public partial class ImportViewModel : DialogViewModelBase
+public partial class ImportViewModel : DialogViewModelBase<List<PropertyRecord>>
 {
+    public override string Title => "Import Data";
+
     private readonly IFileService _fileService;
     private readonly List<Dictionary<string, string>> _allRows = new();
     private static readonly Dictionary<string, string[]> ColumnAliases = new()
@@ -21,7 +23,6 @@ public partial class ImportViewModel : DialogViewModelBase
         ["Acres"] = ["acres", "lotsize",  "acreage", "areaacres"]
     };
 
-    public Action<List<PropertyRecord>>? OnImportCompleted { get; set; }
 
     // -----------------------------
     // State
@@ -181,12 +182,14 @@ public partial class ImportViewModel : DialogViewModelBase
             var records = await Task.Run(() => BuildRecordsFromAllRows());
 
             // Invoke the callback (usually updates a main collection or DB)
-            OnImportCompleted?.Invoke(records);
+            //OnImportCompleted?.Invoke(records);
 
             Status = $"Successfully imported {records.Count} records.";
 
             // Optional: Prevent double-execution if the UI doesn't close immediately
-            OnImportCompleted = null;
+            //OnImportCompleted = null;
+            // Complete the dialog with the records
+            CompleteDialog(records);
         }
         catch (Exception ex)
         {
