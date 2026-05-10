@@ -38,6 +38,9 @@
         <DataTemplate DataType="{x:Type dialogs:MarkerMapViewModel}">
             <viewDialogs:MarkerMapView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:ResolveMatchesViewModel}">
+            <viewDialogs:ResolveMatchesView />
+        </DataTemplate>
     </Window.Resources>
 
     <Grid Background="{DynamicResource Brush.Background.Primary}">

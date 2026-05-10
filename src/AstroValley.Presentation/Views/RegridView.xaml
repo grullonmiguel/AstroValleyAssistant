@@ -85,17 +85,13 @@
                 <Border>
                     <local:PropertyDetailsControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" Focusable="False"/>
                 </Border>
-
-                <!-- ========== MULTIPLE MATCHES AREA ========== -->
-                <Border Grid.Row="1" Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" Margin="0 16 0 0">
-                    <local:MultipleMatchesControl Focusable="False" SelectMatchCommand="{Binding SelectMatchCommand}" SelectedItem="{Binding ElementName=AuctionGrid, Path=SelectedItem}"  />
-                </Border>
             </Grid>
         </Border>
         
         <!-- Regrid Data -->
         <Grid Grid.Column="1" Margin="16 0 0 0 ">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition />
                 <RowDefinition Height="Auto"/>
@@ -153,20 +149,26 @@
 
                         <!-- Copy Button -->
                         <control:IconTextButton Text="Copy" Icon="{StaticResource Icon.Copy}" 
-                                                Command="{Binding CopyRecordsToClipboardCommand}" Margin="0 0 8 0" 
+                                                Command="{Binding CopyToClipboardCommand}" Margin="0 0 8 0" 
                                                 Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
 
                         <!-- Scrape Regrid Data Button -->
-                        <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}" Command="{Binding LoadRegridDataCommand}" />
+                        <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}" Command="{Binding EnrichWithRegridCommand}" />
 
                     </StackPanel>
 
                 </Grid>
             </Border>
 
+            <!-- Row 1: Multiple Matches Banner -->
+            <local:MultipleMatchesBanner MatchCount="{Binding PropertySelected.Matches.Count, Mode=OneWay}" 
+                                                ParcelId="{Binding PropertySelected.ParcelId, Mode=OneWay}"
+                                                ViewMatchesCommand="{Binding ViewMatchesCommand}"
+                                                ViewMatchesCommandParameter="{Binding PropertySelected}"
+                                                Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"/>
             <!-- Parcel List -->
-            <FrameworkElement Grid.Row="1" x:Name="FrameWorkElementProxy" Visibility="Collapsed"/>
-            <DataGrid Grid.Row="1" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}">
+            <FrameworkElement Grid.Row="2" x:Name="FrameWorkElementProxy" Visibility="Collapsed"/>
+            <DataGrid Grid.Row="2" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}">
                 <DataGrid.Columns>
                     <DataGridTemplateColumn Header="Status" Width="85" CellTemplate="{StaticResource StatusBadgeTemplate}"   />
                     <DataGridTextColumn Header="Parcel ID" Binding="{Binding ParcelId}" Width="Auto"/>

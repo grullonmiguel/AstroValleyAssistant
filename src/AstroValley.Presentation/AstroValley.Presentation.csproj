@@ -35,9 +35,6 @@
     <Compile Update="Views\MapView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Views\MultipleMatchesControl.xaml.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Update="Views\PropertyDetailsControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

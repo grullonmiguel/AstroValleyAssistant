@@ -89,6 +89,90 @@
             </DataTemplate.Triggers>
         </DataTemplate>
 
+        <!-- Multiple Matches Banner Styles -->
+        <Style x:Key="MultipleMatchesBanner.Border" TargetType="Border">
+            <Setter Property="Background" Value="#E8EAF6"/>
+            <Setter Property="BorderBrush" Value="#5C6BC0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Margin" Value="0,8,0,8"/>
+        </Style>
+
+        <Style x:Key="MultipleMatchesBanner.Icon" TargetType="Path">
+            <Setter Property="Fill" Value="#5C6BC0"/>
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Margin" Value="0,2,12,0"/>
+        </Style>
+
+        <Style x:Key="MultipleMatchesBanner.Title" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#1A237E"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="MultipleMatchesBanner.Subtitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#5C6BC0"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="MultipleMatchesBanner.Button" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#5C6BC0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#5C6BC0"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+            <ControlTemplate TargetType="Button">
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="4"
+                        Padding="{TemplateBinding Padding}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ContentPresenter Grid.Column="0" 
+                                        HorizontalAlignment="Center" 
+                                        VerticalAlignment="Center"/>
+                        <Path Grid.Column="1" 
+                              Data="M7 10L12 15L17 10H7Z" 
+                              Fill="{TemplateBinding Foreground}"
+                              Width="12" 
+                              Height="12" 
+                              Stretch="Uniform"
+                              Margin="8,0,0,0"/>
+                    </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#F5F5F5"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="#EEEEEE"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Info Icon Geometry -->
+        <Geometry x:Key="Icon.Info">M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M13,17H11V11H13V17M13,9H11V7H13V9Z</Geometry>
+
     </UserControl.Resources>
 
     <Grid Style="{StaticResource ViewSlideInFromTopStyle}" Margin="0 0 16 16" >
@@ -159,11 +243,6 @@
                         <Border Grid.Row="1" Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <local:PropertyDetailsControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" Focusable="False"/>
                         </Border>
-
-                        <!-- ========== MULTIPLE MATCHES AREA ========== -->
-                        <Border Grid.Row="2" Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" Margin="0 16 0 0">
-                            <local:MultipleMatchesControl SelectMatchCommand="{Binding ScrapeMatchCommand}" SelectedItem="{Binding ElementName=AuctionGrid, Path=SelectedItem}"  />
-                        </Border>
                     </Grid>
                 </Border>
 
@@ -174,11 +253,12 @@
         <Grid Grid.Column="1" Margin="16 0 0 0 ">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition />
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Border Background="{StaticResource Brush.Accent}" Padding="16 0" Height="50">
+            <Border Grid.Row="1" Background="{StaticResource Brush.Accent}" Padding="16 0" Height="50">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -211,7 +291,7 @@
                         
                         <!-- Map Button -->
                         <control:IconTextButton Text="Map" Icon="{StaticResource Icon.MapOutline}" 
-                                                Command="{Binding MapCommand}" Margin="0 0 8 0" 
+                                                Command="{Binding ViewInMapCommand}" Margin="0 0 8 0" 
                                                 Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
 
                         <!-- Clear Button -->
@@ -221,7 +301,7 @@
                         
                         <!-- Copy Button -->
                         <control:IconTextButton Text="Copy" Icon="{StaticResource Icon.Copy}" 
-                                                Command="{Binding CopyRecordsToClipboardCommand}" Margin="0 0 8 0" 
+                                                Command="{Binding CopyToClipboardCommand}" Margin="0 0 8 0" 
                                                 Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
 
                         <!-- Scrape Regrid Data Button -->
@@ -230,18 +310,25 @@
                     
                 </Grid>
             </Border>
+
+            <!-- Row 1: Multiple Matches Banner -->
+            <local:MultipleMatchesBanner MatchCount="{Binding PropertySelected.Matches.Count, Mode=OneWay}" 
+                                                ParcelId="{Binding PropertySelected.ParcelId, Mode=OneWay}"
+                                                ViewMatchesCommand="{Binding ViewMatchesCommand}"
+                                                ViewMatchesCommandParameter="{Binding PropertySelected}"
+                                                Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"/>
             
-            <!-- Parcel List -->
-            <FrameworkElement Grid.Row="1" x:Name="FrameWorkElementProxy" Visibility="Collapsed"/>
-            <DataGrid Grid.Row="1" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}">
+            <!-- Row 2: Parcel List -->
+            <FrameworkElement Grid.Row="2" x:Name="FrameWorkElementProxy" Visibility="Collapsed"/>
+            <DataGrid Grid.Row="2" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}">
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="Status" Width="85" CellTemplate="{StaticResource StatusBadgeTemplate}"   />
+                    <DataGridTemplateColumn Header="Status" Width="85" CellTemplate="{StaticResource StatusBadgeTemplate}"/>
                     <DataGridTextColumn Header="Parcel ID" Binding="{Binding ParcelId}" Width="Auto"/>
                     <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
-                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="Auto" />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="Auto"/>
                     <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="100"/>
                     <DataGridTextColumn Header="Opening Bid" Binding="{Binding Bid, StringFormat={}{0:C}}" Width="100"/>
-                    <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="100"  />
+                    <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="100"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>

@@ -1,6 +1,7 @@
 ﻿using AstroValley.Application.Interfaces.Export;
 using AstroValley.Application.Interfaces.Scraping;
 using AstroValley.Presentation.Services;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace AstroValley.Presentation.ViewModels;
@@ -9,27 +10,16 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
 {
     private readonly IRealTaxDeedClient _realScraper;
 
-    // -----------------------------
-    // UI State
-    // -----------------------------
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(OpenRealAuctionCommand))]
+    [NotifyCanExecuteChangedFor(nameof(LoadRealAuctionCommand))]
+    public partial string? CurrentAuctionUrl { get; private set; }
 
-    public string? CurrentAuctionUrl
-    {
-        get;
-        private set => SetProperty(ref field, value);
-    }
-
-    public string? CurrentAuctionAlias
-    {
-        get;
-        private set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    public partial string? CurrentAuctionAlias { get; private set; }
 
     public RealAuctionCalendarDataViewModel RealAuctionCalendarData { get; }
 
-    // -----------------------------
-    // Constructor
-    // -----------------------------
     public RealAuctionViewModel(
         IRegridService regridService,
         IRealTaxDeedClient realScraper,
@@ -50,11 +40,7 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
         RealAuctionCalendarData.Initialize();
     }
 
-    // -----------------------------
-    // RealAuction Loading
-    // -----------------------------
-
-    [RelayCommand(CanExecute = nameof(CanLoadRealAuction))]
+    [RelayCommand(CanExecute = nameof(CanExecuteAuctionCommands))]
     public async Task LoadRealAuctionAsync()
     {
         BeginOperation("Loading RealAuction data...");
@@ -69,15 +55,12 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
             });
 
             var records = await _realScraper
-                .GetAuctionRecordsAsync(CurrentAuctionUrl, ct, progress)
-                .ConfigureAwait(false);
+                .GetAuctionRecordsAsync(CurrentAuctionUrl, ct, progress);
 
-            App.Current.Dispatcher.Invoke(() =>
-            {
-                PropertyRecords.Clear();
-                foreach (var record in records)
-                    PropertyRecords.Add(new PropertyDataViewModel(record, _browserService));
-            });
+            PropertyRecords.Clear();
+            foreach (var record in records)
+                PropertyRecords.Add(new PropertyDataViewModel(record, _browserService));
+
 
             SetIdle($"Loaded {PropertyRecords.Count} properties.");
             IsScrapeVisible = false;
@@ -92,19 +75,26 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
             SetIdle($"Error: {ex.Message}");
         }
     }
-    private bool CanLoadRealAuction => !IsScraping;
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanOpenRealAuction))]
     private void OpenRealAuction() => _browserService!.Launch(CurrentAuctionUrl);
 
-    // -----------------------------
-    // Helpers
-    // -----------------------------
+    // Shared guard — used by both commands
+    private bool CanExecuteAuctionCommands() => !IsScraping && CurrentAuctionUrl is not null;
 
+    private bool CanOpenRealAuction() => CurrentAuctionUrl is not null;
+    
     private void OnAuctionUrlAvailable(string url, DateTime date)
     {
         CurrentAuctionUrl = url;
         var countyName = RealAuctionCalendarData?.SelectedCounty?.Name ?? "Auction";
         CurrentAuctionAlias = $"{countyName} - {date:M/d/yy}";
+    }
+
+    // IsScraping notifications for derived commands
+    protected override void OnIsScrapingChangedCore(bool value)
+    {
+        LoadRealAuctionCommand.NotifyCanExecuteChanged();
+        OpenRealAuctionCommand.NotifyCanExecuteChanged();
     }
 }

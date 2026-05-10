@@ -57,6 +57,7 @@ namespace AstroValley.Presentation
             services.AddTransient<RegridSettingsViewModel>();
             services.AddTransient<RealAuctionCalendarDataViewModel>();
             services.AddTransient<ThemeSettingsViewModel>();
+            services.AddTransient<ResolveMatchesViewModel>();
 
             // ── Presentation: WPF Services ───────────────────────────────────
             services.AddSingleton<IBrowserService, BrowserService>();

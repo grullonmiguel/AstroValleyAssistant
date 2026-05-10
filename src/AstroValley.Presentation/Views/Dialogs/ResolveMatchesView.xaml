@@ -1,0 +1,279 @@
+﻿<UserControl x:Class="AstroValley.Presentation.Views.Dialogs.ResolveMatchesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:AstroValley.Presentation.Views.Dialogs"
+             Width="700">
+
+    <UserControl.Resources>
+
+        <!-- Match Card Border Style -->
+        <Style x:Key="MatchCard.Border" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#5C6BC0"/>
+                    <Setter Property="Background" Value="#F5F7FF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Match Card Title -->
+        <Style x:Key="MatchCard.Title" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#1A237E"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+
+        <!-- Match Card Label -->
+        <Style x:Key="MatchCard.Label" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="#757575"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <!-- Match Card Value -->
+        <Style x:Key="MatchCard.Value" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#212121"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+
+        <!-- Select Button Style -->
+        <Style x:Key="MatchCard.SelectButton" TargetType="Button">
+            <Setter Property="Background" Value="#5C6BC0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="24,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#3F51B5"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#303F9F"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Cancel Button Style -->
+        <Style x:Key="Dialog.CancelButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#757575"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="24,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F5F5F5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </UserControl.Resources>
+
+    <Border Background="White" CornerRadius="12" Padding="32">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                <TextBlock Text="Resolve Multiple Matches" 
+                       FontSize="24" 
+                       FontWeight="SemiBold" 
+                       Foreground="#1A237E"/>
+            </StackPanel>
+
+            <!-- ✅ Property Info Card -->
+            <Border Grid.Row="1" 
+                    Background="#F5F7FF" 
+                    BorderBrush="#5C6BC0"
+                    BorderThickness="2"
+                    Padding="16" 
+                    CornerRadius="8" 
+                    Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Label -->
+                    <Border Grid.Column="0"
+                        Background="#5C6BC0"
+                        Padding="8,4"
+                        CornerRadius="4"
+                        VerticalAlignment="Top"
+                        Margin="0,0,12,0">
+                        <TextBlock Text="ORIGINAL PROPERTY" 
+                               FontSize="10" 
+                               FontWeight="Bold"
+                               Foreground="White"/>
+                    </Border>
+
+                    <!-- Property Details -->
+                    <StackPanel Grid.Column="1">
+                        <TextBlock FontSize="15" 
+                               FontWeight="SemiBold" 
+                               Foreground="#1A237E"
+                               Margin="0,0,0,8">
+                        <Run Text="Parcel ID:"/>
+                        <Run Text="{Binding OriginalParcelId, Mode=OneWay}" FontWeight="Bold"/>
+                        </TextBlock>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Address -->
+                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                   Text="Address:" 
+                                   FontSize="12"
+                                   FontWeight="Medium"
+                                   Foreground="#757575"
+                                   Margin="0,0,8,4"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1"
+                                   Text="{Binding OriginalAddress}" 
+                                   FontSize="12"
+                                   Foreground="#212121"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,4"/>
+
+                            <!-- Owner -->
+                            <TextBlock Grid.Row="1" Grid.Column="0"
+                                   Text="Owner:" 
+                                   FontSize="12"
+                                   FontWeight="Medium"
+                                   Foreground="#757575"
+                                   Margin="0,0,8,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1"
+                                   Text="{Binding OriginalOwner}" 
+                                   FontSize="12"
+                                   Foreground="#212121"
+                                   TextWrapping="Wrap"/>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Matches Count -->
+            <Border Grid.Row="2" 
+                Background="#E8EAF6" 
+                Padding="12,8" 
+                CornerRadius="6" 
+                Margin="0,0,0,16">
+                <TextBlock FontSize="13" Foreground="#5C6BC0">
+                    <Run Text="{Binding Matches.Count, Mode=OneWay}" FontWeight="SemiBold"/>
+                    <Run Text="possible matches found - select the correct one:"/>
+                </TextBlock>
+            </Border>
+
+            <!-- Matches List -->
+            <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Matches}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource MatchCard.Border}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Parcel ID -->
+                                    <TextBlock Grid.Row="0" Text="{Binding ParcelId}" Style="{StaticResource MatchCard.Title}"/>
+
+                                    <!-- Address -->
+                                    <StackPanel Grid.Row="1">
+                                        <TextBlock Text="ADDRESS" Style="{StaticResource MatchCard.Label}"/>
+                                        <TextBlock Text="{Binding Address}" Style="{StaticResource MatchCard.Value}"/>
+                                    </StackPanel>
+
+                                    <!-- City -->
+                                    <StackPanel Grid.Row="2">
+                                        <TextBlock Text="CITY" Style="{StaticResource MatchCard.Label}"/>
+                                        <TextBlock Text="{Binding City}" Style="{StaticResource MatchCard.Value}"/>
+                                    </StackPanel>
+
+                                    <!-- Owner -->
+                                    <StackPanel Grid.Row="3">
+                                        <TextBlock Text="OWNER" Style="{StaticResource MatchCard.Label}"/>
+                                        <TextBlock Text="{Binding Owner}" Style="{StaticResource MatchCard.Value}"/>
+                                    </StackPanel>
+
+                                    <!-- Select Button -->
+                                    <Button Grid.Row="4" 
+                                            Content="Select as Correct" 
+                                            Style="{StaticResource MatchCard.SelectButton}"
+                                            Command="{Binding DataContext.SelectMatchCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Footer -->
+            <Button Grid.Row="4" 
+                    Content="Cancel" 
+                    Style="{StaticResource Dialog.CancelButton}"
+                    Command="{Binding CancelCommand}"
+                    HorizontalAlignment="Left"
+                    Margin="0,24,0,0"/>
+        </Grid>
+    </Border>
+</UserControl>

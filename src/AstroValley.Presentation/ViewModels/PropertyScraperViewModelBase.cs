@@ -15,82 +15,44 @@ namespace AstroValley.Presentation.ViewModels;
 
 public abstract partial class PropertyScraperViewModelBase : ObservableObject
 {
+    private bool _isDialogOpen = false;
+
     protected IDialogService? _dialogService;
     protected IServiceProvider? _serviceProvider;
     protected IExporter<IEnumerable<PropertyRecord>, string>? _clipboardExporter;
     protected IExporter<IEnumerable<PropertyRecord>, string?>? _excelExporter;
-
     protected CancellationTokenSource? _cts;
     protected IRegridService? _regridService;
     protected IBrowserService? _browserService;
 
+    [ObservableProperty]
+    public partial string? Status { get; set; }
 
-    // -----------------------------
-    // UI State
-    // -----------------------------
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(EnrichWithRegridCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ViewInMapCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CancelOperationCommand))]
+    public partial bool IsScraping { get; set; }
 
-    public string? Status
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ViewInMapCommand))]
+    public partial bool IsRegridDataLoaded { get; set; }
 
-    public bool IsScraping
-    {
-        get;
-        set
-        {
-            if (SetProperty(ref field, value))
-            {
-                // Notify all commands that depend on IsScraping
-                // Use BeginInvoke for non-blocking dispatch
-                App.Current.Dispatcher.BeginInvoke(() =>
-                {
-                    EnrichWithRegridCommand.NotifyCanExecuteChanged();
-                    ViewInMapCommand.NotifyCanExecuteChanged();
-                    CancelOperationCommand.NotifyCanExecuteChanged();
-                });
-            }
-        }
-    }
+    [ObservableProperty]
+    public partial bool IsScrapeVisible { get; set; } = true;
 
-    public bool IsRegridDataLoaded
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    public partial bool IsResultButtonsVisible { get; set; }
 
-    public bool IsScrapeVisible
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    [ObservableProperty]
+    public partial RegridScrapeMode ScrapeMode { get; set; } = RegridScrapeMode.ParcelId;
 
-    public bool IsResultButtonsVisible
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    public partial PropertyDataViewModel? PropertySelected { get; set; }
 
-    public RegridScrapeMode ScrapeMode
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = RegridScrapeMode.ParcelId; // Initializer for the backing field
-
-    public PropertyDataViewModel? PropertySelected
-    {
-        get;
-        set
-        {
-            if (field != value)
-                SetProperty(ref field, value);
-        }
-    }
-
-    // Shared collection
     public ObservableCollection<PropertyDataViewModel> PropertyRecords { get; } = [];
 
+    // ✅ Called when PropertyRecords collection items are added/removed
     protected void OnPropertyRecordsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         EnrichWithRegridCommand.NotifyCanExecuteChanged();
@@ -125,9 +87,6 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         }
     }
 
-    /// <summary>
-    /// Orchestrates the transformation and export of property records to the clipboard.
-    /// </summary>
     [RelayCommand]
     private async Task CopyToClipboardAsync()
     {
@@ -147,9 +106,6 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         }
     }
 
-    // -----------------------------
-    // Regrid Scraping
-    // -----------------------------
     [RelayCommand(CanExecute = nameof(CanLoadRegridData))]
     protected async Task EnrichWithRegrid()
     {
@@ -164,10 +120,6 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         try
         {
             var ct = _cts!.Token;
-
-            //            string query = ScrapeMode == RegridScrapeMode.ParcelId
-            //                ? vm.ParcelId
-            //                : vm.Address;
 
             // 1. Build list of parcel queries
             var queries = PropertyRecords
@@ -219,13 +171,10 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
             SetIdle($"Error: {ex.Message}");
         }
     }
-    private bool CanLoadRegridData => PropertyRecords.Count > 0 && !IsScraping;
 
     [RelayCommand(CanExecute = nameof(CanScrapeMatch))]
     public async Task ScrapeMatch(RegridMatch match)
     {
-        System.Diagnostics.Debug.WriteLine($"ScrapeMatch INVOKED: match={match?.ParcelId}");
-
         if (PropertySelected == null)
             return;
 
@@ -261,60 +210,42 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
             SetIdle($"Error: {ex.Message}");
         }
     }
-    private bool CanScrapeMatch(RegridMatch? match)
+
+    [RelayCommand(CanExecute = nameof(CanViewMatches))]
+    private async Task ViewMatches(PropertyDataViewModel property)
     {
-        System.Diagnostics.Debug.WriteLine($"CanScrapeMatch called: match={match?.ParcelId}, PropertySelected={PropertySelected?.ParcelId}");
-        return match != null && PropertySelected != null;
-    }
-
-    protected void ApplyRegridResult(PropertyDataViewModel vm, RegridParcelResult result)
-    {
-        vm.Matches.Clear();
-        vm.HasMultipleMatches = false;
-
-        // Error case
-        if (result.Error != null)
-        {
-            vm.Status = ScrapeStatus.Error;
+        if (property == null || !property.HasMultipleMatches || _isDialogOpen)
             return;
-        }
 
-        // Not Found case
-        if (result.NotFound)
+        _isDialogOpen = true;  // Mark dialog as open
+
+        try
         {
-            // If scraper provided a record with a RegridUrl (search URL), merge just that
-            if (!string.IsNullOrWhiteSpace(result.Record?.RegridUrl))
+            // Create the dialog ViewModel with original property info
+            var dialogVm = new ResolveMatchesViewModel(
+                property.ParcelId,
+                property.Address,
+                property.Owner,
+                property.Matches,
+                _dialogService!);
+
+            // Show the dialog
+            _dialogService!.ShowDialog(dialogVm);
+
+            // Await the result
+            var selectedMatch = await dialogVm.Result;
+
+            // If user selected a match (not cancelled), scrape it
+            if (selectedMatch != null)
             {
-                var existing = vm.Record ?? new PropertyRecord();
-                vm.Record = existing with { RegridUrl = result.Record.RegridUrl };
+                await ScrapeMatch(selectedMatch);
             }
-
-            vm.Status = ScrapeStatus.NotFound;
-            return;
+            // If cancelled (selectedMatch == null), do nothing - banner stays visible
         }
-
-        // Multiple Matches case
-        if (result.IsMultiple)
+        finally
         {
-            foreach (var match in result.Matches)
-                vm.Matches.Add(match);
-
-            vm.HasMultipleMatches = true;
-
-            // If scraper provided a record with a RegridUrl (search URL), merge just that
-            if (!string.IsNullOrWhiteSpace(result.Record?.RegridUrl))
-            {
-                var existing = vm.Record ?? new PropertyRecord();
-                vm.Record = existing with { RegridUrl = result.Record.RegridUrl };
-            }
-
-            vm.Status = ScrapeStatus.MultipleMatches;
-            return;
+            _isDialogOpen = false;  // Always reset state
         }
-
-        // Success case: full merge
-        vm.Record = PropertyRecordMerger.Merge(vm.Record, result.Record!);
-        vm.Status = ScrapeStatus.Success;
     }
 
     [RelayCommand]
@@ -325,19 +256,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         _ = EnrichWithRegrid();
     }
 
-    // -----------------------------
-    // Helpers
-    // -----------------------------
-
-    protected void BeginOperation(string message)
-    {
-        CancelOperation();
-        _cts = new CancellationTokenSource();
-        IsScraping = true;
-        Status = message;
-    }
-
-    [RelayCommand(CanExecute = nameof(IsScraping))]
+    [RelayCommand(CanExecute = nameof(CanCancelOperation))]
     protected void CancelOperation()
     {
         if (_cts != null && !_cts.IsCancellationRequested)
@@ -396,7 +315,81 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
             throw;
         }
     }
+
+    [RelayCommand]
+    private void Clear()
+    {
+        _isDialogOpen = false;
+        PropertyRecords.Clear();
+        Status = string.Empty;
+        IsRegridDataLoaded = false;
+        IsScrapeVisible = true;
+        IsResultButtonsVisible = false;
+    }
+
+    private bool CanCancelOperation => IsScraping;
     private bool CanMap => PropertyRecords.Count > 0 && !IsScraping && IsRegridDataLoaded;
+    private bool CanLoadRegridData => PropertyRecords.Count > 0 && !IsScraping;
+    private bool CanScrapeMatch(RegridMatch? match) => match != null && PropertySelected != null;
+    private bool CanViewMatches(PropertyDataViewModel? property) => property != null && property.HasMultipleMatches && !_isDialogOpen;
+
+    protected void ApplyRegridResult(PropertyDataViewModel vm, RegridParcelResult result)
+    {
+        vm.Matches.Clear();
+        vm.HasMultipleMatches = false;
+
+        // Error case
+        if (result.Error != null)
+        {
+            vm.Status = ScrapeStatus.Error;
+            return;
+        }
+
+        // Not Found case
+        if (result.NotFound)
+        {
+            // If scraper provided a record with a RegridUrl (search URL), merge just that
+            if (!string.IsNullOrWhiteSpace(result.Record?.RegridUrl))
+            {
+                var existing = vm.Record ?? new PropertyRecord();
+                vm.Record = existing with { RegridUrl = result.Record.RegridUrl };
+            }
+
+            vm.Status = ScrapeStatus.NotFound;
+            return;
+        }
+
+        // Multiple Matches case
+        if (result.IsMultiple)
+        {
+            foreach (var match in result.Matches)
+                vm.Matches.Add(match);
+
+            vm.HasMultipleMatches = true;
+
+            // If scraper provided a record with a RegridUrl (search URL), merge just that
+            if (!string.IsNullOrWhiteSpace(result.Record?.RegridUrl))
+            {
+                var existing = vm.Record ?? new PropertyRecord();
+                vm.Record = existing with { RegridUrl = result.Record.RegridUrl };
+            }
+
+            vm.Status = ScrapeStatus.MultipleMatches;
+            return;
+        }
+
+        // Success case: full merge
+        vm.Record = PropertyRecordMerger.Merge(vm.Record, result.Record!);
+        vm.Status = ScrapeStatus.Success;
+    }
+
+    protected void BeginOperation(string message)
+    {
+        CancelOperation();
+        _cts = new CancellationTokenSource();
+        IsScraping = true;
+        Status = message;
+    }
 
     protected void SetIdle(string message)
     {
@@ -404,17 +397,9 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         Status = message;
     }
 
-    // -----------------------------
-    // Shared Clear Logic
-    // -----------------------------
+    // partial void consumed by the generator — forwards to virtual
+    partial void OnIsScrapingChanged(bool value) => OnIsScrapingChangedCore(value);
 
-    [RelayCommand]
-    private void Clear()
-    {
-        PropertyRecords.Clear();
-        Status = string.Empty;
-        IsRegridDataLoaded = false;
-        IsScrapeVisible = true;
-        IsResultButtonsVisible = false;
-    }
+    // virtual — safe to override in derived classes
+    protected virtual void OnIsScrapingChangedCore(bool value) { }
 }
