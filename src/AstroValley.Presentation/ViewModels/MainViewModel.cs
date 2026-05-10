@@ -84,7 +84,18 @@ public partial class MainViewModel : ObservableObject, IDialogService
     }
 
     [RelayCommand]
-    public void CloseDialog() => CurrentDialogViewModel = null;
+    public void CloseDialog()
+    {
+        // Call lifecycle hook if the ViewModel implements it
+        if (CurrentDialogViewModel != null)
+        {
+            // Use reflection to check if OnDialogClosing method exists
+            var method = CurrentDialogViewModel.GetType().GetMethod("OnDialogClosing");
+            method?.Invoke(CurrentDialogViewModel, null);
+        }
+
+        CurrentDialogViewModel = null;
+    }
 
     public void OpenDrawer(DialogViewModelBase drawerViewModel) => CurrentDrawerViewModel = drawerViewModel;
 
