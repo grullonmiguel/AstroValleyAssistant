@@ -16,9 +16,6 @@ public class RegridSettings
 public class RealAuctionSettings
 {
     public string Url { get; set; } = string.Empty;
-    public string State { get; set; } = string.Empty;
-    public string County { get; set; } = string.Empty;
-    public string LastAuctionDate { get; set; } = string.Empty;
 }
 
 public class ThemeSettings

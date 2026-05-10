@@ -5,36 +5,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:AstroValley.Presentation.Views"
              xmlns:control="clr-namespace:AstroValley.Presentation.Themes.Controls"
-             xmlns:behaviors="clr-namespace:AstroValley.Presentation.Behaviors"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 
     <UserControl.Resources>
-
-        <DataTemplate x:Key="CountySelectedTemplate">
-            <TextBlock Text="{Binding Name}" />
-        </DataTemplate>
-
-        <DataTemplate x:Key="CountyDropDownTemplate">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding Name}" />
-                <TextBlock HorizontalAlignment="Center" Grid.Column="1">
-                    <Hyperlink NavigateUri="{Binding Calendar}" RequestNavigate="Hyperlink_RequestNavigate" Style="{StaticResource Hyperlinks.Primary}" TextDecorations="None">
-                        <Grid Background="Transparent">
-                            <Path Data="{StaticResource Icon.Calendar}" Width="14" Height="14" Fill="{DynamicResource Brush.Accent.Secondary}" Stretch="Uniform" />
-                        </Grid>
-                    </Hyperlink>
-                </TextBlock>
-            </Grid>
-        </DataTemplate>
-
-        <behaviors:ComboBoxItemTemplateSelector x:Key="CountyTemplateSelector" 
-                                                SelectedTemplate="{StaticResource CountySelectedTemplate}" 
-                                                DropDownTemplate="{StaticResource CountyDropDownTemplate}" />
        
         <DataTemplate x:Key="StatusBadgeTemplate">
             <Border x:Name="StatusBadge" 
@@ -122,38 +96,6 @@
                             <RowDefinition />
                         </Grid.RowDefinitions>
 
-                        <!-- ========== REAL AUCTION PARAMETERS ========== -->
-                        <StackPanel Grid.Row="0" Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
-
-                            <!-- Header / Title -->
-                            <TextBlock Text="Auction Filters" Style="{StaticResource Theme.TextBlock.Sidebar.Title}" />
-
-                            <TextBlock  Style="{StaticResource Theme.TextBlock.Sidebar.Label}" Text="State" Margin="4 0 0 4" />
-                            <ComboBox DisplayMemberPath="Name"
-                                      ItemsSource="{Binding RealAuctionCalendarData.States}" 
-                                      SelectedItem="{Binding RealAuctionCalendarData.SelectedState}"                           
-                                      Style="{StaticResource Theme.ComboBox.Secondary}"/>
-
-                            <TextBlock Style="{StaticResource Theme.TextBlock.Sidebar.Label}" Text="County" Margin="4 16 0 4"/>
-                            <ComboBox ItemsSource="{Binding RealAuctionCalendarData.Counties}"
-                                      SelectedItem="{Binding RealAuctionCalendarData.SelectedCounty}"
-                                      Style="{StaticResource Theme.ComboBox.Secondary}"
-                                      ItemTemplateSelector="{StaticResource CountyTemplateSelector}" />
-
-                            <TextBlock Style="{StaticResource Theme.TextBlock.Sidebar.Label}" Text="Date" Margin="4 16 0 4" />
-                            <DatePicker Style="{StaticResource Theme.DatePicker.Primary}" 
-                                        SelectedDate="{Binding RealAuctionCalendarData.SelectedDate}" 
-                                        DisplayDateStart="{Binding RealAuctionCalendarData.MinAuctionDate, Mode=OneWay}" />
-
-                            <!-- Button to update URL -->
-                            <control:IconTextButton 
-                                Text="Update"  
-                                Margin="0 8 0 0"
-                                HorizontalAlignment="Right"
-                                Icon="{StaticResource Icon.Save}"
-                                Command="{Binding RealAuctionCalendarData.UpdateAuctionUrlCommand}" />
-                        </StackPanel>
-
                         <!-- ========== PROPERTY DETAILS AREA ========== -->
                         <Border Grid.Row="1" Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <local:PropertyDetailsControl DataContext="{Binding ElementName=AuctionGrid, Path=SelectedItem}" Focusable="False"/>
@@ -187,14 +129,22 @@
                     <ProgressBar IsIndeterminate="True" Height="16" Grid.Column="1" Width="200"
                              Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     
-                    <Button 
-                        Grid.Column="3" Height="42"
-                        Content="Get Real Auction List" 
-                        VerticalAlignment="Center"
-                        Command="{Binding LoadRealAuctionCommand}" 
-                        Style="{StaticResource Theme.Button.Primary}"
-                        IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}"
-                        Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
+                                Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <control:IconTextButton 
+                            Height="42"
+                            Margin="0 0 8 0"
+                            Text="Navigate to Real Auction"
+                            Icon="{StaticResource Icon.Web.Search}"
+                            Command="{Binding OpenWebNavigationCommand}"
+                            IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}"/>
+                        <Button 
+                            Height="42"
+                            Content="Get Real Auction Data" 
+                            Command="{Binding LoadRealAuctionCommand}" 
+                            Style="{StaticResource Theme.Button.Primary}"
+                            IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}"/>
+                    </StackPanel>
 
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
                                 Visibility="{Binding IsResultButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">

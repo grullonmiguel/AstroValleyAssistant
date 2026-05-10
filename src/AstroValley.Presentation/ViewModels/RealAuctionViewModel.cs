@@ -1,15 +1,23 @@
 ﻿using AstroValley.Application.Interfaces.Export;
 using AstroValley.Application.Interfaces.Scraping;
+using AstroValley.Application.Interfaces.Settings;
 using AstroValley.Presentation.Services;
 using AstroValley.Presentation.ViewModels.Dialogs;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Text.RegularExpressions;
 
 namespace AstroValley.Presentation.ViewModels;
 
 public partial class RealAuctionViewModel : PropertyScraperViewModelBase
 {
     private readonly IRealTaxDeedClient _realScraper;
+    private readonly IRealAuctionSettings _realAuctionSettings;
+
+    // Matches realtaxdeed.com or realforeclose.com auction preview URLs with an AUCTIONDATE param
+    private static readonly Regex RealAuctionUrlPattern = new(
+        @"^https?://[^.]+\.real(taxdeed|foreclose)\.com/.*[?&]zaction=AUCTION.*AUCTIONDATE=",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(OpenRealAuctionCommand))]
@@ -19,15 +27,14 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
     [ObservableProperty]
     public partial string? CurrentAuctionAlias { get; private set; }
 
-    public RealAuctionCalendarDataViewModel RealAuctionCalendarData { get; }
-
     public RealAuctionViewModel(
         IRegridService regridService,
         IRealTaxDeedClient realScraper,
         IBrowserService browserService,
         IClipboardExporter clipboardExporter,
-        RealAuctionCalendarDataViewModel realAuctionData,
-        IServiceProvider serviceProvider, IDialogService dialogService)
+        IServiceProvider serviceProvider,
+        IDialogService dialogService,
+        IRealAuctionSettings realAuctionSettings)
     {
         _realScraper = realScraper;
         _regridService = regridService;
@@ -35,10 +42,44 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
         _clipboardExporter = clipboardExporter;
         _serviceProvider = serviceProvider;
         _dialogService = dialogService;
+        _realAuctionSettings = realAuctionSettings;
 
-        RealAuctionCalendarData = realAuctionData;
-        RealAuctionCalendarData.AuctionUrlAvailable += OnAuctionUrlAvailable;
-        RealAuctionCalendarData.Initialize();
+        // Restore last saved URL on startup
+        if (!string.IsNullOrWhiteSpace(_realAuctionSettings.Url))
+        {
+            CurrentAuctionUrl = _realAuctionSettings.Url;
+            CurrentAuctionAlias = BuildAlias(_realAuctionSettings.Url);
+        }
+    }
+
+    /// <summary>
+    /// Extracts a friendly "County - M/d/yy" label from a realtaxdeed.com auction URL.
+    /// Falls back to the raw URL if parsing fails.
+    /// </summary>
+    private static string BuildAlias(string url)
+    {
+        try
+        {
+            var uri = new Uri(url);
+
+            // Subdomain is the county name: "alachua.realtaxdeed.com" → "Alachua"
+            var host = uri.Host; // e.g. "alachua.realtaxdeed.com"
+            var county = host.Split('.')[0];
+            county = char.ToUpper(county[0]) + county[1..];
+
+            // AUCTIONDATE query param: "12/02/2025" → DateTime → "12/2/25"
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            var dateStr = query["AUCTIONDATE"];
+
+            if (DateTime.TryParse(dateStr, out var date))
+                return $"{county} - {date:M/d/yy}";
+
+            return county;
+        }
+        catch
+        {
+            return url;
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanExecuteAuctionCommands))]
@@ -77,7 +118,7 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanOpenWebNavigation))]
     private async Task OpenWebNavigation()
     {
         var dialogVm = new WebNavigationDialogViewModel("https://www.realauction.com/clients");
@@ -85,17 +126,26 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
 
         var selectedUrl = await dialogVm.Result;
 
-        if (selectedUrl != null)
+        if (selectedUrl is null)
+            return;
+
+        if (!RealAuctionUrlPattern.IsMatch(selectedUrl))
         {
-            // User selected a URL - do something with it
-            Console.WriteLine($"User selected URL: {selectedUrl}");
+            Status = "Invalid URL: please navigate to a specific auction date page on realtaxdeed.com.";
+            return;
         }
-        else
-        {
-            // User cancelled (pressed X or Cancel button)
-            Console.WriteLine("User cancelled navigation");
-        }
+
+        CurrentAuctionUrl = selectedUrl;
+        CurrentAuctionAlias = BuildAlias(selectedUrl);
+
+        // Persist so it survives app restarts
+        _realAuctionSettings.Url = selectedUrl;
+        _realAuctionSettings.Save();
+
+        Status = "Auction URL updated. Ready to load.";
     }
+
+    private bool CanOpenWebNavigation() => !IsScraping;
 
     [RelayCommand(CanExecute = nameof(CanOpenRealAuction))]
     private void OpenRealAuction() => _browserService!.Launch(CurrentAuctionUrl);
@@ -104,18 +154,12 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
     private bool CanExecuteAuctionCommands() => !IsScraping && CurrentAuctionUrl is not null;
 
     private bool CanOpenRealAuction() => CurrentAuctionUrl is not null;
-    
-    private void OnAuctionUrlAvailable(string url, DateTime date)
-    {
-        CurrentAuctionUrl = url;
-        var countyName = RealAuctionCalendarData?.SelectedCounty?.Name ?? "Auction";
-        CurrentAuctionAlias = $"{countyName} - {date:M/d/yy}";
-    }
 
     // IsScraping notifications for derived commands
     protected override void OnIsScrapingChangedCore(bool value)
     {
         LoadRealAuctionCommand.NotifyCanExecuteChanged();
         OpenRealAuctionCommand.NotifyCanExecuteChanged();
+        OpenWebNavigationCommand.NotifyCanExecuteChanged();
     }
 }

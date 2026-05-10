@@ -45,24 +45,6 @@ public class SettingsService : IRegridSettings, IRealAuctionSettings
         set => _settings.RealAuction.Url = value;
     }
 
-    public string State
-    {
-        get => _settings.RealAuction.State;
-        set => _settings.RealAuction.State = value;
-    }
-
-    public string County
-    {
-        get => _settings.RealAuction.County;
-        set => _settings.RealAuction.County = value;
-    }
-
-    public string LastAuctionDate
-    {
-        get => _settings.RealAuction.LastAuctionDate;
-        set => _settings.RealAuction.LastAuctionDate = value;
-    }
-
     // ── Theme (used by ThemeService) ─────────────────────────────────────
     public string ThemeName
     {

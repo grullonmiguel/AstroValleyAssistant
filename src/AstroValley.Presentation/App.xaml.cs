@@ -63,7 +63,6 @@ namespace AstroValley.Presentation
             // ── Dialog ViewModels (Transient) ────────────────────────────────
             services.AddTransient<ImportViewModel>();
             services.AddTransient<RegridSettingsViewModel>();
-            services.AddTransient<RealAuctionCalendarDataViewModel>();
             services.AddTransient<ThemeSettingsViewModel>();
             services.AddTransient<ResolveMatchesViewModel>();
             services.AddTransient<WebNavigationDialogViewModel>();
@@ -86,7 +85,6 @@ namespace AstroValley.Presentation
 
             // ── Infrastructure: Data Services ────────────────────────────────
             services.AddSingleton<IGeographyDataService, GeographyDataService>();
-            services.AddSingleton<IRealAuctionDataService, RealAuctionDataService>();
 
             // ── Infrastructure: Exporters ────────────────────────────────────
             services.AddTransient<IClipboardExporter, ClipboardExporter>();
