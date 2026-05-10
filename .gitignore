@@ -14,3 +14,7 @@
 
 # Kiro specs (local only)
 .kiro/specs/
+/DIALOG_FIX.md
+/FIXES.md
+/MIGRATION_STATUS.md
+/STEP2_SOLUTION.md
