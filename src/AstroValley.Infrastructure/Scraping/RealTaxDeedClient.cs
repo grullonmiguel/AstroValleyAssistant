@@ -8,6 +8,15 @@ using System.Web;
 
 namespace AstroValley.Infrastructure.Scraping;
 
+/// <summary>
+/// HTTP client for scraping tax deed auction listings from RealAuction county websites.
+/// Handles pagination, session management, and flexible HTML parsing across different county layouts.
+/// </summary>
+/// <remarks>
+/// Best Practice: This client focuses on business logic (parsing, pagination) while
+/// delegating cross-cutting concerns (retry, timeout, logging) to the resilience handler
+/// configured in DI. Headers are configured in App.xaml.cs for centralized management.
+/// </remarks>
 public class RealTaxDeedClient : IRealTaxDeedClient
 {
     private readonly HttpClient _httpClient;
@@ -24,13 +33,23 @@ public class RealTaxDeedClient : IRealTaxDeedClient
     public RealTaxDeedClient(HttpClient httpClient)
     {
         _httpClient = httpClient;
-
-        // Essential headers to bypass bot detection and mimic a real browser session
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-        _httpClient.DefaultRequestHeaders.Add("Accept", "application/json, text/javascript, */*; q=0.01");
-        _httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+        // Note: Headers are now configured in App.xaml.cs during DI registration
+        // This follows the best practice of separating configuration from implementation
     }
 
+    /// <summary>
+    /// Retrieves all auction records from a RealAuction county page.
+    /// Handles pagination automatically and reports progress.
+    /// </summary>
+    /// <param name="url">The RealAuction county auction URL.</param>
+    /// <param name="ct">Cancellation token for cooperative cancellation.</param>
+    /// <param name="progress">Optional progress reporter for UI updates.</param>
+    /// <returns>A list of all property records found across all pages.</returns>
+    /// <remarks>
+    /// This method performs multiple HTTP requests (one per page) and implements
+    /// polite throttling (400ms between pages) to avoid overwhelming county servers.
+    /// Retry logic and error handling are managed by the resilience handler in DI.
+    /// </remarks>
     public async Task<List<PropertyRecord>> GetAuctionRecordsAsync(string url, CancellationToken ct = default, IProgress<int> progress = null)
     {
         var allRecords = new List<PropertyRecord>();
@@ -43,7 +62,7 @@ public class RealTaxDeedClient : IRealTaxDeedClient
 
         // Initial handshake to establish session cookies and Referer context
         _httpClient.DefaultRequestHeaders.Referrer = new Uri(url);
-        await GetWithRetryAsync(url, ct: ct);
+        await GetAsync(url, ct);
 
         int currentPage = 1;
         string lastFirstParcelId = string.Empty;
@@ -65,7 +84,7 @@ public class RealTaxDeedClient : IRealTaxDeedClient
                              $"&AUCTIONDATE={HttpUtility.UrlEncode(auctionDateStr)}" +
                              $"&page_num={currentPage}&tx={ts}&_={ts + 1}";
 
-            string response = await GetWithRetryAsync(ajaxUrl, ct: ct);
+            string response = await GetAsync(ajaxUrl, ct);
             if (string.IsNullOrWhiteSpace(response)) break;
 
             using var jsonDoc = JsonDocument.Parse(response);
@@ -212,41 +231,26 @@ public class RealTaxDeedClient : IRealTaxDeedClient
         return decimal.TryParse(cleanValue, out decimal result) ? result : 0;
     }
 
-    private async Task<string> GetWithRetryAsync(string url, int maxRetries = 3, CancellationToken ct = default)
+    /// <summary>
+    /// Performs a simple HTTP GET request.
+    /// </summary>
+    /// <param name="url">The URL to request.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The response content as a string.</returns>
+    /// <remarks>
+    /// Best Practice: This method is intentionally simple. Retry logic, timeout handling,
+    /// and error recovery are managed by the resilience handler configured in DI.
+    /// This separation of concerns makes the code more maintainable and testable.
+    /// </remarks>
+    private async Task<string> GetAsync(string url, CancellationToken ct = default)
     {
-        int retryCount = 0;
-
-        while (retryCount < maxRetries)
-        {
-            try
-            {
-                // Path A: Success - returns here
-                // HttpClient methods natively support CancellationTokens
-                var response = await _httpClient.GetAsync(url, ct);
-                return await response.Content.ReadAsStringAsync(ct);
-            }
-            catch (OperationCanceledException)
-            {
-                // Rethrow immediately if the user cancelled
-                throw;
-            }
-            catch (Exception)
-            {
-                retryCount++;
-
-                // Path B: Max retries reached - throws here
-                if (retryCount >= maxRetries)
-                {
-                    throw;
-                }
-
-                // Exponential backoff before the next loop iteration
-                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount)), ct);
-            }
-        }
-
-        // Path C: Final fallback - ensures all code paths return a value
-        // This handles cases where the loop might terminate without returning or throwing
-        return string.Empty;
+        // The resilience handler (configured in App.xaml.cs) automatically:
+        // - Retries on transient failures with exponential backoff
+        // - Applies circuit breaker pattern to prevent cascading failures
+        // - Enforces per-attempt and total request timeouts
+        // - Logs all requests via LoggingDelegatingHandler
+        var response = await _httpClient.GetAsync(url, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync(ct);
     }
 }

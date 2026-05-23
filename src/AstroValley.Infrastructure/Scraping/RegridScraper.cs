@@ -8,6 +8,15 @@ using System.Text.RegularExpressions;
 
 namespace AstroValley.Infrastructure.Scraping;
 
+/// <summary>
+/// HTTP client for scraping parcel data from Regrid's web interface.
+/// Handles authentication, search, match detection, and JSON parsing.
+/// </summary>
+/// <remarks>
+/// Best Practice: This client focuses on Regrid-specific business logic while
+/// delegating infrastructure concerns (retry, circuit breaker, logging) to the
+/// resilience handler configured in DI. Headers are centralized in App.xaml.cs.
+/// </remarks>
 public class RegridScraper : IRegridScraper
 {
     private readonly HttpClient _httpClient;
@@ -18,13 +27,8 @@ public class RegridScraper : IRegridScraper
     public RegridScraper(HttpClient httpClient)
     {
         _httpClient = httpClient;
-
-        // Configure browser-like headers once at construction
-        _httpClient.DefaultRequestHeaders.Clear();
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-        _httpClient.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
-        _httpClient.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
-        _httpClient.DefaultRequestHeaders.Add("Referer", "https://regrid.com/");
+        // Note: Headers are now configured in App.xaml.cs during DI registration
+        // This centralizes configuration and follows HttpClient best practices
     }
 
     // -------------------------------------------------------------------------
@@ -35,6 +39,12 @@ public class RegridScraper : IRegridScraper
     /// Performs the login handshake with Regrid.
     /// Fetches the login page, extracts CSRF token, and posts credentials.
     /// </summary>
+    /// <remarks>
+    /// This method handles the multi-step authentication flow:
+    /// 1. GET login page to obtain CSRF token
+    /// 2. POST credentials with token to establish session
+    /// Session cookies are automatically managed by the SocketsHttpHandler's CookieContainer.
+    /// </remarks>
     public async Task<bool> AuthenticateAsync(string email, string password, CancellationToken ct)
     {
         try
@@ -50,20 +60,20 @@ public class RegridScraper : IRegridScraper
                 .ReadAsStringAsync(ct)
                 .ConfigureAwait(false);
 
-            // 2. Extract authenticity_token
+            // 2. Extract authenticity_token (Rails CSRF protection)
             var match = Regex.Match(loginPageHtml, "name=\"authenticity_token\" value=\"([^\"]+)\"");
             if (!match.Success)
                 return false;
 
             string csrfToken = match.Groups[1].Value;
 
-            // 3. Submit login form
+            // 3. Submit login form with credentials and CSRF token
             var content = new FormUrlEncodedContent(new[]
             {
-            new KeyValuePair<string, string>("user[email]", email),
-            new KeyValuePair<string, string>("user[password]", password),
-            new KeyValuePair<string, string>("authenticity_token", csrfToken)
-        });
+                new KeyValuePair<string, string>("user[email]", email),
+                new KeyValuePair<string, string>("user[password]", password),
+                new KeyValuePair<string, string>("authenticity_token", csrfToken)
+            });
 
             var postResponse = await _httpClient
                 .PostAsync("https://app.regrid.com/users/sign_in", content, ct)
@@ -86,6 +96,15 @@ public class RegridScraper : IRegridScraper
     /// Performs a full scrape: search → match detection → detail fetch → JSON parse.
     /// Automatically routes direct URLs to the direct-scrape path.
     /// </summary>
+    /// <remarks>
+    /// This method orchestrates the multi-step scraping workflow:
+    /// 1. Detect if query is a direct URL or search term
+    /// 2. Perform search and analyze match count
+    /// 3. Handle no matches, single match, or multiple matches
+    /// 4. Fetch and parse parcel details
+    /// 
+    /// Rate limiting (429) is handled via custom exception that bypasses retry logic.
+    /// </remarks>
     public async Task<RegridParcelResult?> GetPropertyDetailsAsync(string query, CancellationToken ct = default)
     {
         try
@@ -99,18 +118,18 @@ public class RegridScraper : IRegridScraper
             // 2. Build search URL for parcel ID or address
             string searchUrl = $"https://app.regrid.com/search?query={Uri.EscapeDataString(query)}&context=/us";
 
-            // 3. Perform search request
-            string searchHtml = await GetHtmlWithRetryAsync(searchUrl, ct).ConfigureAwait(false);
+            // 3. Perform search request (resilience handler manages retries)
+            string searchHtml = await GetHtmlAsync(searchUrl, ct).ConfigureAwait(false);
             Debug.WriteLine($"[REGRID] Search completed for '{query}'.");
 
-            // Prevent rapid search → detail burst
+            // Prevent rapid search → detail burst (polite throttling)
             await Task.Delay(SearchDetailDelayMs, ct).ConfigureAwait(false);
 
-            // 4. Detect match count
+            // 4. Detect match count from search results
             var match = Regex.Match(searchHtml, @"Found (\d+) matches", RegexOptions.IgnoreCase);
             int matchCount = match.Success ? int.Parse(match.Groups[1].Value) : 0;
 
-            // 5. No matches
+            // 5. No matches found
             if (matchCount == 0)
             {
                 Debug.WriteLine($"[REGRID] No matches found for '{query}'.");
@@ -122,7 +141,7 @@ public class RegridScraper : IRegridScraper
                 };
             }
 
-            // 6. Multiple matches
+            // 6. Multiple matches - return list for user selection
             if (matchCount > 1)
             {
                 Debug.WriteLine($"[REGRID] Multiple matches for '{query}'. Count={matchCount}");
@@ -169,6 +188,10 @@ public class RegridScraper : IRegridScraper
     /// Scrapes a parcel directly from a full Regrid URL.
     /// Supports both clean URLs and fragment URLs.
     /// </summary>
+    /// <remarks>
+    /// This method bypasses the search step when the user provides a direct parcel URL.
+    /// Useful for re-scraping known parcels or following links from previous searches.
+    /// </remarks>
     public async Task<RegridParcelResult?> ScrapeParcelFromUrlAsync(string fullUrl, CancellationToken ct = default)
     {
         try
@@ -227,22 +250,23 @@ public class RegridScraper : IRegridScraper
     /// Fetches the parcel JSON and parses it into a PropertyRecord.
     /// Shared by both search-based and direct URL scrapes.
     /// </summary>
+    /// <remarks>
+    /// Regrid exposes parcel details at: https://app.regrid.com{parcelPath}.json
+    /// This method handles the HTTP request and delegates parsing to ParseRegridJson.
+    /// </remarks>
     private async Task<RegridParcelResult?> FetchParcelJsonAsync(string parcelPath, string originalUrl, CancellationToken ct)
     {
-        // Build the JSON endpoint for the parcel.
-        // Regrid always exposes parcel details at: https://app.regrid.com{parcelPath}.json
+        // Build the JSON endpoint for the parcel
         string detailUrl = $"https://app.regrid.com{parcelPath}.json";
         Debug.WriteLine($"[REGRID] Fetching detail JSON → {detailUrl}");
 
-        // Perform the HTTP GET with retry + rate-limit detection.
-        // This returns the raw JSON payload for the parcel.
-        string detailJson = await GetHtmlWithRetryAsync(detailUrl, ct).ConfigureAwait(false);
+        // Perform the HTTP GET (resilience handler manages retry + rate-limit detection)
+        string detailJson = await GetHtmlAsync(detailUrl, ct).ConfigureAwait(false);
 
-        // Convert the JSON payload into a strongly-typed PropertyRecord.
-        // If parsing fails, record will be null.
+        // Convert the JSON payload into a strongly-typed PropertyRecord
         var record = ParseRegridJson(detailJson, originalUrl);
 
-        // If parsing failed, return an error result instead of throwing.
+        // If parsing failed, return an error result instead of throwing
         if (record == null)
         {
             return new RegridParcelResult
@@ -252,7 +276,7 @@ public class RegridScraper : IRegridScraper
             };
         }
 
-        // Successful parse → return the fully populated result.
+        // Successful parse → return the fully populated result
         return new RegridParcelResult
         {
             Query = originalUrl,
@@ -341,56 +365,41 @@ public class RegridScraper : IRegridScraper
     }
 
     // -------------------------------------------------------------------------
-    // HTTP GET HTML WITH RETRY + RATE LIMIT DETECTION
+    // HTTP GET WITH RATE LIMIT DETECTION
     // -------------------------------------------------------------------------
 
     /// <summary>
-    /// Performs an HTTP GET request with retry logic and exponential backoff.
-    /// Automatically detects and throws on Regrid 429 rate-limit responses.
+    /// Performs an HTTP GET request with custom 429 (rate limit) detection.
     /// </summary>
-    private async Task<string> GetHtmlWithRetryAsync(string url, CancellationToken ct)
+    /// <remarks>
+    /// Best Practice: This method is intentionally simple. The resilience handler
+    /// (configured in App.xaml.cs) manages retry logic, exponential backoff, circuit
+    /// breaker, and timeouts. This method only adds domain-specific logic for detecting
+    /// Regrid's rate limiting (HTTP 429), which requires special handling.
+    /// 
+    /// The resilience handler is configured to NOT retry on 429 responses, allowing
+    /// the service layer to implement custom backoff strategies.
+    /// </remarks>
+    private async Task<string> GetHtmlAsync(string url, CancellationToken ct)
     {
-        Exception? lastException = null;
+        // Perform the HTTP GET request
+        // The resilience handler automatically:
+        // - Retries on transient failures (except 429)
+        // - Applies exponential backoff with jitter
+        // - Enforces circuit breaker pattern
+        // - Logs via LoggingDelegatingHandler
+        var response = await _httpClient.GetAsync(url, ct);
 
-        // Attempt the request up to 3 times
-        for (int retry = 0; retry < 3; retry++)
-        {
-            try
-            {            
-                // Perform the HTTP GET request
-                var response = await _httpClient.GetAsync(url, ct);
+        // Custom domain logic: Detect Regrid rate-limit response (HTTP 429)
+        // This exception bypasses the retry logic and bubbles up to the service layer
+        if (response.StatusCode == HttpStatusCode.TooManyRequests)
+            throw new RegridRateLimitException(response);
 
-                // Detect Regrid rate-limit response (HTTP 429)
-                if (response.StatusCode == HttpStatusCode.TooManyRequests)
-                    throw new RegridRateLimitException(response);
+        // Throw if response is not successful (e.g., 404, 500)
+        response.EnsureSuccessStatusCode();
 
-                // Throw if response is not successful (e.g., 404, 500)
-                response.EnsureSuccessStatusCode();
-
-                // Return the HTML content
-                return await response.Content.ReadAsStringAsync(ct);
-            }
-            catch (RegridRateLimitException)
-            {
-                // Do NOT retry on 429 — let the service layer handle backoff
-                throw;
-            }
-            catch (Exception ex) when (retry < 2)
-            {
-                // Capture the exception and apply exponential backoff before retrying
-                lastException = ex;
-                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retry + 1)), ct);
-            }
-            catch (Exception ex)
-            {
-                // Final attempt failed — capture and break out
-                lastException = ex;
-                break;
-            }
-        }
-
-        // All attempts failed — throw with context
-        throw new HttpRequestException($"Failed to GET '{url}' after 3 attempts.", lastException);
+        // Return the HTML/JSON content
+        return await response.Content.ReadAsStringAsync(ct);
     }
 
     // -------------------------------------------------------------------------
@@ -463,13 +472,30 @@ public class RegridScraper : IRegridScraper
 // CUSTOM EXCEPTION FOR 429 HANDLING
 // -----------------------------------------------------------------------------
 
+/// <summary>
+/// Exception thrown when Regrid returns HTTP 429 (Too Many Requests).
+/// This signals rate limiting and requires special handling by the service layer.
+/// </summary>
+/// <remarks>
+/// Best Practice: Domain-specific exceptions allow the service layer to implement
+/// custom retry strategies (e.g., longer backoff for rate limits) while keeping
+/// the HTTP client focused on detection rather than policy.
+/// 
+/// The resilience handler is configured to NOT retry on 429 responses, ensuring
+/// this exception propagates to the service layer for appropriate handling.
+/// </remarks>
 public class RegridRateLimitException : Exception
 {
+    /// <summary>
+    /// The number of seconds to wait before retrying, if provided by the server.
+    /// </summary>
     public int? RetryAfterSeconds { get; }
 
     public RegridRateLimitException(HttpResponseMessage response) : base("Regrid returned 429 Too Many Requests")
     {
-        if (response.Headers.TryGetValues("Retry-After", out var values) && int.TryParse(values.FirstOrDefault(), out int seconds))
+        // Extract Retry-After header if present (RFC 7231)
+        if (response.Headers.TryGetValues("Retry-After", out var values) && 
+            int.TryParse(values.FirstOrDefault(), out int seconds))
         {
             RetryAfterSeconds = seconds;
         }
