@@ -35,6 +35,10 @@
                     Orientation="Horizontal" 
                     HorizontalAlignment="Right"
                     Margin="0,0,0,0">
+            <TextBlock VerticalAlignment="Center" Margin="0,0,12,0"
+                       Foreground="#FFB74D" FontSize="11"
+                       Text="Navigate to a specific auction date page to enable selection."
+                       Visibility="{Binding IsValidAuctionUrl, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
             <Button Content="Select This URL" 
                     Command="{Binding SelectUrlCommand}"
                     MinWidth="120"

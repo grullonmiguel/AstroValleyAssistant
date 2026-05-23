@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using System.Text.RegularExpressions;
 
 namespace AstroValley.Presentation.ViewModels.Dialogs;
 
@@ -10,13 +11,24 @@ public partial class WebNavigationDialogViewModel : DialogViewModelBase<string?>
 
     public string InitialUrl { get; }
 
+    // Matches realtaxdeed.com or realforeclose.com auction preview URLs with an AUCTIONDATE param
+    private static readonly Regex RealAuctionUrlPattern = new(
+        @"^https?://[^.]+\.real(taxdeed|foreclose)\.com/.*[?&]zaction=AUCTION.*AUCTIONDATE=",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     public string CurrentUrl
     {
         get => _currentUrl;
-        set => SetProperty(ref _currentUrl, value);
+        set
+        {
+            if (SetProperty(ref _currentUrl, value))
+            {
+                IsValidAuctionUrl = RealAuctionUrlPattern.IsMatch(value);
+                SelectUrlCommand.NotifyCanExecuteChanged();
+            }
+        }
     }
     private string _currentUrl;
-
 
     public bool CanGoBack
     {
@@ -24,13 +36,20 @@ public partial class WebNavigationDialogViewModel : DialogViewModelBase<string?>
         set => SetProperty(ref field, value);
     }
 
+    public bool IsValidAuctionUrl
+    {
+        get => field;
+        private set => SetProperty(ref field, value);
+    }
+
     public WebNavigationDialogViewModel(string initialUrl)
     {
         InitialUrl = initialUrl;
         _currentUrl = initialUrl;
+        IsValidAuctionUrl = RealAuctionUrlPattern.IsMatch(initialUrl);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsValidAuctionUrl))]
     private void SelectUrl()
     {
         CompleteDialog(CurrentUrl);
@@ -45,19 +64,13 @@ public partial class WebNavigationDialogViewModel : DialogViewModelBase<string?>
     [RelayCommand(CanExecute = nameof(CanExecuteGoBack))]
     private void GoBack()
     {
-        // Will be invoked via a public method from the View
         OnGoBackRequested?.Invoke();
     }
 
     private bool CanExecuteGoBack() => CanGoBack;
 
-    /// <summary>
-    /// Lifecycle hook called when the dialog is being closed via X button.
-    /// Complete with null instead of canceling to avoid TaskCanceledException.
-    /// </summary>
     public override void OnDialogClosing()
     {
-        // Don't call base - we want to complete with null, not cancel
         CompleteDialog(null);
     }
 }

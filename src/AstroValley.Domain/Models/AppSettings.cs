@@ -16,6 +16,7 @@ public class RegridSettings
 public class RealAuctionSettings
 {
     public string Url { get; set; } = string.Empty;
+    public List<string> RecentUrls { get; set; } = [];
 }
 
 public class ThemeSettings

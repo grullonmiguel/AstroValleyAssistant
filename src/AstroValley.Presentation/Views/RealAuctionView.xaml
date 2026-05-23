@@ -82,13 +82,43 @@
                 </Grid.RowDefinitions>
 
                 <Border Background="{StaticResource Brush.Accent.Tertiary}" Padding="8 10">
-                    <control:IconTextButton Text="{Binding CurrentAuctionAlias}" FontSize="14"
-                                            Icon="{StaticResource Icon.Web.Search}"
-                                            Command="{Binding OpenRealAuctionCommand}" 
-                                            Style="{StaticResource Theme.Button.IconText.Sidebar}" />                    
+                    <StackPanel>
+                        <control:IconTextButton Text="{Binding CurrentAuctionAlias}" FontSize="14"
+                                                Icon="{StaticResource Icon.Web.Search}"
+                                                Command="{Binding OpenRealAuctionCommand}" 
+                                                Style="{StaticResource Theme.Button.IconText.Sidebar}" />
+                        <!-- Stale date warning -->
+                        <TextBlock Text="⚠ Auction date has passed"
+                                   FontSize="10" Margin="4 4 4 0"
+                                   Foreground="#FFB74D"
+                                   Visibility="{Binding IsAuctionDateStale, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </StackPanel>
                 </Border>
 
-                <Border Grid.Row="1" Padding="16 8">
+                <!-- Recent URLs -->
+                <Border Grid.Row="1" Padding="8 8 8 0"
+                        Visibility="{Binding RecentAuctionUrls.Count, Converter={StaticResource NullToBooleanConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="Recent" Style="{StaticResource Theme.TextBlock.Sidebar.Label}" Margin="4 0 0 4"/>
+                        <ListBox ItemsSource="{Binding RecentAuctionUrls}"
+                                 Background="Transparent" BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Alias}"
+                                            Command="{Binding DataContext.SelectRecentUrlCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalContentAlignment="Left"
+                                            Style="{StaticResource Theme.Button.Hyperlink}"
+                                            FontSize="11"
+                                            Padding="4 4"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="2" Padding="16 8">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
