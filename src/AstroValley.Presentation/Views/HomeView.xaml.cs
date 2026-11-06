@@ -32,7 +32,9 @@ public partial class HomeView : UserControl
                 _pageLoaded = true;
                 HighlightSelectedState();
             };
-            MapWebView.CoreWebView2.Navigate("https://appassets.local/homemap.html");
+            // homemaplibre.html = MapLibre globe; homeglobe.html = Cesium globe; homemap.html = Leaflet flat map.
+            // Same functions/messages in all three, so switching is this one name.
+            MapWebView.CoreWebView2.Navigate("https://appassets.local/homemaplibre.html");
         };
     }
 

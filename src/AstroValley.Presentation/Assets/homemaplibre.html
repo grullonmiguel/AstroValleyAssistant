@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+    <style>html, body, #map { height: 100%; margin: 0; background: #000; }</style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        // Same page contract as homemap.html (Leaflet) and homeglobe.html (Cesium): WPF calls highlightState /
+        // highlightCounty / setImagery and receives {type:'counties'} messages, so HomeView doesn't care which page loads.
+        var esri = function (path) {
+            return 'https://server.arcgisonline.com/ArcGIS/rest/services/' + path + '/MapServer/tile/{z}/{y}/{x}';
+        };
+        var PURPLE = '#4F4486', WHITE = '#FFFFFF';
+        var imagery = false;
+        function lineColor() { return imagery ? WHITE : PURPLE; }
+        function emptyFc() { return { type: 'FeatureCollection', features: [] }; }
+
+        var map = new maplibregl.Map({
+            container: 'map',
+            center: [-98, 38], zoom: 3,
+            attributionControl: { compact: true },
+            style: {
+                version: 8,
+                projection: { type: 'globe' },
+                sources: {
+                    street: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, maxzoom: 19, attribution: '&copy; OpenStreetMap contributors' },
+                    imagery: { type: 'raster', tiles: [esri('World_Imagery')], tileSize: 256, maxzoom: 19, attribution: 'Tiles &copy; Esri' },
+                    labels: { type: 'raster', tiles: [esri('Reference/World_Boundaries_and_Places')], tileSize: 256, maxzoom: 19 },
+                    outline: { type: 'geojson', data: emptyFc() },
+                    counties: { type: 'geojson', data: emptyFc() },
+                    highlight: { type: 'geojson', data: emptyFc() }
+                },
+                layers: [
+                    { id: 'bg', type: 'background', paint: { 'background-color': '#000' } },
+                    { id: 'street', type: 'raster', source: 'street' },
+                    { id: 'imagery', type: 'raster', source: 'imagery', layout: { visibility: 'none' } },
+                    // our lines sit under the labels so place names stay readable
+                    { id: 'county-lines', type: 'line', source: 'counties', paint: { 'line-color': PURPLE, 'line-width': 1, 'line-opacity': 0.7 } },
+                    { id: 'highlight-fill', type: 'fill', source: 'highlight', paint: {
+                        'fill-color': PURPLE,
+                        // fades out between zoom 8 and 10 so streets show when zoomed in
+                        'fill-opacity': ['interpolate', ['linear'], ['zoom'], 8, 0.35, 10, 0]
+                    } },
+                    { id: 'highlight-line', type: 'line', source: 'highlight', paint: { 'line-color': PURPLE, 'line-width': 3 } },
+                    { id: 'outline-line', type: 'line', source: 'outline', paint: { 'line-color': PURPLE, 'line-width': 3 } },
+                    { id: 'labels', type: 'raster', source: 'labels', layout: { visibility: 'none' } }
+                ]
+            }
+        });
+
+        // Padding clears the WPF overlays: sidebar (+ county list once a state is selected) on the left, header on top.
+        function pad(withCounties) {
+            return withCounties ? { left: 430, top: 110, right: 60, bottom: 40 } : { left: 260, top: 100, right: 40, bottom: 40 };
+        }
+        // Slightly tighter than the full contiguous US (-125..-66.5, 24.5..49.5) so the start view is closer in.
+        var US_BOUNDS = [[-120, 26], [-72, 47.5]];
+        function flyTo(bounds, withCounties) {
+            map.fitBounds(bounds, { padding: pad(withCounties), duration: 1500, essential: true });
+        }
+        // style.load (not load): 'load' waits for every first tile and could fire after a state was already selected.
+        map.once('style.load', function () { map.fitBounds(US_BOUNDS, { padding: pad(false), duration: 0 }); });
+
+        // [[west, south], [east, north]] of a geometry. skipEast drops positive longitudes (Alaska's Aleutians wrap past 180).
+        function boundsOf(geom, skipEast) {
+            var w = 180, e = -180, s = 90, n = -90;
+            (function walk(c) {
+                if (typeof c[0] === 'number') {
+                    if (skipEast && c[0] > 0) return;
+                    w = Math.min(w, c[0]); e = Math.max(e, c[0]); s = Math.min(s, c[1]); n = Math.max(n, c[1]);
+                } else c.forEach(walk);
+            })(geom.coordinates);
+            return [[w, s], [e, n]];
+        }
+
+        function setImagery(on) { whenReady(function () { applyImagery(on); }); }
+
+        function applyImagery(on) {
+            imagery = on;
+            var vis = function (id, show) { map.setLayoutProperty(id, 'visibility', show ? 'visible' : 'none'); };
+            vis('street', !on); vis('imagery', on); vis('labels', on);
+            var c = lineColor(); // purple on the street map, white on satellite
+            ['county-lines', 'highlight-line', 'outline-line'].forEach(function (id) { map.setPaintProperty(id, 'line-color', c); });
+            map.setPaintProperty('highlight-fill', 'fill-color', c);
+        }
+
+        // ---- selected state outline + counties -----------------------------------------------------------------
+        var statesData = null, selectedName = null, countyFeatures = [], loadToken = 0, hadOutline = false;
+        fetch('Geo/us-states.geojson').then(function (r) { return r.json(); }).then(function (d) { statesData = d; whenReady(drawOutline); });
+
+        // The style may not be loaded yet when WPF or fetch call in.
+        function whenReady(fn) { if (map.isStyleLoaded()) fn(); else map.once('style.load', fn); }
+
+        function highlightState(name) { selectedName = name; whenReady(drawOutline); }
+
+        function clearCounties() {
+            loadToken++; // makes any in-flight county load stale
+            map.getSource('counties').setData(emptyFc());
+            map.getSource('highlight').setData(emptyFc());
+            countyFeatures = [];
+        }
+
+        // "Bay" for counties; "Acadia Parish", "Richmond city" etc. otherwise (keeps same-named entries apart).
+        function countyLabel(p) { return p.LSAD === 'County' ? p.NAME : p.NAME + ' ' + p.LSAD; }
+
+        function drawOutline() {
+            clearCounties();
+            map.getSource('outline').setData(emptyFc());
+            if (!selectedName) { // selection cleared: fly back out to the whole US
+                if (hadOutline) flyTo(US_BOUNDS, false);
+                hadOutline = false;
+                return;
+            }
+            if (!statesData) return; // called again once the data arrives
+            var f = statesData.features.find(function (f) { return f.properties.name === selectedName; });
+            if (!f) return;
+            map.getSource('outline').setData({ type: 'FeatureCollection', features: [f] });
+            hadOutline = true;
+            flyTo(boundsOf(f.geometry, selectedName === 'Alaska'), true);
+            loadCounties(f.id, selectedName); // state FIPS = feature id, same as the county file name
+        }
+
+        function loadCounties(fips, stateName) {
+            var token = ++loadToken;
+            fetch('Geo/counties/' + fips + '.geojson').then(function (r) { return r.json(); }).then(function (d) {
+                if (token !== loadToken) return; // another state was selected meanwhile
+                countyFeatures = d.features;
+                map.getSource('counties').setData(d);
+                // Tell WPF the county names for its list.
+                var msg = {
+                    type: 'counties', state: stateName,
+                    items: d.features
+                        .map(function (f) { return { id: f.properties.COUNTY, name: countyLabel(f.properties) }; })
+                        .sort(function (a, b) { return a.name.localeCompare(b.name); })
+                };
+                if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage(msg);
+            });
+        }
+
+        function highlightCounty(id) {
+            whenReady(function () {
+                var f = id && countyFeatures.find(function (f) { return f.properties.COUNTY === id; });
+                map.getSource('highlight').setData(f ? { type: 'FeatureCollection', features: [f] } : emptyFc());
+            });
+        }
+    </script>
+</body>
+</html>
