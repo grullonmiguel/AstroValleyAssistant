@@ -1,26 +1,52 @@
 # Astro Valley Assistant
-A simple WPF / C# application to assist with research on tax defaulted properties.
 
-# Features
-- Desktop UI built with WPF and MVVM.
-- Minimal dependencies for easy deployment.
-- Structured, maintainable codebase designed for future installer packaging.
-- Tools and workflows to streamline tax defaulted property research.
-- 
-# Tech Stack
-- .NET 8
-- WPF (Windows Presentation Foundation)
-- MVVM (Model-View-ViewModel) pattern
-- C#
-- 
-# About
-Astro Valley Assistant is built to help analyze information related to tax-defaulted properties in the U.S. for researchers.
+A Windows desktop app (WPF / C#) that helps researchers analyze tax-defaulted properties in the U.S.
 
-This is a hobby project and is not intended to be sold.
+## Features
 
-You are free to use this application as-is.
-No warranty is provided, and I am not responsible for any outcomes resulting from its use.
+- **Regrid lookup** – Look up parcel data by parcel ID or address. Import lists from the clipboard or a file, scrape in batches, track status per record, and resolve multiple-match results.
+- **Real Auction** – Browse county RealAuction tax deed sites in an embedded WebView2 window and pull listings (opening bids, assessed values, auction dates).
+- **Maps** – View property locations as pins on an interactive map, by county or from a marker list, and export them to a standalone HTML map.
+- **Import / export** – Copy results to the clipboard (tab-delimited) or export to Excel.
+- **Themes** – Configurable light/dark theme and accent settings.
 
-# Future Plans
-- Create an installer (.msi/.exe) for easy downloads from GitHub.
-- Add more tools for property analysis and data import/export.
+## Tech stack
+
+- .NET 10, C# 14, WPF
+- MVVM with CommunityToolkit.Mvvm
+- Generic Host, dependency injection, and `HttpClient` with resilience handlers (`Microsoft.Extensions.*`)
+- WebView2 for the map and RealAuction navigation
+- ClosedXML for Excel export
+
+## Project layout
+
+The solution follows Clean Architecture (`src/`):
+
+| Project | Role |
+|---|---|
+| `AstroValley.Domain` | Entities, enums, models, pure utilities |
+| `AstroValley.Application` | Service interfaces and application services |
+| `AstroValley.Infrastructure` | HTTP clients, scrapers, data and export implementations |
+| `AstroValley.Presentation` | WPF UI, view models, composition root (startup project) |
+
+See [SOLUTION.md](SOLUTION.md) and `CLAUDE.md` for more detail.
+
+## Getting started
+
+Requirements: Windows, the .NET 10 SDK, and the WebView2 runtime.
+
+```bash
+dotnet build AstroValleyAssistant.sln
+dotnet run --project src/AstroValley.Presentation
+```
+
+Regrid credentials and other user settings are entered in the app and stored in `appsettings.user.json` next to the executable. Don't commit that file.
+
+## About
+
+This is a hobby project and is not intended to be sold. You are free to use it as-is. No warranty is provided, and I am not responsible for any outcomes resulting from its use.
+
+## Future plans
+
+- Installer (.msi/.exe) for download from GitHub.
+- More tools for property analysis and data import/export.
