@@ -25,51 +25,94 @@
             </Setter>
         </Style>
 
-        <!-- Type pill: same status colours as Maps, but always a filled pill so it reads on top of the map. -->
-        <Style x:Key="HomeTaxStatusPill" TargetType="ContentControl" BasedOn="{StaticResource Theme.Control.TaxStatusPill}">
+        <!-- County rows sit on a white list, so use the accent colour instead of the state list's pale text. -->
+        <Style x:Key="HomeCountyItem" TargetType="ListBoxItem" BasedOn="{StaticResource Theme.ListBoxItem.StateList}">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="ContentControl">
-                        <Border CornerRadius="12" Padding="10,4" Background="{DynamicResource Brush.Pill.Background}">
-                            <ContentPresenter TextElement.Foreground="{DynamicResource Brush.Accent}"/>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Padding="{TemplateBinding Padding}" Background="Transparent" SnapsToDevicePixels="true">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Background.Secondary}"/>
+                            </Trigger>
+                            <!-- Selected: same dark purple as the state sidebar, white text. -->
+                            <Trigger Property="IsSelected" Value="true">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Segmented Map | Satellite switch: two buttons that read as one rounded control; selected one is filled. -->
+        <Style x:Key="HomeSegment" TargetType="Button">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="12" Padding="12 4" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#224F4486"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeSegment.Map" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsImagery}" Value="False">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeSegment.Satellite" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsImagery}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
     </UserControl.Resources>
     <Grid>
         <!-- Composition control (not WebView2) so WPF elements can overlay the map. -->
         <wv2:WebView2CompositionControl x:Name="MapWebView"/>
 
-        <!-- Selected-state info pills, top right. WPF (not HTML) so they use the app theme and bind to SelectedState. -->
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top"
-                    Margin="0 86 24 0"
-                    DataContext="{Binding SelectedState}"
-                    Visibility="{Binding Converter={StaticResource NullToVisibilityConverter}}">
-            <StackPanel.Effect>
-                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.35"/>
-            </StackPanel.Effect>
-            <ContentControl Style="{StaticResource HomeTaxStatusPill}">
-                <TextBlock>
-                    <Run Text="Type:" FontWeight="SemiBold"/>
-                    <Run Text="{Binding TaxStatus, Converter={StaticResource EnumToDescriptionConverter}, StringFormat='{} {0}'}"/>
-                </TextBlock>
-            </ContentControl>
-            <ContentControl Style="{StaticResource Theme.Control.CountyInfoPill}" Margin="8,0,0,0">
-                <TextBlock>
-                    <Run Text="Counties:" FontWeight="SemiBold"/>
-                    <Run Text="{Binding CountyCount}"/>
-                </TextBlock>
-            </ContentControl>
-        </StackPanel>
+        <!-- Base map switch, top right. -->
+        <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 86 24 0"
+                CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
+            </Border.Effect>
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Map" Style="{StaticResource HomeSegment.Map}" Command="{Binding ShowMapCommand}"/>
+                <Button Content="Satellite" Style="{StaticResource HomeSegment.Satellite}" Command="{Binding ShowSatelliteCommand}"/>
+            </StackPanel>
+        </Border>
 
-        <!-- Left sidebar: sits below the header like the Maps state list; collapses to a narrow strip. -->
-        <Border HorizontalAlignment="Left" Margin="40 86 0 24"
-                Background="{DynamicResource Brush.Accent}">
+        <!-- Left side: state sidebar, then the county list of the selected state to its right. -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="40 86 0 24">
+        <!-- State sidebar: sits below the header like the Maps state list; collapses to a narrow strip. -->
+        <Border Background="{DynamicResource Brush.Accent}">
             <Border.Style>
                 <Style TargetType="Border">
-                    <Setter Property="Width" Value="200"/>
+                    <Setter Property="Width" Value="195"/>
                     <Setter Property="ClipToBounds" Value="True"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsSidebarOpen}" Value="False">
@@ -85,7 +128,7 @@
                             <DataTrigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetProperty="Width" To="200" Duration="0:0:0.2">
+                                        <DoubleAnimation Storyboard.TargetProperty="Width" To="195" Duration="0:0:0.2">
                                             <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
                                         </DoubleAnimation>
                                     </Storyboard>
@@ -133,5 +176,57 @@
                 </ListBox>
             </DockPanel>
         </Border>
+
+        <!-- Counties of the selected state (names come from the map's county GeoJSON); hidden when no state is selected. -->
+        <Grid Width="155" Margin="8 0 0 0">
+        <Border Background="#90FFFFFF">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedState}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <DockPanel>
+                <!-- Header: "75 counties" with a divider underneath. -->
+                <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource Brush.Accent}" BorderThickness="0 0 0 1"
+                        Margin="8 0 8 8" Padding="0 8 0 4">
+                    <TextBlock FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding SelectedState.CountyCount, StringFormat='{}{0} counties'}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedState.CountyCount}" Value="1">
+                                        <Setter Property="Text" Value="1 county"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Border>
+                <ListBox ItemsSource="{Binding Counties}"
+                         SelectedItem="{Binding SelectedCounty, Mode=TwoWay}"
+                         DisplayMemberPath="Name"
+                         ItemContainerStyle="{StaticResource HomeCountyItem}"
+                         Background="Transparent" BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.CanContentScroll="False"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Sale-type pill ("Tax Lien", "Tax Deed"...) hanging off the list's top-right corner; always light green. -->
+        <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 -8 -16 0"
+                CornerRadius="10" Padding="8 2" Background="{DynamicResource Brush.Status.Success}"
+                Visibility="{Binding SelectedState, Converter={StaticResource NullToVisibilityConverter}}">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
+            </Border.Effect>
+            <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Status.Success.Foreground}"
+                       Text="{Binding SelectedState.TaxStatus, Converter={StaticResource EnumToDescriptionConverter}}"/>
+        </Border>
+        </Grid>
+        </StackPanel>
     </Grid>
 </UserControl>

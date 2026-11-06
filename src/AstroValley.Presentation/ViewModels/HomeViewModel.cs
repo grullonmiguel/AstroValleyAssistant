@@ -5,6 +5,9 @@ using System.Collections.ObjectModel;
 
 namespace AstroValley.Presentation.ViewModels;
 
+// Id is the county FIPS code within the state (unique even when names repeat, e.g. Richmond county/city).
+public record CountyItem(string Id, string Name);
+
 public partial class HomeViewModel : ObservableObject
 {
     private const TaxSaleType Lien = TaxSaleType.TaxLien, Deed = TaxSaleType.TaxDeed,
@@ -15,6 +18,18 @@ public partial class HomeViewModel : ObservableObject
 
     [ObservableProperty]
     private StateViewModel? _selectedState;
+
+    // Counties of the selected state; filled from the map's county GeoJSON (see HomeView).
+    public ObservableCollection<CountyItem> Counties { get; } = [];
+
+    [ObservableProperty]
+    private CountyItem? _selectedCounty;
+
+    partial void OnSelectedStateChanged(StateViewModel? value)
+    {
+        Counties.Clear();
+        SelectedCounty = null;
+    }
 
     // Required by the shared state-list style's scroll-offset binding.
     public double ListBoxScrollOffset { get; set; }
@@ -45,6 +60,16 @@ public partial class HomeViewModel : ObservableObject
         {
             Name = s.Name, Abbreviation = s.Abbr, CountyCount = s.Counties, TaxStatus = s.Type
         }));
+
+    // Satellite imagery instead of the plain street map.
+    [ObservableProperty]
+    private bool _isImagery;
+
+    [RelayCommand]
+    private void ShowMap() => IsImagery = false;
+
+    [RelayCommand]
+    private void ShowSatellite() => IsImagery = true;
 
     [RelayCommand]
     private void ToggleSidebar() => IsSidebarOpen = !IsSidebarOpen;

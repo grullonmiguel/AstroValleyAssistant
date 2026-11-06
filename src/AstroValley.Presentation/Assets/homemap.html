@@ -10,15 +10,20 @@
     <div id="map"></div>
     <script>
         // Whole contiguous US; zoomControl off so it doesn't sit under the WPF header.
-        // Finer zoom steps: 0.25 per snap, wheel needs 240px per zoom level (default 60 = jumpy).
+        // Quarter-level snap so fits land exactly; wheel speed is Leaflet's default (60px per level).
+        // Raise wheelPxPerZoomLevel (e.g. 120) if zooming feels too jumpy.
         var map = L.map('map', {
             zoomControl: false,
             zoomSnap: 0.25,
             zoomDelta: 0.5,
-            wheelPxPerZoomLevel: 240
+            wheelPxPerZoomLevel: 60
         });
         // Fit the contiguous US into the free area: left padding clears the sidebar, top clears the header.
-        var US_BOUNDS = [[24.5, -125], [49.5, -66.5]];
+        // WPF can resize/show the hosted page without a window 'resize' event. Leaflet then keeps a stale size
+        // and clips its vector layers (outlines, counties, highlight) to it, so re-measure on any size change.
+        new ResizeObserver(() => map.invalidateSize()).observe(document.getElementById('map'));
+
+        var US_BOUNDS =[[24.5, -125], [49.5, -66.5]];
         var FIT = { paddingTopLeft: [280, 100], paddingBottomRight: [40, 40] };
         map.fitBounds(US_BOUNDS, FIT);
 
@@ -28,9 +33,70 @@
 
         function highlightState(name) { selectedName = name; drawOutline(); }
 
+        // County lines of the selected state, loaded from Geo/counties/<state FIPS>.geojson.
+        var countyLayer = null, countyHighlight = null, countyFeatures = [], loadToken = 0;
+
+        // Overlay colour: purple on the street map, white on imagery (purple disappears on dark satellite photos).
+        var imagery = false;
+        function lineColor() { return imagery ? '#FFFFFF' : '#4F4486'; }
+
+        // The highlight's fill fades out between zoom 9 and 11 so streets stay visible when zoomed in.
+        function highlightFill() { return 0.35 * Math.min(1, Math.max(0, (11 - map.getZoom()) / 2)); }
+
+        function styleHighlight() {
+            if (countyHighlight) countyHighlight.setStyle({ color: lineColor(), fillColor: lineColor(), fillOpacity: highlightFill() });
+        }
+        map.on('zoomend', styleHighlight);
+
+        function clearCountyHighlight() {
+            if (countyHighlight) { map.removeLayer(countyHighlight); countyHighlight = null; }
+        }
+
+        function clearCounties() {
+            loadToken++; // makes any in-flight county load stale
+            if (countyLayer) { map.removeLayer(countyLayer); countyLayer = null; }
+            clearCountyHighlight();
+            countyFeatures = [];
+        }
+
+        // "Bay" for counties; "Acadia Parish", "Richmond city" etc. otherwise (also keeps same-named entries apart).
+        function countyLabel(p) { return p.LSAD === 'County' ? p.NAME : p.NAME + ' ' + p.LSAD; }
+
+        function loadCounties(fips, stateName) {
+            var token = ++loadToken;
+            fetch('Geo/counties/' + fips + '.geojson').then(r => r.json()).then(d => {
+                if (token !== loadToken) return; // another state was selected meanwhile
+                countyFeatures = d.features;
+                countyLayer = L.geoJSON(d, {
+                    style: { color: lineColor(), weight: 1, opacity: 0.7, fill: false },
+                    interactive: false
+                }).addTo(map);
+                if (outline) outline.bringToFront();
+                // Tell WPF the county names for its list.
+                window.chrome.webview.postMessage({
+                    type: 'counties',
+                    state: stateName,
+                    items: d.features
+                        .map(f => ({ id: f.properties.COUNTY, name: countyLabel(f.properties) }))
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                });
+            });
+        }
+
+        function highlightCounty(id) {
+            clearCountyHighlight();
+            var f = id && countyFeatures.find(f => f.properties.COUNTY === id);
+            if (!f) return;
+            countyHighlight = L.geoJSON(f, {
+                style: { color: lineColor(), weight: 3, fillColor: lineColor(), fillOpacity: highlightFill() },
+                interactive: false
+            }).addTo(map);
+        }
+
         function drawOutline() {
             var hadOutline = !!outline;
             if (outline) { map.removeLayer(outline); outline = null; }
+            clearCounties();
             if (!selectedName) { // selection cleared: glide back out to the whole US
                 if (hadOutline) map.flyToBounds(US_BOUNDS, Object.assign({ duration: 1.2 }, FIT));
                 return;
@@ -39,16 +105,40 @@
             var matches = statesData.features.filter(f => f.properties.name === selectedName);
             if (!matches.length) return;
             outline = L.geoJSON(matches, {
-                style: { color: '#4F4486', weight: 3, fill: false },
+                style: { color: lineColor(), weight: 3, fill: false },
                 interactive: false
             }).addTo(map);
             // Glide to the state (remove this line to keep the view where it is).
             map.flyToBounds(outline.getBounds(), Object.assign({ duration: 1.2 }, FIT));
+            loadCounties(matches[0].id, selectedName); // state FIPS = feature id, same as the county file name
         }
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+        // Base maps: plain street map or satellite imagery (Esri World Imagery, same source as the Marker Map).
+        var streetTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
+        var imageryTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19, attribution: 'Tiles &copy; Esri'
+        });
+
+        // State/country borders and place names drawn over the photos. Own pane sits above our outlines, below nothing clickable.
+        map.createPane('labels').style.zIndex = 450;
+        map.getPane('labels').style.pointerEvents = 'none';
+        var labelTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            pane: 'labels', maxZoom: 19
+        });
+
+        function setImagery(on) {
+            imagery = on;
+            map.removeLayer(on ? streetTiles : imageryTiles);
+            map.addLayer(on ? imageryTiles : streetTiles);
+            if (on) map.addLayer(labelTiles); else map.removeLayer(labelTiles);
+            // Recolour whatever is already drawn.
+            var c = lineColor();
+            if (outline) outline.setStyle({ color: c });
+            if (countyLayer) countyLayer.setStyle({ color: c });
+            styleHighlight();
+        }
     </script>
 </body>
 </html>
