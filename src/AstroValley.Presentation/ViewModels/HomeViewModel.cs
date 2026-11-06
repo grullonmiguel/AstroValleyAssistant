@@ -19,7 +19,7 @@ public partial class HomeViewModel : ObservableObject
     // Required by the shared state-list style's scroll-offset binding.
     public double ListBoxScrollOffset { get; set; }
 
-    // Home's own state list (independent of MapViewModel, which Home is meant to replace).
+    // State list.
     public ObservableCollection<StateViewModel> States { get; } = new(
         new (string Name, string Abbr, int Counties, TaxSaleType Type)[]
         {

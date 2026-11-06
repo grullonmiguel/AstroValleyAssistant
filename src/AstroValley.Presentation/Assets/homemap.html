@@ -18,10 +18,34 @@
             wheelPxPerZoomLevel: 240
         });
         // Fit the contiguous US into the free area: left padding clears the sidebar, top clears the header.
-        map.fitBounds([[24.5, -125], [49.5, -66.5]], {
-            paddingTopLeft: [280, 100],
-            paddingBottomRight: [40, 40]
-        });
+        var US_BOUNDS = [[24.5, -125], [49.5, -66.5]];
+        var FIT = { paddingTopLeft: [280, 100], paddingBottomRight: [40, 40] };
+        map.fitBounds(US_BOUNDS, FIT);
+
+        // Outline of the selected state, matched by name from the bundled states GeoJSON.
+        var statesData = null, selectedName = null, outline = null;
+        fetch('Geo/us-states.geojson').then(r => r.json()).then(d => { statesData = d; drawOutline(); });
+
+        function highlightState(name) { selectedName = name; drawOutline(); }
+
+        function drawOutline() {
+            var hadOutline = !!outline;
+            if (outline) { map.removeLayer(outline); outline = null; }
+            if (!selectedName) { // selection cleared: glide back out to the whole US
+                if (hadOutline) map.flyToBounds(US_BOUNDS, Object.assign({ duration: 1.2 }, FIT));
+                return;
+            }
+            if (!statesData) return; // called again once the data arrives
+            var matches = statesData.features.filter(f => f.properties.name === selectedName);
+            if (!matches.length) return;
+            outline = L.geoJSON(matches, {
+                style: { color: '#4F4486', weight: 3, fill: false },
+                interactive: false
+            }).addTo(map);
+            // Glide to the state (remove this line to keep the view where it is).
+            map.flyToBounds(outline.getBounds(), Object.assign({ duration: 1.2 }, FIT));
+        }
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
