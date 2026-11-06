@@ -59,6 +59,7 @@ namespace AstroValley.Presentation
             services.AddSingleton<MainView>();
 
             // ── Page ViewModels (Singleton) ──────────────────────────────────
+            services.AddSingleton<HomeViewModel>();
             services.AddSingleton<RegridViewModel>();
             services.AddSingleton<RealAuctionViewModel>();
             services.AddSingleton<MapViewModel>();
@@ -309,7 +310,7 @@ namespace AstroValley.Presentation
 
             // Initialize MainViewModel's current view AFTER all services are ready
             var mainViewModel = _host.Services.GetRequiredService<MainViewModel>();
-            mainViewModel.CurrentViewModel = _host.Services.GetRequiredService<MapViewModel>();
+            mainViewModel.CurrentViewModel = _host.Services.GetRequiredService<HomeViewModel>();
 
             _host.Services.GetRequiredService<MainView>().Show();
             base.OnStartup(e);

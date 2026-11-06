@@ -50,9 +50,13 @@
     </Window.Resources>
 
     <Grid Background="{DynamicResource Brush.Background.Primary}">
-        <DockPanel>
-            <!-- Header -->
-            <Border Style="{StaticResource Theme.Border.Header}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <!-- Header (ZIndex 1 keeps it above the full-bleed Home map) -->
+            <Border Grid.Row="0" Panel.ZIndex="1" Style="{StaticResource Theme.Border.Header}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -63,11 +67,12 @@
                     <!-- Logo -->
                     <ContentControl Grid.Column="0" Style="{StaticResource AppLogo}"/>
 
-                    <!-- Navigation Buttons: Regrid | Real Auction | Maps | Menu  -->
+                    <!-- Navigation Buttons: Home | Regrid | Real Auction | Maps | Menu  -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <RadioButton Content="Home" Command="{Binding NavigateCommand}" CommandParameter="Home" IsChecked="True" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <RadioButton Content="Regrid" Command="{Binding NavigateCommand}" CommandParameter="Regrid" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <RadioButton Content="Real Auction" Command="{Binding NavigateCommand}" CommandParameter="RealAuction" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
-                        <RadioButton Content="Maps" Command="{Binding NavigateCommand}" CommandParameter="Map" IsChecked="True" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
+                        <RadioButton Content="Maps" Command="{Binding NavigateCommand}" CommandParameter="Map" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <Button x:Name="HamburgerMenuButton" Command="{Binding OpenMenuCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}" Style="{StaticResource Theme.Button.HamburgerMenu}" >
                             <Button.ContextMenu>
                                 <ContextMenu Style="{StaticResource Theme.ContextMenu}">
@@ -82,9 +87,33 @@
             </Border>
 
             <!-- Content -->
-            <ContentControl Content="{Binding CurrentViewModel}" Margin="{StaticResource Margin.Page}" />
-            
-        </DockPanel>
+            <!-- Other pages: below the header, hidden while Home is showing. -->
+            <ContentControl Content="{Binding CurrentViewModel}" Grid.Row="1" Margin="{StaticResource Margin.Page}">
+                <ContentControl.Style>
+                    <Style TargetType="ContentControl">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsFullBleed}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ContentControl.Style>
+            </ContentControl>
+
+            <!-- Home: one persistent instance, edge to edge behind the header. -->
+            <views:HomeView Grid.Row="0" Grid.RowSpan="2" DataContext="{Binding Home}">
+                <views:HomeView.Style>
+                    <Style TargetType="views:HomeView">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding DataContext.IsFullBleed, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </views:HomeView.Style>
+            </views:HomeView>
+        </Grid>
 
         <!-- Left/Top Accent Lines -->
         <ContentControl Style="{StaticResource Theme.Decorator.AccentOverlay}"/>

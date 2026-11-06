@@ -21,8 +21,17 @@ public partial class MainViewModel : ObservableObject
     public ObservableObject? CurrentViewModel
     {
         get;
-        set => SetProperty(ref field, value);
+        set
+        {
+            if (SetProperty(ref field, value)) OnPropertyChanged(nameof(IsFullBleed));
+        }
     }
+
+    // Home's view is created once in MainView (not via DataTemplate) so the map persists.
+    public HomeViewModel Home { get; }
+
+    // Home draws edge to edge behind the header; other pages sit below it.
+    public bool IsFullBleed => CurrentViewModel is HomeViewModel;
 
     // Dialog overlay — only DialogViewModelBase subclasses
     public object? CurrentDialogViewModel
@@ -45,6 +54,7 @@ public partial class MainViewModel : ObservableObject
        
         // Set the initial view.
         _serviceProvider = serviceProvider;
+        Home = serviceProvider.GetRequiredService<HomeViewModel>();
         //CurrentViewModel = _serviceProvider.GetRequiredService<MapViewModel>();
     }
 
@@ -61,6 +71,7 @@ public partial class MainViewModel : ObservableObject
         // as Singletons, it will always return the same instance, preserving state.
         CurrentViewModel = viewName switch
         {
+            "Home" => _serviceProvider.GetRequiredService<HomeViewModel>(),
             "Regrid" => _serviceProvider.GetRequiredService<RegridViewModel>(),
             "RealAuction" => _serviceProvider.GetRequiredService<RealAuctionViewModel>(),
             "Map" => _serviceProvider.GetRequiredService<MapViewModel>(),

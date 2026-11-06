@@ -90,7 +90,11 @@ public partial class MarkerMapView : UserControl
             }
 
             // 4. Navigate to the local map
-            MapWebView.CoreWebView2.Navigate(new Uri(htmlPath).AbsoluteUri);
+            // https origin (not file://) so OSM tile servers receive a Referer and don't block us.
+            MapWebView.CoreWebView2.SetVirtualHostNameToFolderMapping("appassets.local",
+                Path.GetDirectoryName(htmlPath)!,
+                Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow);
+            MapWebView.CoreWebView2.Navigate("https://appassets.local/markermap.html");
 
             // 5. Wire up the post-load synchronization
             MapWebView.NavigationCompleted += (s, args) =>
