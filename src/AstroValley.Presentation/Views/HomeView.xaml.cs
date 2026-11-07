@@ -24,6 +24,9 @@ public partial class HomeView : UserControl
             {
                 vm.PropertyChanged += OnViewModelPropertyChanged;
                 vm.MarkersAdded += PushMarkers;
+                vm.FilterChanged += () => _ = PushFilter();
+                vm.TerrainToggleRequested += () => _ = RunScript("toggle3d();");
+                vm.TourToggleRequested += () => _ = RunScript("toggleTour();");
                 vm.MarkerRemoved += async m =>
                 {
                     if (!_pageLoaded) return;
@@ -88,6 +91,12 @@ public partial class HomeView : UserControl
         var root = doc.RootElement;
         var type = root.GetProperty("type").GetString();
         if (type == "ready") { HideLoading(); return; }
+        if (type == "mode")
+        {
+            vm.IsTerrain = root.GetProperty("terrain").GetBoolean();
+            vm.IsTouring = root.GetProperty("touring").GetBoolean();
+            return;
+        }
         if (type != "counties") return;
         // Ignore a late reply for a state that is no longer selected.
         if (root.GetProperty("state").GetString() != vm.SelectedState?.Name) return;
@@ -118,6 +127,20 @@ public partial class HomeView : UserControl
         // Property names stay PascalCase to match the JS (loc.Latitude, loc.ParcelID ...).
         var json = JsonSerializer.Serialize(locations, new JsonSerializerOptions { PropertyNamingPolicy = null });
         await MapWebView.CoreWebView2.ExecuteScriptAsync($"addMarkers({json});");
+        await PushFilter(); // new pins may be hidden by the active filter
+    }
+
+    private async Task RunScript(string script)
+    {
+        if (_pageLoaded) await MapWebView.CoreWebView2.ExecuteScriptAsync(script);
+    }
+
+    // Tells the map which pins the active filter hides (same "lat,lon" key the map uses).
+    private Task PushFilter()
+    {
+        if (DataContext is not HomeViewModel vm) return Task.CompletedTask;
+        var keys = vm.HiddenMarkers.Select(m => $"{Inv(m.Latitude)},{Inv(m.Longitude)}");
+        return RunScript($"setHidden({JsonSerializer.Serialize(keys)});");
     }
 
     // Invariant culture so the decimal separator is always '.' in scripts.

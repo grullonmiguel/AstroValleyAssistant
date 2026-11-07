@@ -11,6 +11,7 @@ public record MarkerLocation
     public double Longitude { get; init; }
     public string? Acres { get; init; }
     public string? ParcelLines { get; init; }
+    public DateTime? AuctionDate { get; init; } // drives pin colour and the "This week" filter
 
     // Links shown in the Home map popup (null = not available, so the text is not a link).
     public string? RegridUrl { get; init; }

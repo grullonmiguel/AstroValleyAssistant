@@ -3,6 +3,7 @@ using AstroValley.Domain.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.Windows.Data;
 using System.IO;
 using System.Text.Json;
 
@@ -37,11 +38,61 @@ public partial class HomeViewModel : ObservableObject
     // Pins sent from Real Auction / Regrid. The map page is kept alive, so these live for the whole app session.
     public ObservableCollection<MarkerLocation> Markers { get; } = [];
 
-    public HomeViewModel() => Markers.CollectionChanged += (_, _) =>
+    public HomeViewModel()
     {
-        SavePinsCommand.NotifyCanExecuteChanged();
-        ExportMapCommand.NotifyCanExecuteChanged();
-    };
+        Markers.CollectionChanged += (_, _) =>
+        {
+            SavePinsCommand.NotifyCanExecuteChanged();
+            ExportMapCommand.NotifyCanExecuteChanged();
+        };
+        // The parcel list binds to Markers, i.e. this default view, so filtering it filters the list too.
+        CollectionViewSource.GetDefaultView(Markers).Filter = o => Matches((MarkerLocation)o);
+    }
+
+    // Quick filters shown as chips under the map: All | Week | Under5k | Acre.
+    [ObservableProperty]
+    private string _filter = "All";
+
+    [ObservableProperty]
+    private bool _isTerrain;
+
+    [ObservableProperty]
+    private bool _isTouring;
+
+    /// <summary>Raised when the filter changed; the map then hides <see cref="HiddenMarkers"/>.</summary>
+    public event Action? FilterChanged;
+    public event Action? TerrainToggleRequested;
+    public event Action? TourToggleRequested;
+
+    public IEnumerable<MarkerLocation> HiddenMarkers => Markers.Where(m => !Matches(m));
+
+    partial void OnFilterChanged(string value)
+    {
+        CollectionViewSource.GetDefaultView(Markers).Refresh();
+        FilterChanged?.Invoke();
+    }
+
+    private bool Matches(MarkerLocation m)
+    {
+        var today = DateTime.Today;
+        return Filter switch
+        {
+            "Week" => m.AuctionDate is { } d && d.Date >= today && d.Date <= today.AddDays(7),
+            "Under5k" => m.ExtraDetails?.GetValueOrDefault("Minimum Bid") is { } bid
+                         && decimal.TryParse(bid, System.Globalization.NumberStyles.Currency, null, out var amount) && amount < 5000,
+            "Acre" => double.TryParse(m.Acres, out var acres) && acres > 1,
+            _ => true
+        };
+    }
+
+    [RelayCommand]
+    private void SetFilter(string filter) => Filter = filter;
+
+    [RelayCommand]
+    private void ToggleTerrain() => TerrainToggleRequested?.Invoke();
+
+    [RelayCommand]
+    private void ToggleTour() => TourToggleRequested?.Invoke();
     private readonly HashSet<string> _markerKeys = [];
 
     /// <summary>Raised with only the pins that were new, so the map never draws a pin twice.</summary>

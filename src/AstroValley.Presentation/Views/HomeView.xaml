@@ -127,6 +127,57 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Chips under the map: the filter ones show the active filter; 3D / Tour show the map's state. -->
+        <Style x:Key="HomeChip.All" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Filter}" Value="All">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeChip.Week" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Filter}" Value="Week">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeChip.Under5k" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Filter}" Value="Under5k">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeChip.Acre" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Filter}" Value="Acre">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeChip.Terrain" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsTerrain}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeChip.Tour" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsTouring}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="Content" Value="Stop"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <Grid>
         <!-- Composition control (not WebView2) so WPF elements can overlay the map. -->
@@ -189,6 +240,43 @@
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>
+            </Border>
+        </StackPanel>
+
+        <!-- Filter chips, 3D terrain and tour; only while pins exist. -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0 0 0 28">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Markers.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <Border CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="All" Style="{StaticResource HomeChip.All}" Command="{Binding SetFilterCommand}" CommandParameter="All"/>
+                    <Button Content="This week" Style="{StaticResource HomeChip.Week}" Command="{Binding SetFilterCommand}" CommandParameter="Week"
+                            ToolTip="Auctions in the next 7 days"/>
+                    <Button Content="Under $5k" Style="{StaticResource HomeChip.Under5k}" Command="{Binding SetFilterCommand}" CommandParameter="Under5k"
+                            ToolTip="Minimum bid under $5,000"/>
+                    <Button Content="Over 1 acre" Style="{StaticResource HomeChip.Acre}" Command="{Binding SetFilterCommand}" CommandParameter="Acre"/>
+                </StackPanel>
+            </Border>
+            <Border Margin="8 0 0 0" CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="3D" Style="{StaticResource HomeChip.Terrain}" Command="{Binding ToggleTerrainCommand}"
+                            ToolTip="Tilt the map and show terrain (switches from the globe to a flat map)"/>
+                    <Button Content="Tour" Style="{StaticResource HomeChip.Tour}" Command="{Binding ToggleTourCommand}"
+                            ToolTip="Fly through the pins one by one in 3D. Click the map to stop."/>
+                </StackPanel>
             </Border>
         </StackPanel>
 

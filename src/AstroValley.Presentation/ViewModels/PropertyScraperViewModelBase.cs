@@ -301,6 +301,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
                     Latitude = (double)record.Latitude.TryParseDouble(),
                     Longitude = (double)record.Longitude.TryParseDouble(),
                     ParcelLines = record.ParcelLines,
+                    AuctionDate = record.Record.AuctionDate.Year > 1 ? record.Record.AuctionDate : null,
                     RegridUrl = string.IsNullOrWhiteSpace(record.RegridUrl) ? null : record.RegridUrl,
                     GoogleMapsUrl = UrlBuilder.BuildGoogleMapsUrl(record.Record),
                     FemaUrl = UrlBuilder.BuildFemaFloodUrl(record.Record),

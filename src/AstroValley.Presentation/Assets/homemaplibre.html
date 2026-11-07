@@ -35,7 +35,8 @@
                     outline: { type: 'geojson', data: emptyFc() },
                     counties: { type: 'geojson', data: emptyFc() },
                     highlight: { type: 'geojson', data: emptyFc() },
-                    parcels: { type: 'geojson', data: emptyFc() }
+                    parcels: { type: 'geojson', data: emptyFc() },
+                    dem: DEM_SOURCE
                 },
                 layers: [
                     { id: 'bg', type: 'background', paint: { 'background-color': '#000' } },
@@ -158,10 +159,7 @@
             (map.getSource('parcels') ? function (fn) { fn(); } : function (fn) { map.once('style.load', fn); })(function () {
                 var bounds = new maplibregl.LngLatBounds();
                 list.forEach(function (loc) {
-                    var marker = new maplibregl.Marker({ color: '#CD7B2E' })
-                        .setLngLat([loc.Longitude, loc.Latitude])
-                        .setPopup(new maplibregl.Popup({ offset: 25, maxWidth: '360px' }).setHTML(popupHtml(loc)))
-                        .addTo(map);
+                    var marker = makePin(loc, map); // colour by auction urgency (pinpopup.js)
                     pinMarkers.push({ marker: marker, lat: loc.Latitude, lon: loc.Longitude });
                     bounds.extend([loc.Longitude, loc.Latitude]);
 
@@ -182,7 +180,11 @@
         }
 
         function pinKey(lat, lon) { return lat + ',' + lon; }
-        function drawParcels() { map.getSource('parcels').setData({ type: 'FeatureCollection', features: parcelFeatures }); }
+        function drawParcels() {
+            var shown = parcelFeatures.filter(function (f) { return !hiddenKeys[f.properties.pin]; });
+            var src = map.getSource('parcels');
+            if (src) src.setData({ type: 'FeatureCollection', features: shown }); // not there yet: addMarkers draws once the style loads
+        }
 
         function removeMarker(lat, lon) {
             var key = pinKey(lat, lon);
@@ -200,6 +202,30 @@
             pinMarkers = [];
             parcelFeatures = [];
             drawParcels();
+        }
+
+        // ---- filter chips, 3D terrain and tour (driven from WPF) -------------------------------------------------------
+        var hiddenKeys = {}, terrain3d = false;
+        function postMode() {
+            if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'mode', terrain: terrain3d, touring: TOUR.on });
+        }
+        // keys of the pins the active filter hides ("lat,lon")
+        function setHidden(keys) {
+            hiddenKeys = {};
+            keys.forEach(function (k) { hiddenKeys[k] = 1; });
+            pinMarkers.forEach(function (p) {
+                var hide = !!hiddenKeys[pinKey(p.lat, p.lon)];
+                p.marker.getElement().style.display = hide ? 'none' : '';
+                if (hide && p.marker.getPopup().isOpen()) p.marker.togglePopup();
+            });
+            drawParcels();
+        }
+        function apply3d(on) { terrain3d = on; set3d(map, on, true); postMode(); }
+        function toggle3d() { apply3d(!terrain3d); }
+        function toggleTour() {
+            if (TOUR.on) { stopTour(); return; }
+            var shown = pinMarkers.filter(function (p) { return !hiddenKeys[pinKey(p.lat, p.lon)]; });
+            startTour(map, shown, { pad: pinPad, is3d: function () { return terrain3d; }, set3d: apply3d, onState: postMode });
         }
 
         // The parcel list adds a third panel on the left (county list too once a state is selected).
