@@ -106,6 +106,7 @@ public partial class HomeView : UserControl
             vm.IsTouring = root.GetProperty("touring").GetBoolean();
             vm.IsFlood = root.GetProperty("flood").GetBoolean();
             vm.IsWetlands = root.GetProperty("wetlands").GetBoolean();
+            vm.IsEpa = root.GetProperty("epa").GetBoolean();
             return;
         }
         if (type != "counties") return;

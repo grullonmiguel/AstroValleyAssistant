@@ -245,6 +245,14 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="HomeChip.Epa" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsEpa}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <Grid>
         <!-- Composition control (not WebView2) so WPF elements can overlay the map. -->
@@ -375,6 +383,8 @@
                             ToolTip="FEMA flood zones (draws when zoomed in to about street level). Click the map to see the zone at that spot."/>
                     <Button Content="Wetlands" Style="{StaticResource HomeChip.Wetlands}" Command="{Binding ToggleOverlayCommand}" CommandParameter="wetlands"
                             ToolTip="National Wetlands Inventory (draws from about county zoom). Click the map to see the wetland type at that spot."/>
+                    <Button Content="EPA" Style="{StaticResource HomeChip.Epa}" Command="{Binding ToggleOverlayCommand}" CommandParameter="epa"
+                            ToolTip="EPA Superfund (magenta) and brownfield (brown) sites. Shows when zoomed in to about county level; click a dot for details."/>
                 </StackPanel>
             </Border>
         </StackPanel>

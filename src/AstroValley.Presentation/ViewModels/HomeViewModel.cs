@@ -81,7 +81,10 @@ public partial class HomeViewModel : ObservableObject
     [ObservableProperty]
     private bool _isWetlands;
 
-    /// <summary>Asks the map to switch an overlay ("flood" / "wetlands") on or off.</summary>
+    [ObservableProperty]
+    private bool _isEpa;
+
+    /// <summary>Asks the map to switch an overlay ("flood" / "wetlands" / "epa") on or off.</summary>
     public event Action<string>? OverlayToggleRequested;
 
     /// <summary>Raised when the filter changed; the map then hides <see cref="HiddenMarkers"/>.</summary>

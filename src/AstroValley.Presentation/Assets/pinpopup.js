@@ -190,7 +190,10 @@ function overlayLayer(key) {
     return { id: key, type: 'raster', source: key, layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.65 } };
 }
 
-function setOverlay(map, key, on) { map.setLayoutProperty(key, 'visibility', on ? 'visible' : 'none'); }
+function setOverlay(map, key, on) {
+    if (key === 'epa') setEpa(map, on);
+    else map.setLayoutProperty(key, 'visibility', on ? 'visible' : 'none');
+}
 
 // Click on the map: ask each visible overlay what is at that point and show it in a popup.
 function identify(map, lngLat, on) {
@@ -235,6 +238,68 @@ function wireIdentify(map, getOn) {
         var on = getOn();
         if ((!on.flood && !on.wetlands) || TOUR.on) return;
         if (e.originalEvent.target.closest && e.originalEvent.target.closest('.maplibregl-marker')) return;
+        if (map.getLayer('epa-points') && map.queryRenderedFeatures(e.point, { layers: ['epa-points'] }).length) return; // the dot has its own popup
         identify(map, e.lngLat, on);
+    });
+}
+
+// ---- EPA red flags: Superfund (NPL) and brownfield sites as dots (shared) -----------------------------------------
+// Point data, so the dots are drawn here from the visible area's features (not server images). shortcut: refetched after each
+// move, max 1000 per kind, and only from zoom 8 in; if a county ever shows exactly 1000 dots, zoom in further.
+var EPA = {
+    url: 'https://geodata.epa.gov/arcgis/rest/services/OEI/FRS_INTERESTS/MapServer',
+    minZoom: 8,
+    kinds: [{ id: 22, kind: 'Superfund (NPL)', color: '#D6249F' }, { id: 0, kind: 'Brownfield', color: '#8B5E3C' }]
+};
+var EPA_EMPTY = { type: 'FeatureCollection', features: [] };
+
+function epaSource() { return { type: 'geojson', data: EPA_EMPTY, attribution: 'Sites: EPA FRS' }; }
+
+function epaLayer() {
+    return { id: 'epa-points', type: 'circle', source: 'epa', layout: { visibility: 'none' }, paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 4, 15, 9],
+        'circle-color': ['match', ['get', 'kind']].concat(EPA.kinds.reduce(function (a, k) { return a.concat([k.kind, k.color]); }, []), ['#8B5E3C']),
+        'circle-stroke-color': '#fff', 'circle-stroke-width': 2 } };
+}
+
+var epaAbort = null;
+function refreshEpa(map) {
+    var src = map.getSource('epa');
+    if (map.getZoom() < EPA.minZoom) { src.setData(EPA_EMPTY); return; }
+    var b = map.getBounds(), env = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',');
+    if (epaAbort) epaAbort.abort();
+    epaAbort = new AbortController();
+    Promise.all(EPA.kinds.map(function (k) {
+        return fetch(EPA.url + '/' + k.id + '/query?geometry=' + env + '&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects' +
+                '&outFields=PRIMARY_NAME,LOCATION_ADDRESS,CITY_NAME,STATE_CODE,FAC_URL&returnGeometry=true&outSR=4326&resultRecordCount=1000&f=geojson', { signal: epaAbort.signal })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { return (d.features || []).map(function (f) { f.properties.kind = k.kind; return f; }); });
+    })).then(function (parts) {
+        src.setData({ type: 'FeatureCollection', features: [].concat.apply([], parts) });
+    }).catch(function () { /* cancelled by a newer request, or unreachable: keep what is shown */ });
+}
+
+function setEpa(map, on) {
+    map.setLayoutProperty('epa-points', 'visibility', on ? 'visible' : 'none');
+    if (on) refreshEpa(map); else map.getSource('epa').setData(EPA_EMPTY);
+}
+
+// refetch after the map moves while the layer is on; a click on a dot shows what the site is
+function wireEpa(map, isOn) {
+    var timer;
+    map.on('moveend', function () { if (isOn()) { clearTimeout(timer); timer = setTimeout(function () { refreshEpa(map); }, 400); } });
+    map.on('mouseenter', 'epa-points', function () { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'epa-points', function () { map.getCanvas().style.cursor = ''; });
+    map.on('click', 'epa-points', function (e) {
+        var f = e.features[0], p = f.properties;
+        var color = EPA.kinds.filter(function (k) { return k.kind === p.kind; }).map(function (k) { return k.color; })[0];
+        var place = [p.LOCATION_ADDRESS, p.CITY_NAME, p.STATE_CODE].filter(Boolean).join(', ');
+        new maplibregl.Popup({ maxWidth: '300px' }).setLngLat(f.geometry.coordinates).setHTML(
+            '<div style="padding:12px 14px;font-family:\'Segoe UI\',sans-serif">' +
+            '<span style="background:' + color + ';color:#fff;border-radius:10px;padding:2px 10px;font-size:11px;font-weight:600">' + esc(p.kind) + '</span>' +
+            '<div style="font-size:14px;font-weight:700;color:#30294B;margin:8px 0 2px">' + esc(p.PRIMARY_NAME) + '</div>' +
+            '<div style="font-size:12px;color:#777">' + esc(place) + '</div>' +
+            (p.FAC_URL ? '<div style="margin-top:8px;font-size:12px"><a class="pp-link pp-accent" href="' + esc(p.FAC_URL).replace(/"/g, '&quot;') + '" target="_blank">EPA facility page &#8599;</a></div>' : '') +
+            '</div>').addTo(map);
     });
 }
