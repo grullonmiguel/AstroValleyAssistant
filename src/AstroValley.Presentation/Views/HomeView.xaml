@@ -131,31 +131,64 @@
         <!-- Chips under the map: the filter ones show the active filter; 3D / Tour show the map's state. -->
         <Style x:Key="HomeChip.All" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Filter}" Value="All">
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Filter}" Value="All"/>
+                        <Condition Binding="{Binding AcreStep}" Value="9"/>
+                    </MultiDataTrigger.Conditions>
                     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
                     <Setter Property="Foreground" Value="White"/>
-                </DataTrigger>
+                </MultiDataTrigger>
             </Style.Triggers>
         </Style>
-        <Style x:Key="HomeChip.Week" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding Filter}" Value="Week">
-                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </DataTrigger>
-            </Style.Triggers>
+
+        <!-- Slim rounded slider in the accent colour: filled part left of the thumb. -->
+        <Style x:Key="HomeSlider" TargetType="Slider">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid Height="20" Background="Transparent">
+                            <Border Height="4" CornerRadius="2" Background="#33534B80" VerticalAlignment="Center"/>
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge" Focusable="False">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Grid Background="Transparent">
+                                                    <Border Height="4" CornerRadius="2" Background="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge" Focusable="False">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Grid Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Focusable="False" Cursor="Hand">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Width="16" Height="16" Fill="{DynamicResource Brush.Accent}" Stroke="White" StrokeThickness="2"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="HomeChip.Under5k" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Filter}" Value="Under5k">
-                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="HomeChip.Acre" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding Filter}" Value="Acre">
                     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
                     <Setter Property="Foreground" Value="White"/>
                 </DataTrigger>
@@ -260,13 +293,25 @@
                 </Border.Effect>
                 <StackPanel Orientation="Horizontal">
                     <Button Content="All" Style="{StaticResource HomeChip.All}" Command="{Binding SetFilterCommand}" CommandParameter="All"/>
-                    <Button Content="This week" Style="{StaticResource HomeChip.Week}" Command="{Binding SetFilterCommand}" CommandParameter="Week"
-                            ToolTip="Auctions in the next 7 days"/>
                     <Button Content="Under $5k" Style="{StaticResource HomeChip.Under5k}" Command="{Binding SetFilterCommand}" CommandParameter="Under5k"
                             ToolTip="Minimum bid under $5,000"/>
-                    <Button Content="Over 1 acre" Style="{StaticResource HomeChip.Acre}" Command="{Binding SetFilterCommand}" CommandParameter="Acre"/>
                 </StackPanel>
             </Border>
+
+            <!-- Acre slider: pins with more acres than the slider are hidden (far right = no limit). -->
+            <Border Margin="8 0 0 0" CornerRadius="12" Padding="12 4" Background="{DynamicResource Brush.Pill.Background}"
+                    ToolTip="Show only pins up to this many acres. Pins without acreage are hidden while a limit is set.">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding AcreLabel}" Width="78" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
+                    <Slider Style="{StaticResource HomeSlider}" Width="110" Minimum="0" Maximum="9"
+                            TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding AcreStep, Mode=TwoWay}"/>
+                </StackPanel>
+            </Border>
+
             <Border Margin="8 0 0 0" CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>

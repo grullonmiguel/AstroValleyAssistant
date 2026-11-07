@@ -49,9 +49,18 @@ public partial class HomeViewModel : ObservableObject
         CollectionViewSource.GetDefaultView(Markers).Filter = o => Matches((MarkerLocation)o);
     }
 
-    // Quick filters shown as chips under the map: All | Week | Under5k | Acre.
+    // Chips under the map: All | Under5k. The acre slider is a second, independent filter.
     [ObservableProperty]
     private string _filter = "All";
+
+    // Slider positions for "max acres"; the last position means no limit.
+    private static readonly double[] AcreSteps = [0.25, 0.5, 1, 2, 5, 10, 25, 50, 100];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AcreLabel))]
+    private int _acreStep = AcreSteps.Length;
+
+    public string AcreLabel => AcreStep >= AcreSteps.Length ? "Acres: any" : $"Acres: ≤ {AcreSteps[AcreStep]}";
 
     [ObservableProperty]
     private bool _isTerrain;
@@ -66,7 +75,11 @@ public partial class HomeViewModel : ObservableObject
 
     public IEnumerable<MarkerLocation> HiddenMarkers => Markers.Where(m => !Matches(m));
 
-    partial void OnFilterChanged(string value)
+    partial void OnFilterChanged(string value) => ApplyFilter();
+
+    partial void OnAcreStepChanged(int value) => ApplyFilter();
+
+    private void ApplyFilter()
     {
         CollectionViewSource.GetDefaultView(Markers).Refresh();
         FilterChanged?.Invoke();
@@ -74,19 +87,21 @@ public partial class HomeViewModel : ObservableObject
 
     private bool Matches(MarkerLocation m)
     {
-        var today = DateTime.Today;
-        return Filter switch
-        {
-            "Week" => m.AuctionDate is { } d && d.Date >= today && d.Date <= today.AddDays(7),
-            "Under5k" => m.ExtraDetails?.GetValueOrDefault("Minimum Bid") is { } bid
-                         && decimal.TryParse(bid, System.Globalization.NumberStyles.Currency, null, out var amount) && amount < 5000,
-            "Acre" => double.TryParse(m.Acres, out var acres) && acres > 1,
-            _ => true
-        };
+        var bidOk = Filter != "Under5k"
+            || (m.ExtraDetails?.GetValueOrDefault("Minimum Bid") is { } bid
+                && decimal.TryParse(bid, System.Globalization.NumberStyles.Currency, null, out var amount) && amount < 5000);
+        // pins without an acreage are hidden once the slider is below "any"
+        var acresOk = AcreStep >= AcreSteps.Length
+            || (double.TryParse(m.Acres, out var acres) && acres <= AcreSteps[AcreStep]);
+        return bidOk && acresOk;
     }
 
     [RelayCommand]
-    private void SetFilter(string filter) => Filter = filter;
+    private void SetFilter(string filter)
+    {
+        Filter = filter;
+        if (filter == "All") AcreStep = AcreSteps.Length; // "All" also clears the slider
+    }
 
     [RelayCommand]
     private void ToggleTerrain() => TerrainToggleRequested?.Invoke();
