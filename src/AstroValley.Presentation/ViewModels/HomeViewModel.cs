@@ -68,6 +68,15 @@ public partial class HomeViewModel : ObservableObject
     [ObservableProperty]
     private bool _isTouring;
 
+    [ObservableProperty]
+    private bool _isFlood;
+
+    [ObservableProperty]
+    private bool _isWetlands;
+
+    /// <summary>Asks the map to switch an overlay ("flood" / "wetlands") on or off.</summary>
+    public event Action<string>? OverlayToggleRequested;
+
     /// <summary>Raised when the filter changed; the map then hides <see cref="HiddenMarkers"/>.</summary>
     public event Action? FilterChanged;
     public event Action? TerrainToggleRequested;
@@ -105,6 +114,9 @@ public partial class HomeViewModel : ObservableObject
 
     [RelayCommand]
     private void ToggleTerrain() => TerrainToggleRequested?.Invoke();
+
+    [RelayCommand]
+    private void ToggleOverlay(string key) => OverlayToggleRequested?.Invoke(key);
 
     [RelayCommand]
     private void ToggleTour() => TourToggleRequested?.Invoke();

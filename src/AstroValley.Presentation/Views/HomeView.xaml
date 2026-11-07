@@ -211,6 +211,22 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="HomeChip.Flood" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsFlood}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeChip.Wetlands" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsWetlands}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <Grid>
         <!-- Composition control (not WebView2) so WPF elements can overlay the map. -->
@@ -321,6 +337,19 @@
                             ToolTip="Tilt the map and show terrain (switches from the globe to a flat map)"/>
                     <Button Content="Tour" Style="{StaticResource HomeChip.Tour}" Command="{Binding ToggleTourCommand}"
                             ToolTip="Fly through the pins one by one in 3D. Click the map to stop."/>
+                </StackPanel>
+            </Border>
+
+            <!-- Due-diligence layers; with one on, clicking the map shows what is at that spot. -->
+            <Border Margin="8 0 0 0" CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Flood" Style="{StaticResource HomeChip.Flood}" Command="{Binding ToggleOverlayCommand}" CommandParameter="flood"
+                            ToolTip="FEMA flood zones (draws when zoomed in to about street level). Click the map to see the zone at that spot."/>
+                    <Button Content="Wetlands" Style="{StaticResource HomeChip.Wetlands}" Command="{Binding ToggleOverlayCommand}" CommandParameter="wetlands"
+                            ToolTip="National Wetlands Inventory (draws from about county zoom). Click the map to see the wetland type at that spot."/>
                 </StackPanel>
             </Border>
         </StackPanel>

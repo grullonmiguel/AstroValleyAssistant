@@ -26,6 +26,7 @@ public partial class HomeView : UserControl
                 vm.MarkersAdded += PushMarkers;
                 vm.FilterChanged += () => _ = PushFilter();
                 vm.TerrainToggleRequested += () => _ = RunScript("toggle3d();");
+                vm.OverlayToggleRequested += key => _ = RunScript($"toggleOverlay('{key}');");
                 vm.TourToggleRequested += () => _ = RunScript("toggleTour();");
                 vm.MarkerRemoved += async m =>
                 {
@@ -95,6 +96,8 @@ public partial class HomeView : UserControl
         {
             vm.IsTerrain = root.GetProperty("terrain").GetBoolean();
             vm.IsTouring = root.GetProperty("touring").GetBoolean();
+            vm.IsFlood = root.GetProperty("flood").GetBoolean();
+            vm.IsWetlands = root.GetProperty("wetlands").GetBoolean();
             return;
         }
         if (type != "counties") return;

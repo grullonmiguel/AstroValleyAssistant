@@ -36,12 +36,15 @@
                     counties: { type: 'geojson', data: emptyFc() },
                     highlight: { type: 'geojson', data: emptyFc() },
                     parcels: { type: 'geojson', data: emptyFc() },
-                    dem: DEM_SOURCE
+                    dem: DEM_SOURCE,
+                    flood: overlaySource('flood'),
+                    wetlands: overlaySource('wetlands')
                 },
                 layers: [
                     { id: 'bg', type: 'background', paint: { 'background-color': '#000' } },
                     { id: 'street', type: 'raster', source: 'street' },
                     { id: 'imagery', type: 'raster', source: 'imagery', layout: { visibility: 'none' } },
+                    overlayLayer('flood'), overlayLayer('wetlands'), // toggled from WPF; under our lines
                     // our lines sit under the labels so place names stay readable
                     { id: 'county-lines', type: 'line', source: 'counties', paint: { 'line-color': PURPLE, 'line-width': 1, 'line-opacity': 0.7 } },
                     { id: 'highlight-fill', type: 'fill', source: 'highlight', paint: {
@@ -205,10 +208,13 @@
         }
 
         // ---- filter chips, 3D terrain and tour (driven from WPF) -------------------------------------------------------
-        var hiddenKeys = {}, terrain3d = false;
+        var hiddenKeys = {}, terrain3d = false, overlayOn = { flood: false, wetlands: false };
         function postMode() {
-            if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'mode', terrain: terrain3d, touring: TOUR.on });
+            if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({
+                type: 'mode', terrain: terrain3d, touring: TOUR.on, flood: overlayOn.flood, wetlands: overlayOn.wetlands });
         }
+        function toggleOverlay(key) { overlayOn[key] = !overlayOn[key]; setOverlay(map, key, overlayOn[key]); postMode(); }
+        wireIdentify(map, function () { return overlayOn; });
         // keys of the pins the active filter hides ("lat,lon")
         function setHidden(keys) {
             hiddenKeys = {};
