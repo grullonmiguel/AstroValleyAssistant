@@ -24,9 +24,6 @@
     <Compile Update="Views\Dialogs\ImportView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Views\Dialogs\MarkerMapView.xaml.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Update="Views\Dialogs\RegridSettingsView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -70,12 +67,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Assets\homemap.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\markermap.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\markermap_interop.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -63,7 +63,6 @@ namespace AstroValley.Presentation
             services.AddSingleton<RegridViewModel>();
             services.AddSingleton<RealAuctionViewModel>();
             services.AddSingleton<MapViewModel>();
-            services.AddSingleton<MarkerMapViewModel>();
 
             // ── Dialog ViewModels (Transient) ────────────────────────────────
             services.AddTransient<ImportViewModel>();
@@ -94,8 +93,6 @@ namespace AstroValley.Presentation
             // ── Infrastructure: Exporters ────────────────────────────────────
             services.AddTransient<IClipboardExporter, ClipboardExporter>();
             services.AddTransient<IExcelExporter, ExcelPropertyExporter>();
-            services.AddTransient<IHtmlMapExporter, HtmlMarkerMapExporter>();
-            services.AddTransient<IMarkerMapParserService, MarkerMapParserService>();
 
             // ── Infrastructure: HTTP Logging Handler ─────────────────────────
             // ── Infrastructure: HTTP Logging Handler ─────────────────────────

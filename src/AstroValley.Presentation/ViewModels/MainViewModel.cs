@@ -103,13 +103,6 @@ public partial class MainViewModel : ObservableObject
                     break;
                 }
 
-            case MenuOption.PinMap:
-                {
-                    var vm = _serviceProvider.GetRequiredService<MarkerMapViewModel>();
-                    CurrentDialogViewModel = vm;
-                    break;
-                }
-
             case MenuOption.Themes:
                 {
                     var vm = _serviceProvider.GetRequiredService<ThemeSettingsViewModel>();

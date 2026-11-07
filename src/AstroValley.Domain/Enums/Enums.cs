@@ -13,7 +13,6 @@ public enum MenuOption
     RealAuction,
     Regrid,
     Themes,
-    PinMap
 }
 
 public enum RegridScrapeMode

@@ -35,9 +35,6 @@
         <DataTemplate DataType="{x:Type dialogs:ImportViewModel}">
             <viewDialogs:ImportView/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type dialogs:MarkerMapViewModel}">
-            <viewDialogs:MarkerMapView/>
-        </DataTemplate>
         <DataTemplate DataType="{x:Type dialogs:ResolveMatchesViewModel}">
             <viewDialogs:ResolveMatchesView />
         </DataTemplate>
@@ -78,7 +75,6 @@
                                 <ContextMenu Style="{StaticResource Theme.ContextMenu}">
                                     <MenuItem Header="Regrid" Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.Regrid}" />
                                     <MenuItem Header="Theme"  Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.Themes}" />
-                                    <MenuItem Header="Marker Map"  Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.PinMap}" />
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>
