@@ -41,11 +41,17 @@ function pinInfo(loc) {
     return { color: color, urgent: days >= 0 && days <= 7, days: days };
 }
 
+// Pin size follows acreage on a log scale: 0.25 ac = small, 1 ac = normal, 10 ac = 1.45x, 100 ac = 1.9x (capped). No acreage = normal.
+function pinScale(loc) {
+    var acres = parseFloat(loc.Acres);
+    return acres > 0 ? Math.min(1.9, Math.max(0.75, 1 + 0.45 * Math.log10(acres))) : 1;
+}
+
 function makePin(loc, map) {
-    var info = pinInfo(loc);
-    var marker = new maplibregl.Marker({ color: info.color })
+    var info = pinInfo(loc), scale = pinScale(loc);
+    var marker = new maplibregl.Marker({ color: info.color, scale: scale })
         .setLngLat([loc.Longitude, loc.Latitude])
-        .setPopup(new maplibregl.Popup({ offset: 25, maxWidth: '360px' }).setHTML(popupHtml(loc)))
+        .setPopup(new maplibregl.Popup({ offset: Math.round(25 * scale), maxWidth: '360px' }).setHTML(popupHtml(loc)))
         .addTo(map);
     if (info.urgent) marker.getElement().classList.add('pin-urgent');
     return marker;
