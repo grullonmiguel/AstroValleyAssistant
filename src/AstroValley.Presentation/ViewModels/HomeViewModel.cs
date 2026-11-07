@@ -36,6 +36,12 @@ public partial class HomeViewModel : ObservableObject
 
     // Pins sent from Real Auction / Regrid. The map page is kept alive, so these live for the whole app session.
     public ObservableCollection<MarkerLocation> Markers { get; } = [];
+
+    public HomeViewModel() => Markers.CollectionChanged += (_, _) =>
+    {
+        SavePinsCommand.NotifyCanExecuteChanged();
+        ExportMapCommand.NotifyCanExecuteChanged();
+    };
     private readonly HashSet<string> _markerKeys = [];
 
     /// <summary>Raised with only the pins that were new, so the map never draws a pin twice.</summary>
@@ -56,7 +62,7 @@ public partial class HomeViewModel : ObservableObject
     }
 
     // Writes the current pins to a standalone HTML map (list + fly-to + popups, no delete). Needs internet to show tiles.
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasMarkers))]
     private async Task ExportMap()
     {
         var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "HTML File (*.html)|*.html", FileName = "AstroValley-Pins.html" };
@@ -81,6 +87,38 @@ public partial class HomeViewModel : ObservableObject
             System.Windows.MessageBox.Show($"Could not export the map: {ex.Message}", "Export map");
         }
     }
+
+    private static readonly JsonSerializerOptions PinJson = new() { PropertyNamingPolicy = null, WriteIndented = true };
+
+    // Pins as a JSON file: keeps everything a pin carries (outline, links, details), so it can be loaded back later.
+    [RelayCommand(CanExecute = nameof(HasMarkers))]
+    private async Task SavePins()
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "JSON File (*.json)|*.json", FileName = "AstroValley-Pins.json" };
+        if (dialog.ShowDialog() != true) return;
+        try { await File.WriteAllTextAsync(dialog.FileName, JsonSerializer.Serialize(Markers, PinJson)); }
+        catch (Exception ex) { System.Windows.MessageBox.Show($"Could not save the pins: {ex.Message}", "Save pins"); }
+    }
+
+    [RelayCommand]
+    private async Task LoadPins()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "JSON File (*.json)|*.json" };
+        if (dialog.ShowDialog() != true) return;
+        try
+        {
+            var pins = JsonSerializer.Deserialize<List<MarkerLocation>>(await File.ReadAllTextAsync(dialog.FileName), PinJson) ?? [];
+            var added = AddMarkers(pins);
+            if (added == 0)
+                System.Windows.MessageBox.Show("No new pins: the file had none, or they are already on the map.", "Load pins");
+        }
+        catch (Exception ex) // bad JSON or wrong shape
+        {
+            System.Windows.MessageBox.Show($"Could not load the pins: {ex.Message}", "Load pins");
+        }
+    }
+
+    private bool HasMarkers() => Markers.Count > 0;
 
     [RelayCommand]
     private void ClearMarkers()

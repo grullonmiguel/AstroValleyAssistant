@@ -169,6 +169,27 @@
                     <Button Content="Satellite" Style="{StaticResource HomeSegment.Satellite}" Command="{Binding ShowSatelliteCommand}"/>
                 </StackPanel>
             </Border>
+
+            <!-- Pins menu: save / load pins as JSON, export the standalone HTML map. -->
+            <Border Margin="8 0 0 0" CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
+                </Border.Effect>
+                <Button x:Name="MenuButton" Style="{StaticResource HomeSegment}" ToolTip="Pins menu" Click="OnMenuClicked">
+                    <Path Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource Brush.Accent}" Data="{StaticResource Icon.DotsVertical}"/>
+                    <Button.ContextMenu>
+                        <ContextMenu x:Name="PinsMenu" Placement="Bottom">
+                            <MenuItem Header="Load pins (JSON)…" Command="{Binding LoadPinsCommand}"
+                                      ToolTip="Add pins from a JSON file saved earlier. Pins already on the map are skipped."/>
+                            <MenuItem Header="Save pins (JSON)…" Command="{Binding SavePinsCommand}"
+                                      ToolTip="Save the current pins to a JSON file you can load again later."/>
+                            <Separator/>
+                            <MenuItem Header="Export map (HTML)…" Command="{Binding ExportMapCommand}"
+                                      ToolTip="Save the current pins as a standalone HTML map (parcel list, fly-to and popups) that opens in any browser."/>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
+            </Border>
         </StackPanel>
 
         <!-- Left side: state sidebar, then the county list of the selected state to its right. -->
@@ -320,13 +341,6 @@
                             <StackPanel Orientation="Horizontal">
                                 <Path Width="14" Height="14" Stretch="Uniform" Fill="White" Data="{StaticResource Icon.Delete}"/>
                                 <TextBlock Text="Clear" Margin="4 0 0 0" FontSize="12" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                        <Button HorizontalAlignment="Right" Style="{StaticResource HomePinTrash}" Padding="0"
-                                Command="{Binding ExportMapCommand}" ToolTip="Export: saves the current pins as a standalone HTML map (parcel list, fly-to and popups) that opens in any browser.">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Width="16" Height="16" Stretch="Uniform" Fill="White" Data="{StaticResource Icon.Html}"/>
-                                <TextBlock Text="Export" Margin="4 0 0 0" FontSize="12" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </Grid>

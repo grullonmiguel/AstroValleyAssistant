@@ -97,6 +97,12 @@ public partial class HomeView : UserControl
             vm.Counties.Add(new CountyItem(item.GetProperty("id").GetString()!, item.GetProperty("name").GetString()!));
     }
 
+    private void OnMenuClicked(object sender, System.Windows.RoutedEventArgs e)
+    {
+        PinsMenu.PlacementTarget = MenuButton;
+        PinsMenu.IsOpen = true;
+    }
+
     private void HideLoading()
     {
         if (MapLoading.Visibility != System.Windows.Visibility.Visible) return;
