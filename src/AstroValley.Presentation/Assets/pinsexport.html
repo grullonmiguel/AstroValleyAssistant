@@ -22,6 +22,7 @@
         .item { padding: 9px 14px; font-size: 14px; font-weight: 600; color: #534B80; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .item:hover { background: rgba(255,255,255,.85); }
         .item.sel { background: #534B80; color: #fff; }
+        .item .dot { float: right; width: 9px; height: 9px; margin-top: 5px; border-radius: 50%; border: 1px solid #fff; }
 
         /* Map | Satellite switch */
         #modes { position: absolute; top: 16px; right: 16px; z-index: 2; display: flex; background: #DBD8E9; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
@@ -109,6 +110,11 @@
             var el = document.createElement('div');
             el.className = 'item';
             el.textContent = loc.ParcelID || loc.Address;
+            if (loc.AccessStatus) { // road access flag, if checked in the app
+                var dot = document.createElement('span');
+                dot.className = 'dot'; dot.style.background = ACCESS_COLORS[loc.AccessStatus]; dot.title = accessText(loc);
+                el.appendChild(dot);
+            }
             el.title = loc.Address || '';
             var idx = pins.length;
             el.onclick = function () { focusPin(idx); };

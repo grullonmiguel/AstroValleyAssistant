@@ -1,31 +1,76 @@
 /* Pin popup look, shared by the Home map (homemaplibre.html) and the exported map (pinsexport.html). */
-.maplibregl-popup-content { padding: 0; border-radius: 12px; overflow: hidden; }
-.maplibregl-popup-close-button { width: 28px; height: 28px; margin: 8px; border-radius: 50%; background: #fff; font-size: 18px; line-height: 1; color: #30294B; }
+.maplibregl-popup-content { padding: 0; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 24px rgba(48,41,75,.35); }
+.maplibregl-popup-close-button { width: 32px; height: 32px; margin: 10px 10px 0 0; border-radius: 50%; background: transparent; font-size: 24px; line-height: 1; color: #fff; }
+.maplibregl-popup-close-button:hover { background: rgba(255,255,255,.18); }
+
+/* header band in the app's accent purple */
+.pp-head { display: flex; align-items: center; gap: 12px; background: #4F4486; color: #fff; padding: 14px 48px 14px 16px; font-family: 'Segoe UI', sans-serif; }
+.pp-ico { flex: none; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.16); display: flex; align-items: center; justify-content: center; }
+.pp-title { font-size: 15px; font-weight: 700; text-transform: uppercase; line-height: 1.25; word-wrap: break-word; }
+.pp-pid { font-size: 12px; opacity: .85; margin-top: 2px; }
+.pp-head .pp-link { color: #fff; }
+
+.pp-body { padding: 14px 16px 16px; font-family: 'Segoe UI', sans-serif; color: #30294B; }
 .pp-label { font-size: 11px; color: #777; }
-.pp-value { font-size: 13px; font-weight: 600; color: #222; word-wrap: break-word; }
-.pp-money { display: flex; gap: 12px; background: #DBD8E9; border-radius: 8px; padding: 10px 12px; } /* app's light purple (Color.Secondary) */
-.pp-big { font-size: 17px; font-weight: 700; color: #30294B; }
 .pp-link { color: inherit; text-decoration: none; }
 .pp-link:hover { text-decoration: underline; }
-.pp-accent { color: #4F4486; }
 
+/* facts: three columns with thin dividers */
+.pp-facts { display: flex; margin-bottom: 12px; }
+.pp-fact { flex: 1; min-width: 0; padding: 0 12px; border-left: 1px solid #E2DFEE; }
+.pp-fact:first-child { padding-left: 0; border-left: 0; }
+.pp-flabel { white-space: nowrap; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #777; margin-bottom: 4px; }
+.pp-flabel svg { color: #4F4486; flex: none; }
+.pp-fval { font-size: 13px; font-weight: 700; color: #222; word-wrap: break-word; }
+.pp-fbig { font-size: 18px; }
+.pp-pill { display: inline-block; background: #DBD8E9; color: #4F4486; font-size: 13px; font-weight: 700; border-radius: 12px; padding: 2px 16px; }
+a.pp-pill:hover { background: #cfcae3; text-decoration: none; }
+
+/* value box (app's light purple) and the bid / assessed bar below it */
+.pp-money { display: flex; background: #DBD8E9; border-radius: 10px; padding: 12px 14px; }
+.pp-mcell { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.pp-mcell + .pp-mcell { border-left: 1px solid rgba(79,68,134,.25); padding-left: 14px; margin-left: 14px; }
+.pp-badge { flex: none; width: 28px; height: 28px; border-radius: 50%; background: #4F4486; color: #fff; display: flex; align-items: center; justify-content: center; }
+.pp-badge svg { width: 16px; height: 16px; }
+.pp-big { font-size: 19px; font-weight: 700; color: #30294B; }
+.pp-eq { margin-top: 10px; }
+.pp-eqbar { height: 8px; border-radius: 4px; background: #E8E6F1; overflow: hidden; }
+.pp-eqbar i { display: block; height: 100%; border-radius: 4px; }
+.pp-eqtext { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-top: 6px; }
+
+/* research status + notes */
+.pp-sec { margin-top: 12px; padding-top: 12px; border-top: 1px solid #E2DFEE; }
+.pp-slabel { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #30294B; }
+.pp-slabel svg { color: #2F80ED; width: 16px; height: 16px; }
+.pp-sts { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 10px; }
+.pp-st { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--c); background: #fff; color: var(--c); border-radius: 16px; padding: 4px 12px; font: 600 12px 'Segoe UI', sans-serif; cursor: pointer; }
+.pp-st.on { background: var(--c); color: #fff; }
+.pp-notes-wrap { position: relative; }
+.pp-notes-wrap svg { position: absolute; left: 10px; top: 9px; color: #8a86a3; }
+.pp-notes { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid #DBD8E9; border-radius: 10px; padding: 8px 10px 8px 32px; font: 12px 'Segoe UI', sans-serif; color: #30294B; }
+.pp-notes-ro { font-size: 12px; color: #30294B; white-space: pre-wrap; margin-top: 6px; }
+
+/* actions row: landlocked check on the left, property appraiser on the right */
+.pp-actions { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.pp-btn { margin-left: auto; flex: none; background: #4F4486; color: #fff; border-radius: 18px; padding: 7px 16px; font: 600 12px 'Segoe UI', sans-serif; text-decoration: none; }
+.pp-btn:hover { background: #3f3670; }
+.pp-access { position: relative; font-size: 12px; color: #30294B; }
+.pp-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.pp-check { border: 1.5px solid #4F4486; background: #fff; color: #4F4486; border-radius: 18px; padding: 6px 16px; font: 600 12px 'Segoe UI', sans-serif; cursor: pointer; }
+a.pp-check { border: 0; background: none; padding: 0; text-decoration: underline; font-weight: 400; font-size: 11px; border-radius: 0; }
+.pp-err { color: #D64545; }
+/* styled tooltip: dark purple bubble above the access row, fades in on hover or keyboard focus */
+.pp-check[data-tip]::after { content: attr(data-tip); position: absolute; left: 0; bottom: calc(100% + 6px); width: 270px; box-sizing: border-box; padding: 9px 12px;
+    background: #30294B; color: #fff; border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); font: 400 11px/1.45 'Segoe UI', sans-serif;
+    text-align: left; text-decoration: none; white-space: normal; opacity: 0; pointer-events: none; transition: opacity .15s ease; z-index: 5; }
+.pp-check[data-tip]:hover::after, .pp-check[data-tip]:focus-visible::after { opacity: 1; }
+
+/* auction badge sits at the top of the body */
 /* auctions within 7 days: pin glows */
 @keyframes pin-pulse { 0%, 100% { filter: drop-shadow(0 0 0 rgba(214,69,69,0)); } 50% { filter: drop-shadow(0 0 10px rgba(214,69,69,.95)); } }
 .pin-urgent { animation: pin-pulse 1.6s ease-in-out infinite; }
 
-/* bid as a share of assessed value */
-.pp-money { flex-wrap: wrap; }
-.pp-eq { flex-basis: 100%; font-size: 12px; color: #30294B; }
-.pp-eqbar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.7); margin-bottom: 4px; overflow: hidden; }
-.pp-eqbar i { display: block; height: 100%; border-radius: 3px; }
-
-/* research status + notes */
-.pp-sec { margin-top: 10px; }
-.pp-sts { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 8px; }
-.pp-st { border: 1.5px solid var(--c); background: #fff; color: var(--c); border-radius: 12px; padding: 2px 10px; font: 600 11px 'Segoe UI', sans-serif; cursor: pointer; }
-.pp-st.on { background: var(--c); color: #fff; }
-.pp-notes { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid #DBD8E9; border-radius: 8px; padding: 6px 8px; font: 12px 'Segoe UI', sans-serif; color: #30294B; }
-.pp-notes-ro { font-size: 12px; color: #30294B; white-space: pre-wrap; }
+/* status dot on the pin, greyed-out Skip */
 .maplibregl-marker[data-status]::after { content: ''; position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; border-radius: 50%;
     background: var(--st); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.4); }
 .pin-skip { filter: grayscale(1) opacity(.45); }

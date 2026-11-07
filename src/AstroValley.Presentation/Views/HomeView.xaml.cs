@@ -97,7 +97,10 @@ public partial class HomeView : UserControl
         if (type == "pinEdit")
         {
             vm.UpdatePin(root.GetProperty("lat").GetDouble(), root.GetProperty("lon").GetDouble(),
-                root.GetProperty("status").GetString(), root.GetProperty("notes").GetString());
+                root.GetProperty("status").GetString(), root.GetProperty("notes").GetString(),
+                root.GetProperty("accessStatus").GetString(),
+                root.GetProperty("accessFt").ValueKind == JsonValueKind.Number ? root.GetProperty("accessFt").GetDouble() : null,
+                root.GetProperty("accessRoad").GetString(), root.GetProperty("accessChecked").GetString());
             return;
         }
         if (type == "mode")

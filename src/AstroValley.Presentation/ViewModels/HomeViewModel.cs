@@ -136,13 +136,18 @@ public partial class HomeViewModel : ObservableObject
         AcreStep = AcreSteps.Length;
     }
 
-    /// <summary>Status / notes edited in a map popup.</summary>
-    public void UpdatePin(double lat, double lon, string? status, string? notes)
+    /// <summary>Status, notes or access check changed in a map popup.</summary>
+    public void UpdatePin(double lat, double lon, string? status, string? notes,
+        string? accessStatus, double? accessFt, string? accessRoad, string? accessChecked)
     {
         var pin = Markers.FirstOrDefault(m => Math.Abs(m.Latitude - lat) < 1e-9 && Math.Abs(m.Longitude - lon) < 1e-9);
         if (pin is null) return;
         pin.Status = status;
         pin.Notes = notes;
+        pin.AccessStatus = accessStatus;
+        pin.AccessDistanceFt = accessFt;
+        pin.AccessRoad = accessRoad;
+        pin.AccessChecked = accessChecked;
         if (HideSkipped) ApplyFilter(); // a pin just marked Skip drops out
     }
 

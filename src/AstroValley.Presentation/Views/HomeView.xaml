@@ -571,10 +571,34 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="{Binding ParcelID}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                <!-- Road access flag from the popup's "Check if landlocked": green road / amber near / red possibly landlocked; hidden until checked. -->
+                                <Ellipse Grid.Column="1" Width="9" Height="9" Margin="6 0 2 0" Stroke="White" StrokeThickness="1"
+                                         ToolTip="{Binding AccessText}">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding AccessStatus}" Value="Road">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Fill" Value="#2E9E5B"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding AccessStatus}" Value="Near">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Fill" Value="#CD7B2E"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding AccessStatus}" Value="None">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Fill" Value="#D64545"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
                                 <!-- Trash can follows the row's text colour (accent, or white on the selected row); shown on hover only. -->
-                                <Button x:Name="PinRemove" Grid.Column="1" Opacity="0" ToolTip="Remove pin"
+                                <Button x:Name="PinRemove" Grid.Column="2" Opacity="0" ToolTip="Remove pin"
                                         Style="{StaticResource HomePinTrash}"
                                         Command="{Binding DataContext.RemoveMarkerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}">

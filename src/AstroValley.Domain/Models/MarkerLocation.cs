@@ -1,10 +1,14 @@
-﻿namespace AstroValley.Domain.Models;
+﻿using System.ComponentModel;
+using System.Text.Json.Serialization;
+
+namespace AstroValley.Domain.Models;
 
 /// <summary>
 /// Represents a geographic point to be rendered as a marker on the map.
 /// </summary>
-public record MarkerLocation
+public record MarkerLocation : INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged; // the parcel list shows the access flag
     public string? ParcelID { get; init; }
     public string Address { get; init; } = "N/A";
     public double Latitude { get; init; }
@@ -23,6 +27,33 @@ public record MarkerLocation
     // Research workflow, edited in the map popup and saved with the pins: Interested | Visited | Bid | Skip (null = none).
     public string? Status { get; set; }
     public string? Notes { get; set; }
+
+    // Road access check (run from the map popup, saved with the pin): "Road" = a road touches or is within ~100 ft,
+    // "Near" = nearest road within ~1,000 ft, "None" = no road found within ~1,000 ft ("possibly landlocked"; map data can miss roads).
+    private string? _accessStatus;
+    private double? _accessDistanceFt;
+    private string? _accessRoad;
+
+    public string? AccessStatus { get => _accessStatus; set { _accessStatus = value; AccessChanged(); } }
+    public double? AccessDistanceFt { get => _accessDistanceFt; set { _accessDistanceFt = value; AccessChanged(); } }
+    public string? AccessRoad { get => _accessRoad; set { _accessRoad = value; AccessChanged(); } }
+    public string? AccessChecked { get; set; } // yyyy-MM-dd
+
+    /// <summary>One-line result for tooltips (same wording as the map popup); not saved.</summary>
+    [JsonIgnore]
+    public string? AccessText => AccessStatus switch
+    {
+        "Road" => $"Road access: {AccessRoad ?? "road"}{(AccessDistanceFt > 15 ? $" ({AccessDistanceFt:N0} ft)" : "")}",
+        "Near" => $"Nearest road {AccessDistanceFt:N0} ft away{(AccessRoad is null ? "" : $" ({AccessRoad})")}, no frontage",
+        "None" => "Possibly landlocked: no road within 1,000 ft",
+        _ => null
+    };
+
+    private void AccessChanged()
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AccessStatus)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AccessText)));
+    }
 
     // Numbers parsed from ExtraDetails, written to the JSON as plain values (handy for a later Excel export). Missing or 0 = null.
     public decimal? BidAmount => Money("Minimum Bid");

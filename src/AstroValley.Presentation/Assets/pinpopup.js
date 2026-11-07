@@ -1,44 +1,69 @@
 // Pin popup HTML, shared by the Home map (homemaplibre.html) and the exported map (pinsexport.html).
 function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
-function popupHtml(loc) {
+// small inline icons (Material Design Icons paths, 24x24); `stroke` ones are drawn as lines
+var ICONS = {
+    home: 'M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z',
+    acres: 'M3,3H9V5H5V9H3V3M21,3V9H19V5H15V3H21M3,21V15H5V19H9V21H3M21,21H15V19H19V15H21V21Z',
+    person: 'M12,12A4,4 0 1,0 8,8A4,4 0 0,0 12,12M12,14C9.33,14 4,15.34 4,18V20H20V18C20,15.34 14.67,14 12,14Z',
+    dollar: 'M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z',
+    trend: 'M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z',
+    star: 'M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z',
+    eye: 'M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z',
+    skip: 'M5.59,7.41L10.18,12L5.59,16.59L7,18L13,12L7,6L5.59,7.41M16,6H18V18H16V6Z',
+    info: 'M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M13,17H11V11H13V17M13,9H11V7H13V9Z',
+    note: 'M14,10H19.5L14,4.5V10M5,3H15L21,9V19A2,2 0 0,1 19,21H5C3.89,21 3,20.1 3,19V5C3,3.89 3.89,3 5,3M5,5V19H19V12H12V5H5Z'
+};
+function ico(name) { return '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="' + ICONS[name] + '"/></svg>'; }
+var WAVES = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2,8C5,5 8,11 12,8S19,11 22,8M2,14C5,11 8,17 12,14S19,17 22,14M2,20C5,17 8,23 12,20S19,23 22,20"/></svg>';
+
+function popupHtml(loc, message) {
     var d = loc.ExtraDetails || {};
     // Text becomes a link (opened in the default browser) only when WPF sent a URL for it.
-    var link = function (url, html, accent) {
-        return url ? '<a class="pp-link' + (accent ? ' pp-accent' : '') + '" href="' + esc(url).replace(/"/g, '&quot;') + '" target="_blank">' + html + '</a>' : html;
+    var link = function (url, html) {
+        return url ? '<a class="pp-link" href="' + esc(url).replace(/"/g, '&quot;') + '" target="_blank">' + html + '</a>' : html;
     };
-    var money = function (v) { var n = parseFloat(v); return isNaN(n) ? esc(v) : n.toLocaleString('en-US', { style: 'currency', currency: 'USD' }); };
-    // label above value; cells are skipped when the data is missing
-    var cell = function (label, value, url) {
-        return value ? '<div style="flex:1;min-width:0"><div class="pp-label">' + label + '</div><div class="pp-value">' + link(url, esc(value), true) + '</div></div>' : '';
-    };
-    var facts = cell('Acres', loc.Acres) + cell('Flood Zone', d['Flood Zone'], loc.FemaUrl) + cell('Owner', d['Owner']);
-    // a value of 0 (or none) means "not available": its cell is left out and no percentage is shown
+    var money = function (n) { return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' }); };
+    // a value of 0 (or none) means "not available": shown as -- , and no percentage is calculated
     var num = function (v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isNaN(n) ? 0 : n; };
     var assessed = num(d['Assessed']), minBid = num(d['Minimum Bid']);
+
+    // header: house badge, address (Google Maps) and parcel ID (Regrid)
+    var head = '<div class="pp-head"><div class="pp-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="' + ICONS.home + '"/></svg></div>' +
+        '<div style="min-width:0"><div class="pp-title">' + link(loc.GoogleMapsUrl, esc(loc.Address)) + '</div>' +
+        '<div class="pp-pid">' + link(loc.RegridUrl, esc(loc.ParcelID)) + '</div></div></div>';
+
+    // facts row: acres | flood zone (pill, opens FEMA) | owner; a fact is left out when its data is missing
+    var fact = function (icon, label, value) {
+        return '<div class="pp-fact"><div class="pp-flabel">' + icon + label + '</div>' + value + '</div>';
+    };
+    var facts = (loc.Acres ? fact(ico('acres'), 'Acres', '<div class="pp-fval pp-fbig">' + esc(loc.Acres) + '</div>') : '') +
+        (d['Flood Zone'] ? fact(WAVES, 'Flood Zone', '<div>' + (loc.FemaUrl ? '<a class="pp-pill pp-link" href="' + esc(loc.FemaUrl).replace(/"/g, '&quot;') + '" target="_blank">' + esc(d['Flood Zone']) + '</a>'
+            : '<span class="pp-pill">' + esc(d['Flood Zone']) + '</span>') + '</div>') : '') +
+        (d['Owner'] ? fact(ico('person'), 'Owner', '<div class="pp-fval">' + esc(d['Owner']) + '</div>') : '');
+
+    // value box: collapsed when both are missing or 0; one missing shows --
+    var cellMoney = function (label, n) {
+        return '<div class="pp-mcell"><span class="pp-badge">' + ico('dollar') + '</span><div><div class="pp-label">' + label + '</div>' +
+            '<div class="pp-big">' + (n > 0 ? money(n) : '--') + '</div></div></div>';
+    };
+    var box = (assessed > 0 || minBid > 0) ? '<div class="pp-money">' + cellMoney('Assessed Value', assessed) + cellMoney('Minimum Bid', minBid) + '</div>' : '';
     var equity = '';
     if (assessed > 0 && minBid > 0) {
         var pct = minBid / assessed * 100;
         var label = pct < 1 ? '&lt;1' : pct < 10 ? pct.toFixed(1) : String(Math.round(pct));
-        equity = '<div class="pp-eq"><div class="pp-eqbar"><i style="width:' + Math.min(100, pct) + '%;background:' +
-            (pct <= 25 ? '#2E9E5B' : pct <= 60 ? '#CD7B2E' : '#9A9A9A') + '"></i></div>Bid is <b>' + label + '%</b> of assessed value</div>';
+        var color = pct <= 25 ? '#2E9E5B' : pct <= 60 ? '#CD7B2E' : '#9A9A9A';
+        equity = '<div class="pp-eq"><div class="pp-eqbar"><i style="width:' + Math.min(100, pct) + '%;background:' + color + '"></i></div>' +
+            '<div class="pp-eqtext" style="color:' + color + '">' + ico('trend') + '<span style="color:#30294B">Bid is <b>' + label + '%</b> of assessed value</span></div></div>';
     }
-    var bid = (assessed > 0 || minBid > 0) ?
-        '<div class="pp-money">' +
-            (assessed > 0 ? '<div style="flex:1"><div class="pp-label">Assessed Value</div><div class="pp-big">' + money(assessed) + '</div></div>' : '') +
-            (minBid > 0 ? '<div style="flex:1"><div class="pp-label">Minimum Bid</div><div class="pp-big">' + money(minBid) + '</div></div>' : '') +
-            equity +
-        '</div>' : '';
-    return '<div style="padding:14px 16px 16px;font-family:\'Segoe UI\',sans-serif">' +
-        '<div style="font-size:16px;font-weight:700;color:#30294B;text-transform:uppercase">' + link(loc.GoogleMapsUrl, esc(loc.Address)) + '</div>' +
-        // parcel ID on the left, appraiser link (only when the record has one) on the right
-        '<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#777;margin:2px 0 10px">' +
-            '<span>' + link(loc.RegridUrl, esc(loc.ParcelID), true) + '</span>' +
-            (loc.AppraiserUrl ? '<span>' + link(loc.AppraiserUrl, 'Property Appraiser &#8599;', true) + '</span>' : '') +
-        '</div>' +
-        auctionBadge(loc) +
-        (facts ? '<div style="display:flex;gap:12px;margin-bottom:10px">' + facts + '</div>' : '') +
-        bid + statusSection(loc) + '</div>';
+
+    // actions: landlocked check (left) and the property appraiser, when the record has a link (right)
+    var access = accessHtml(loc, message);
+    var appraiser = loc.AppraiserUrl ? '<a class="pp-btn" href="' + esc(loc.AppraiserUrl).replace(/"/g, '&quot;') + '" target="_blank">Property Appraiser &#8599;</a>' : '';
+    var actions = (access || appraiser) ? '<div class="pp-actions">' + access + appraiser + '</div>' : '';
+
+    return head + '<div class="pp-body">' + auctionBadge(loc) +
+        (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + box + equity + statusSection(loc) + actions + '</div>';
 }
 
 // ---- pin colour by auction urgency (shared by Home and the exported map) -----------------------------------------
@@ -59,8 +84,9 @@ function pinScale(loc) {
 }
 
 function makePin(loc, map) {
+    if (loc.Status === 'Bid') loc.Status = 'Interested'; // "Bid" status was retired; saved pins keep working
     var info = pinInfo(loc), scale = pinScale(loc);
-    var popup = new maplibregl.Popup({ offset: Math.round(25 * scale), maxWidth: '360px' }).setHTML(popupHtml(loc));
+    var popup = new maplibregl.Popup({ offset: Math.round(25 * scale), maxWidth: '380px' }).setHTML(popupHtml(loc));
     var marker = new maplibregl.Marker({ color: info.color, scale: scale })
         .setLngLat([loc.Longitude, loc.Latitude])
         .setPopup(popup)
@@ -71,7 +97,8 @@ function makePin(loc, map) {
 }
 
 // ---- research status + notes (editable on Home, read-only in the exported map) -----------------------------------
-var STATUS_COLORS = { Interested: '#2F80ED', Visited: '#17A2B8', Bid: '#E0A800', Skip: '#777777' };
+var STATUS_COLORS = { Interested: '#2F80ED', Visited: '#17A2B8', Skip: '#777777' };
+var STATUS_ICONS = { Interested: 'star', Visited: 'eye', Skip: 'skip' };
 
 // urgent pulse, status dot on the pin, and a greyed-out look for Skip
 function decoratePin(marker, loc) {
@@ -83,12 +110,15 @@ function decoratePin(marker, loc) {
 }
 
 function statusSection(loc) {
-    var chip = function (st) { return '<button type="button" class="pp-st' + (loc.Status === st ? ' on' : '') + '" data-st="' + st + '" style="--c:' + STATUS_COLORS[st] + '">' + st + '</button>'; };
+    var chip = function (st, on) {
+        return '<button type="button" class="pp-st' + (on ? ' on' : '') + '" data-st="' + st + '" style="--c:' + STATUS_COLORS[st] + '">' + ico(STATUS_ICONS[st]) + st + '</button>';
+    };
     if (typeof onPinEdit === 'function') // Home: editable
-        return '<div class="pp-sec"><div class="pp-label">Status</div><div class="pp-sts">' + Object.keys(STATUS_COLORS).map(chip).join('') + '</div>' +
-            '<textarea class="pp-notes" rows="2" placeholder="Notes...">' + esc(loc.Notes) + '</textarea></div>';
+        return '<div class="pp-sec"><div class="pp-slabel">' + ico('info') + 'Status</div><div class="pp-sts">' +
+            Object.keys(STATUS_COLORS).map(function (st) { return chip(st, loc.Status === st); }).join('') + '</div>' +
+            '<div class="pp-notes-wrap">' + ico('note') + '<textarea class="pp-notes" rows="2" placeholder="Notes...">' + esc(loc.Notes) + '</textarea></div></div>';
     if (!loc.Status && !loc.Notes) return '';
-    return '<div class="pp-sec">' + (loc.Status ? '<div class="pp-sts">' + chip(loc.Status).replace('class="pp-st', 'class="pp-st on') + '</div>' : '') +
+    return '<div class="pp-sec">' + (STATUS_COLORS[loc.Status] ? '<div class="pp-sts">' + chip(loc.Status, true) + '</div>' : '') +
         (loc.Notes ? '<div class="pp-notes-ro">' + esc(loc.Notes) + '</div>' : '') + '</div>';
 }
 
@@ -107,6 +137,111 @@ function wireEditor(popup, loc, marker) {
     });
     var notes = root.querySelector('.pp-notes');
     if (notes) notes.onchange = function () { loc.Notes = notes.value.trim() || null; onPinEdit(loc); }; // change fires when the box loses focus
+    var check = root.querySelector('.pp-check');
+    if (check) check.onclick = function (e) {
+        e.preventDefault();
+        root.querySelector('.pp-access').innerHTML = '<span class="pp-label">Checking roads...</span>';
+        checkAccess(loc).then(function (r) {
+            loc.AccessStatus = r.status; loc.AccessDistanceFt = r.ft; loc.AccessRoad = r.road; loc.AccessChecked = new Date().toISOString().slice(0, 10);
+            popup.setHTML(popupHtml(loc)); wireEditor(popup, loc, marker); onPinEdit(loc);
+        }).catch(function () { // service down: nothing is saved, offer to try again
+            popup.setHTML(popupHtml(loc, 'Could not reach the Census road service.')); wireEditor(popup, loc, marker);
+        });
+    };
+}
+
+// ---- road access check: public Census TIGER roads, looked up per pin when asked (shared) ---------------------------
+// shortcut: TIGER shows public roads only (no private roads, driveways or some rural tracks), so "None" is always "possibly".
+var ACCESS = {
+    url: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Transportation/MapServer',
+    layers: [2, 6, 8],                                    // primary, secondary and local roads
+    where: "MTFCC IN ('S1100','S1200','S1400','S1500')",  // main roads, streets, 4WD trails; no private roads, walkways, parking
+    roadFt: 100, nearFt: 1000
+};
+// shown as a styled tooltip on the button (see .pp-check[data-tip] in pinpopup.css); no double quotes in here
+var ACCESS_TIP = 'Checks whether a public road touches or comes near this parcel. Data: US Census Bureau TIGER roads (free, looked up only when you click). ' +
+    'Private roads and some rural tracks are not included, so treat a landlocked result as a lead to verify, not proof.';
+var ACCESS_COLORS = { Road: '#2E9E5B', Near: '#CD7B2E', None: '#D64545' };
+
+function accessText(loc) {
+    var ft = loc.AccessDistanceFt == null ? 0 : Math.round(loc.AccessDistanceFt).toLocaleString('en-US');
+    if (loc.AccessStatus === 'Road') return 'Road access: ' + (loc.AccessRoad || 'road') + (loc.AccessDistanceFt > 15 ? ' (' + ft + ' ft)' : '');
+    if (loc.AccessStatus === 'Near') return 'Nearest road ' + ft + ' ft away' + (loc.AccessRoad ? ' (' + loc.AccessRoad + ')' : '') + ', no frontage';
+    if (loc.AccessStatus === 'None') return 'Possibly landlocked: no road within 1,000 ft';
+    return '';
+}
+
+function accessHtml(loc, message) {
+    var editable = typeof onPinEdit === 'function';
+    if (!loc.AccessStatus)
+        return editable ? '<div class="pp-access">' + (message ? '<span class="pp-err">' + esc(message) + '</span> ' : '') + '<button type="button" class="pp-check" data-tip="' + ACCESS_TIP + '">Check if landlocked</button></div>' : '';
+    return '<div class="pp-access"><span class="pp-dot" style="background:' + ACCESS_COLORS[loc.AccessStatus] + '"></span>' + esc(accessText(loc)) +
+        '<div class="pp-label">Checked ' + esc(loc.AccessChecked || '') + (editable ? ' &middot; <a href="#" class="pp-check" data-tip="' + ACCESS_TIP + '">Check again</a>' : '') + '</div></div>';
+}
+
+function geomRings(g, out) {
+    if (!g) return out;
+    if (g.type === 'FeatureCollection') g.features.forEach(function (f) { geomRings(f.geometry, out); });
+    else if (g.type === 'Feature') geomRings(g.geometry, out);
+    else if (g.type === 'Polygon') g.coordinates.forEach(function (r) { out.push(r); });
+    else if (g.type === 'MultiPolygon') g.coordinates.forEach(function (p) { p.forEach(function (r) { out.push(r); }); });
+    return out;
+}
+
+// shortest distance between two segments (metres); 0 when they cross
+function segDist(a, b, c, d) {
+    var cross = function (o, p, q) { return (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0]); };
+    var d1 = cross(c, d, a), d2 = cross(c, d, b), d3 = cross(a, b, c), d4 = cross(a, b, d);
+    if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return 0;
+    var pt = function (p, s, e) {
+        var dx = e[0] - s[0], dy = e[1] - s[1], len = dx * dx + dy * dy;
+        var t = len ? Math.max(0, Math.min(1, ((p[0] - s[0]) * dx + (p[1] - s[1]) * dy) / len)) : 0;
+        return Math.hypot(p[0] - (s[0] + t * dx), p[1] - (s[1] + t * dy));
+    };
+    return Math.min(pt(a, c, d), pt(b, c, d), pt(c, a, b), pt(d, a, b));
+}
+
+// Resolves { status: Road | Near | None, ft, road }; rejects when the road service cannot be reached.
+function checkAccess(loc) {
+    var rings = geomRings((function () { try { return JSON.parse(loc.ParcelLines); } catch (e) { return null; } })(), []);
+    if (!rings.length) rings = [[[loc.Longitude, loc.Latitude]]]; // no outline: measure from the pin
+    var lons = [], lats = [];
+    rings.forEach(function (r) { r.forEach(function (p) { lons.push(p[0]); lats.push(p[1]); }); });
+    var minLon = Math.min.apply(null, lons), maxLon = Math.max.apply(null, lons), minLat = Math.min.apply(null, lats), maxLat = Math.max.apply(null, lats);
+    var lat0 = (minLat + maxLat) / 2, lon0 = (minLon + maxLon) / 2, kx = Math.cos(lat0 * Math.PI / 180) * 111320, ky = 110540;
+    var dLat = 0.0031, dLon = dLat / Math.cos(lat0 * Math.PI / 180); // about 1,000 ft each way beyond the parcel
+    var env = [minLon - dLon, minLat - dLat, maxLon + dLon, maxLat + dLat].join(',');
+    var toM = function (p) { return [(p[0] - lon0) * kx, (p[1] - lat0) * ky]; };
+    var edges = [];
+    rings.forEach(function (r) {
+        var pts = r.map(toM);
+        if (pts.length === 1) edges.push([pts[0], pts[0]]);
+        for (var i = 1; i < pts.length; i++) edges.push([pts[i - 1], pts[i]]);
+    });
+    return Promise.all(ACCESS.layers.map(function (layer) {
+        return fetch(ACCESS.url + '/' + layer + '/query?geometry=' + env + '&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects' +
+                '&where=' + encodeURIComponent(ACCESS.where) + '&outFields=NAME,MTFCC&returnGeometry=true&outSR=4326&f=geojson')
+            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(function (d) { if (d.error) throw new Error('service error'); return d.features || []; });
+    })).then(function (parts) {
+        var best = Infinity, name = null;
+        [].concat.apply([], parts).forEach(function (f) {
+            var g = f.geometry;
+            if (!g) return;
+            var lines = g.type === 'LineString' ? [g.coordinates] : g.type === 'MultiLineString' ? g.coordinates : [];
+            lines.forEach(function (line) {
+                var pts = line.map(toM);
+                for (var i = 1; i < pts.length; i++)
+                    edges.forEach(function (e) {
+                        var m = segDist(e[0], e[1], pts[i - 1], pts[i]);
+                        if (m < best) { best = m; name = f.properties.NAME; }
+                    });
+            });
+        });
+        var ft = best * 3.28084;
+        var status = ft <= ACCESS.roadFt ? 'Road' : ft <= ACCESS.nearFt ? 'Near' : 'None';
+        return { status: status, ft: status === 'None' ? null : Math.round(ft / 10) * 10, road: status === 'None' ? null : (name || null) };
+    });
 }
 
 // ---- 3D terrain + camera tour (shared) -----------------------------------------------------------------------------

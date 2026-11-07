@@ -218,7 +218,9 @@
         // Called by the popup editor (pinpopup.js): status / notes changed, tell WPF so they are saved with the pins.
         function onPinEdit(loc) {
             if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({
-                type: 'pinEdit', lat: loc.Latitude, lon: loc.Longitude, status: loc.Status || null, notes: loc.Notes || null });
+                type: 'pinEdit', lat: loc.Latitude, lon: loc.Longitude, status: loc.Status || null, notes: loc.Notes || null,
+                accessStatus: loc.AccessStatus || null, accessFt: loc.AccessDistanceFt == null ? null : loc.AccessDistanceFt,
+                accessRoad: loc.AccessRoad || null, accessChecked: loc.AccessChecked || null });
         }
         function postMode() {
             if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({
