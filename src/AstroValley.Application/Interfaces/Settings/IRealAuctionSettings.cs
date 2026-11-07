@@ -13,6 +13,11 @@ public interface IRealAuctionSettings
     List<string> RecentUrls { get; }
 
     /// <summary>
+    /// Number of properties found the last time each recent URL was scraped (key = URL).
+    /// </summary>
+    Dictionary<string, int> RecentCounts { get; }
+
+    /// <summary>
     /// Saves the current URL to storage and updates the list of recent URLs.
     /// </summary>
     void Save();

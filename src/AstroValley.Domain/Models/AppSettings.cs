@@ -17,6 +17,9 @@ public class RealAuctionSettings
 {
     public string Url { get; set; } = string.Empty;
     public List<string> RecentUrls { get; set; } = [];
+
+    /// <summary>Property count from the last scrape of each recent URL (key = URL).</summary>
+    public Dictionary<string, int> RecentCounts { get; set; } = [];
 }
 
 public class ThemeSettings

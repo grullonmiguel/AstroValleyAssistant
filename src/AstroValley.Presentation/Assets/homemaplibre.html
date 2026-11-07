@@ -4,7 +4,9 @@
     <meta charset="utf-8" />
     <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+    <link href="pinpopup.css" rel="stylesheet" />
     <style>html, body, #map { height: 100%; margin: 0; background: #000; }</style>
+    <script src="pinpopup.js"></script>
 </head>
 <body>
     <div id="map"></div>
@@ -32,7 +34,8 @@
                     labels: { type: 'raster', tiles: [esri('Reference/World_Boundaries_and_Places')], tileSize: 256, maxzoom: 19 },
                     outline: { type: 'geojson', data: emptyFc() },
                     counties: { type: 'geojson', data: emptyFc() },
-                    highlight: { type: 'geojson', data: emptyFc() }
+                    highlight: { type: 'geojson', data: emptyFc() },
+                    parcels: { type: 'geojson', data: emptyFc() }
                 },
                 layers: [
                     { id: 'bg', type: 'background', paint: { 'background-color': '#000' } },
@@ -47,6 +50,9 @@
                     } },
                     { id: 'highlight-line', type: 'line', source: 'highlight', paint: { 'line-color': PURPLE, 'line-width': 3 } },
                     { id: 'outline-line', type: 'line', source: 'outline', paint: { 'line-color': PURPLE, 'line-width': 3 } },
+                    // parcel boundaries for pins sent from Real Auction / Regrid (neon green reads on both base maps)
+                    { id: 'parcel-fill', type: 'fill', source: 'parcels', paint: { 'fill-color': '#39ff14', 'fill-opacity': 0.2 } },
+                    { id: 'parcel-line', type: 'line', source: 'parcels', paint: { 'line-color': '#39ff14', 'line-width': 3 } },
                     { id: 'labels', type: 'raster', source: 'labels', layout: { visibility: 'none' } }
                 ]
             }
@@ -138,6 +144,71 @@
                 };
                 if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage(msg);
             });
+        }
+
+        // ---- pins sent from WPF (Real Auction / Regrid "Map" button) -------------------------------------------
+        var parcelFeatures = [], pinMarkers = [];
+        // esc() and popupHtml() live in pinpopup.js (shared with the exported map).
+
+        // WPF only sends pins that are not on the map yet, so this just appends.
+        function addMarkers(list) {
+            // getSource works as soon as the style exists (isStyleLoaded can stay false while tiles load)
+            (map.getSource('parcels') ? function (fn) { fn(); } : function (fn) { map.once('style.load', fn); })(function () {
+                var bounds = new maplibregl.LngLatBounds();
+                list.forEach(function (loc) {
+                    var marker = new maplibregl.Marker({ color: '#CD7B2E' })
+                        .setLngLat([loc.Longitude, loc.Latitude])
+                        .setPopup(new maplibregl.Popup({ offset: 25, maxWidth: '360px' }).setHTML(popupHtml(loc)))
+                        .addTo(map);
+                    pinMarkers.push({ marker: marker, lat: loc.Latitude, lon: loc.Longitude });
+                    bounds.extend([loc.Longitude, loc.Latitude]);
+
+                    if (!loc.ParcelLines) return;
+                    try { // Regrid GeoJSON: a geometry, a Feature or a FeatureCollection
+                        var g = JSON.parse(loc.ParcelLines);
+                        var feats = g.type === 'FeatureCollection' ? g.features : [g.type === 'Feature' ? g : { type: 'Feature', geometry: g }];
+                        // tag each outline with its pin so removeMarker can drop it again
+                        feats.forEach(function (f) {
+                            f.properties = Object.assign({}, f.properties, { pin: pinKey(loc.Latitude, loc.Longitude) });
+                            parcelFeatures.push(f);
+                        });
+                    } catch (e) { console.error('Bad ParcelLines for ' + loc.ParcelID, e); }
+                });
+                drawParcels();
+                if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: pinPad(), maxZoom: 17, duration: 1500 });
+            });
+        }
+
+        function pinKey(lat, lon) { return lat + ',' + lon; }
+        function drawParcels() { map.getSource('parcels').setData({ type: 'FeatureCollection', features: parcelFeatures }); }
+
+        function removeMarker(lat, lon) {
+            var key = pinKey(lat, lon);
+            pinMarkers = pinMarkers.filter(function (p) {
+                if (pinKey(p.lat, p.lon) !== key) return true;
+                p.marker.remove(); // also closes its popup
+                return false;
+            });
+            parcelFeatures = parcelFeatures.filter(function (f) { return f.properties.pin !== key; });
+            drawParcels();
+        }
+
+        function clearMarkers() {
+            pinMarkers.forEach(function (p) { p.marker.remove(); });
+            pinMarkers = [];
+            parcelFeatures = [];
+            drawParcels();
+        }
+
+        // The parcel list adds a third panel on the left (county list too once a state is selected).
+        function pinPad() { return { left: countyFeatures.length ? 650 : 490, top: 110, right: 60, bottom: 40 }; }
+
+        // Flies to a pin and opens its popup once the camera arrives (other popups are closed first).
+        function flyToMarker(lat, lon) {
+            var hit = pinMarkers.find(function (p) { return Math.abs(p.lat - lat) < 1e-9 && Math.abs(p.lon - lon) < 1e-9; });
+            pinMarkers.forEach(function (p) { if (p.marker.getPopup().isOpen()) p.marker.togglePopup(); });
+            map.once('moveend', function () { if (hit && !hit.marker.getPopup().isOpen()) hit.marker.togglePopup(); });
+            map.flyTo({ center: [lon, lat], zoom: 17, padding: pinPad(), essential: true });
         }
 
         function highlightCounty(id) {

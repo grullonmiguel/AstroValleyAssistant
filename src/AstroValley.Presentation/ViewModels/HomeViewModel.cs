@@ -1,7 +1,10 @@
 using AstroValley.Domain.Enums;
+using AstroValley.Domain.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Text.Json;
 
 namespace AstroValley.Presentation.ViewModels;
 
@@ -29,6 +32,75 @@ public partial class HomeViewModel : ObservableObject
     {
         Counties.Clear();
         SelectedCounty = null;
+    }
+
+    // Pins sent from Real Auction / Regrid. The map page is kept alive, so these live for the whole app session.
+    public ObservableCollection<MarkerLocation> Markers { get; } = [];
+    private readonly HashSet<string> _markerKeys = [];
+
+    /// <summary>Raised with only the pins that were new, so the map never draws a pin twice.</summary>
+    public event Action<IReadOnlyList<MarkerLocation>>? MarkersAdded;
+
+    public event Action<MarkerLocation>? MarkerRemoved;
+    public event Action? MarkersCleared;
+
+    // Parcel IDs can repeat across counties, so the key also includes the (rounded) position.
+    private static string KeyOf(MarkerLocation l) => $"{l.ParcelID}|{l.Latitude:F4}|{l.Longitude:F4}";
+
+    [RelayCommand]
+    private void RemoveMarker(MarkerLocation marker)
+    {
+        if (!Markers.Remove(marker)) return;
+        _markerKeys.Remove(KeyOf(marker)); // so the same pin can be sent again later
+        MarkerRemoved?.Invoke(marker);
+    }
+
+    // Writes the current pins to a standalone HTML map (list + fly-to + popups, no delete). Needs internet to show tiles.
+    [RelayCommand]
+    private async Task ExportMap()
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "HTML File (*.html)|*.html", FileName = "AstroValley-Pins.html" };
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var assets = Path.Combine(AppContext.BaseDirectory, "Assets");
+            // Default JSON encoding escapes '<' etc., so the data can't break out of the <script> tag.
+            var pinsJson = JsonSerializer.Serialize(Markers, new JsonSerializerOptions { PropertyNamingPolicy = null });
+
+            var html = (await File.ReadAllTextAsync(Path.Combine(assets, "pinsexport.html")))
+                .Replace("/*POPUP_CSS*/", await File.ReadAllTextAsync(Path.Combine(assets, "pinpopup.css")))
+                .Replace("/*POPUP_JS*/", await File.ReadAllTextAsync(Path.Combine(assets, "pinpopup.js")))
+                .Replace("{{IMAGERY}}", IsImagery ? "true" : "false")
+                .Replace("{{PINS_JSON}}", pinsJson); // last, so pin text can never be mistaken for a placeholder
+
+            await File.WriteAllTextAsync(dialog.FileName, html);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Could not export the map: {ex.Message}", "Export map");
+        }
+    }
+
+    [RelayCommand]
+    private void ClearMarkers()
+    {
+        Markers.Clear();
+        _markerKeys.Clear();
+        MarkersCleared?.Invoke();
+    }
+
+    /// <summary>Adds pins that are not already on the map and returns how many were new.</summary>
+    public int AddMarkers(IEnumerable<MarkerLocation> locations)
+    {
+        var added = locations
+            .Where(l => l.IsValid && _markerKeys.Add(KeyOf(l)))
+            .ToList();
+        if (added.Count == 0) return 0;
+
+        foreach (var m in added) Markers.Add(m);
+        MarkersAdded?.Invoke(added);
+        return added.Count;
     }
 
     // Required by the shared state-list style's scroll-offset binding.

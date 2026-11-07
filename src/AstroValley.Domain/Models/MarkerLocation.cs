@@ -11,6 +11,12 @@ public record MarkerLocation
     public double Longitude { get; init; }
     public string? Acres { get; init; }
     public string? ParcelLines { get; init; }
+
+    // Links shown in the Home map popup (null = not available, so the text is not a link).
+    public string? RegridUrl { get; init; }
+    public string? GoogleMapsUrl { get; init; }
+    public string? FemaUrl { get; init; }
+    public string? AppraiserUrl { get; init; }
     public Dictionary<string, string>? ExtraDetails { get; init; }
 
     /// <summary>

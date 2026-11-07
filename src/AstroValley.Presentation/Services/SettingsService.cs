@@ -47,6 +47,8 @@ public class SettingsService : IRegridSettings, IRealAuctionSettings
 
     public List<string> RecentUrls => _settings.RealAuction.RecentUrls;
 
+    public Dictionary<string, int> RecentCounts => _settings.RealAuction.RecentCounts;
+
     // ── Theme (used by ThemeService) ─────────────────────────────────────
     public string ThemeName
     {

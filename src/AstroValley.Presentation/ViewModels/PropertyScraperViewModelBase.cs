@@ -281,46 +281,42 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanMap))]
-    protected async Task ViewInMap()
+    protected void ViewInMap()
     {
-        try
+        var mapLocations = new List<MarkerLocation>();
+        foreach (var record in PropertyRecords)
         {
-            var vm = _serviceProvider!.GetRequiredService<MarkerMapViewModel>();
+            var details = new Dictionary<string, string>();
+            if (!string.IsNullOrEmpty(record.FloodZone)) details.Add("Flood Zone", record.FloodZone);
+            if (!string.IsNullOrEmpty(record.Owner)) details.Add("Owner", record.Owner);
+            if (!string.IsNullOrEmpty(record.AssessedValue?.ToString() ?? "")) details.Add("Assessed", record.AssessedValue?.ToString() ?? "");
+            if (!string.IsNullOrEmpty(record.Bid?.ToString() ?? "")) details.Add("Minimum Bid", record.Bid?.ToString() ?? "");
 
-            // Opens the county map dialog for a given state.
-            _dialogService!.ShowDialog(vm);
-
-            // Add short delay then load data
-            await Task.Delay(300);
-
-            var mapLocations = new List<MarkerLocation>();
-            foreach (var record in PropertyRecords)
-            {
-                var details = new Dictionary<string, string>();
-                if (!string.IsNullOrEmpty(record.FloodZone)) details.Add("Flood Zone", record.FloodZone);
-                if (!string.IsNullOrEmpty(record.Owner)) details.Add("Owner", record.Owner);
-                if (!string.IsNullOrEmpty(record.AssessedValue?.ToString() ?? "")) details.Add("Assessed", record.AssessedValue?.ToString() ?? "");
-                if (!string.IsNullOrEmpty(record.Bid?.ToString() ?? "")) details.Add("Minimum Bid", record.Bid?.ToString() ?? "");
-
-                if (!string.IsNullOrWhiteSpace(record.Latitude) && !string.IsNullOrEmpty(record.Longitude))
-                    mapLocations.Add(new MarkerLocation
-                    {
-                        ParcelID = record.ParcelId,
-                        Address = record.Address ?? record.Owner,
-                        Acres = record.Acres?.ToString() ?? null,
-                        Latitude = (double)record.Latitude.TryParseDouble(),
-                        Longitude = (double)record.Longitude.TryParseDouble(),
-                        ParcelLines = record.ParcelLines,
-                        ExtraDetails = details
-                    });
-            }
-
-            vm.AddLocations(mapLocations);
+            if (!string.IsNullOrWhiteSpace(record.Latitude) && !string.IsNullOrEmpty(record.Longitude))
+                mapLocations.Add(new MarkerLocation
+                {
+                    ParcelID = record.ParcelId,
+                    Address = record.Address ?? record.Owner,
+                    Acres = record.Acres?.ToString() ?? null,
+                    Latitude = (double)record.Latitude.TryParseDouble(),
+                    Longitude = (double)record.Longitude.TryParseDouble(),
+                    ParcelLines = record.ParcelLines,
+                    RegridUrl = string.IsNullOrWhiteSpace(record.RegridUrl) ? null : record.RegridUrl,
+                    GoogleMapsUrl = UrlBuilder.BuildGoogleMapsUrl(record.Record),
+                    FemaUrl = UrlBuilder.BuildFemaFloodUrl(record.Record),
+                    AppraiserUrl = string.IsNullOrWhiteSpace(record.AppraiserUrl) ? null : record.AppraiserUrl,
+                    ExtraDetails = details
+                });
         }
-        catch (Exception)
-        {
-            throw;
-        }
+
+        // Pins go to the persistent Home map; only ones not already there are added.
+        var home = _serviceProvider!.GetRequiredService<HomeViewModel>();
+        var added = home.AddMarkers(mapLocations);
+        Status = added == mapLocations.Count
+            ? $"Sent {added} pins to the Home map."
+            : $"Sent {added} new pins to the Home map ({mapLocations.Count - added} already there).";
+
+        _serviceProvider!.GetRequiredService<MainViewModel>().CurrentViewModel = home;
     }
 
     [RelayCommand]

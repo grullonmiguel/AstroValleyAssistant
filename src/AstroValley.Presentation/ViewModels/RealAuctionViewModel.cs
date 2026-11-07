@@ -50,12 +50,15 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
 
         // Restore recent URLs list
         foreach (var url in _realAuctionSettings.RecentUrls)
-            RecentAuctionUrls.Add(new AuctionUrlEntry(url, BuildAlias(url)));
+            RecentAuctionUrls.Add(NewEntry(url));
 
         // Restore last saved URL on startup
         if (!string.IsNullOrWhiteSpace(_realAuctionSettings.Url))
             ApplyUrl(_realAuctionSettings.Url, persist: false);
     }
+
+    private AuctionUrlEntry NewEntry(string url) =>
+        new(url, BuildAlias(url), _realAuctionSettings.RecentCounts.TryGetValue(url, out var count) ? count : null);
 
     /// <summary>
     /// Extracts a friendly "County - M/d/yy" label from a realtaxdeed.com auction URL.
@@ -116,7 +119,10 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
             _realAuctionSettings.RecentUrls.Remove(url);
             _realAuctionSettings.RecentUrls.Insert(0, url);
             if (_realAuctionSettings.RecentUrls.Count > MaxRecentUrls)
+            {
+                _realAuctionSettings.RecentCounts.Remove(_realAuctionSettings.RecentUrls[^1]);
                 _realAuctionSettings.RecentUrls.RemoveAt(_realAuctionSettings.RecentUrls.Count - 1);
+            }
 
             _realAuctionSettings.Url = url;
             _realAuctionSettings.Save();
@@ -124,7 +130,7 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
             // Sync observable collection
             RecentAuctionUrls.Clear();
             foreach (var u in _realAuctionSettings.RecentUrls)
-                RecentAuctionUrls.Add(new AuctionUrlEntry(u, BuildAlias(u)));
+                RecentAuctionUrls.Add(NewEntry(u));
         }
     }
 
@@ -150,6 +156,7 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
                 PropertyRecords.Add(new PropertyDataViewModel(record, _browserService));
 
             SetIdle($"Loaded {PropertyRecords.Count} properties.");
+            SaveRecentCount(CurrentAuctionUrl!, PropertyRecords.Count);
             IsScrapeVisible = false;
             IsResultButtonsVisible = true;
         }
@@ -161,6 +168,16 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
         {
             SetIdle($"Error: {ex.Message}");
         }
+    }
+
+    // Stores the scraped count next to the recent URL and refreshes that list entry's tooltip.
+    private void SaveRecentCount(string url, int count)
+    {
+        _realAuctionSettings.RecentCounts[url] = count;
+        _realAuctionSettings.Save();
+
+        var i = RecentAuctionUrls.ToList().FindIndex(e => e.Url == url);
+        if (i >= 0) RecentAuctionUrls[i] = NewEntry(url);
     }
 
     [RelayCommand(CanExecute = nameof(CanOpenWebNavigation))]
@@ -189,6 +206,7 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
     private void RemoveRecentUrl(AuctionUrlEntry entry)
     {
         _realAuctionSettings.RecentUrls.Remove(entry.Url);
+        _realAuctionSettings.RecentCounts.Remove(entry.Url);
         _realAuctionSettings.Save();
         RecentAuctionUrls.Remove(entry);
     }
@@ -212,5 +230,13 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
     }
 }
 
-/// <summary>A recent auction URL paired with its display alias.</summary>
-public record AuctionUrlEntry(string Url, string Alias);
+/// <summary>A recent auction URL with its display alias and the property count from its last scrape (null = never scraped).</summary>
+public record AuctionUrlEntry(string Url, string Alias, int? Count = null)
+{
+    public string Tooltip => Count switch
+    {
+        null => "Not scraped yet",
+        1 => "1 property",
+        var n => $"{n} properties"
+    };
+}

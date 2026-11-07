@@ -50,6 +50,44 @@
             </Setter>
         </Style>
 
+        <!-- Text-only button for use inside a pill: pill's green text colour, underlined on hover. -->
+        <Style x:Key="HomePillButton" TargetType="Button">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <!-- Transparent Border + the pill's padding here, so the whole pill is clickable, not just the glyphs. -->
+                        <Border Background="Transparent" Padding="8 2">
+                            <TextBlock x:Name="Label" Text="{TemplateBinding Content}" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Brush.Status.Success.Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Label" Property="TextDecorations" Value="Underline"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Bare icon button for a list row; colour comes from the Path inside, no hover background. -->
+        <Style x:Key="HomePinTrash" TargetType="Button">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="6 4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Segmented Map | Satellite switch: two buttons that read as one rounded control; selected one is filled. -->
         <Style x:Key="HomeSegment" TargetType="Button">
             <Setter Property="Focusable" Value="False"/>
@@ -95,16 +133,17 @@
         <wv2:WebView2CompositionControl x:Name="MapWebView"/>
 
         <!-- Base map switch, top right. -->
-        <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 86 24 0"
-                CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
-            </Border.Effect>
-            <StackPanel Orientation="Horizontal">
-                <Button Content="Map" Style="{StaticResource HomeSegment.Map}" Command="{Binding ShowMapCommand}"/>
-                <Button Content="Satellite" Style="{StaticResource HomeSegment.Satellite}" Command="{Binding ShowSatelliteCommand}"/>
-            </StackPanel>
-        </Border>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 86 24 0">
+            <Border CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Map" Style="{StaticResource HomeSegment.Map}" Command="{Binding ShowMapCommand}"/>
+                    <Button Content="Satellite" Style="{StaticResource HomeSegment.Satellite}" Command="{Binding ShowSatelliteCommand}"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
 
         <!-- Left side: state sidebar, then the county list of the selected state to its right. -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="40 86 0 24">
@@ -179,6 +218,16 @@
 
         <!-- Counties of the selected state (names come from the map's county GeoJSON); hidden when no state is selected. -->
         <Grid Width="155" Margin="8 0 0 0">
+            <Grid.Style>
+                <!-- Collapse the whole slot (not just the panel) so the parcel list closes up against the state sidebar. -->
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedState}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
         <Border Background="#90FFFFFF">
             <Border.Style>
                 <Style TargetType="Border">
@@ -191,20 +240,25 @@
             </Border.Style>
             <DockPanel>
                 <!-- Header: "75 counties" with a divider underneath. -->
-                <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource Brush.Accent}" BorderThickness="0 0 0 1"
-                        Margin="8 0 8 8" Padding="0 8 0 4">
-                    <TextBlock FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}">
+                <Border DockPanel.Dock="Top" Background="{DynamicResource Brush.Accent}" Margin="0 0 0 4" Padding="12 10 12 8">
+                    <StackPanel>
+                    <Border HorizontalAlignment="Left" Margin="0 0 0 8" CornerRadius="10" Padding="8 2" Background="{DynamicResource Brush.Status.Success}">
+                        <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Status.Success.Foreground}"
+                                   Text="{Binding SelectedState.TaxStatus, Converter={StaticResource EnumToDescriptionConverter}}"/>
+                    </Border>
+                    <TextBlock FontWeight="Bold" FontSize="12" Foreground="White">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
-                                <Setter Property="Text" Value="{Binding SelectedState.CountyCount, StringFormat='{}{0} counties'}"/>
+                                <Setter Property="Text" Value="{Binding SelectedState.CountyCount, StringFormat='Total Counties: {0}'}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding SelectedState.CountyCount}" Value="1">
-                                        <Setter Property="Text" Value="1 county"/>
+                                        <Setter Property="Text" Value="Total Counties: 1"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
+                    </StackPanel>
                 </Border>
                 <ListBox ItemsSource="{Binding Counties}"
                          SelectedItem="{Binding SelectedCounty, Mode=TwoWay}"
@@ -216,16 +270,92 @@
             </DockPanel>
         </Border>
 
-        <!-- Sale-type pill ("Tax Lien", "Tax Deed"...) hanging off the list's top-right corner; always light green. -->
-        <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 -8 -16 0"
-                CornerRadius="10" Padding="8 2" Background="{DynamicResource Brush.Status.Success}"
-                Visibility="{Binding SelectedState, Converter={StaticResource NullToVisibilityConverter}}">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
-            </Border.Effect>
-            <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Status.Success.Foreground}"
-                       Text="{Binding SelectedState.TaxStatus, Converter={StaticResource EnumToDescriptionConverter}}"/>
+        </Grid>
+
+        <!-- Parcels sent from Real Auction / Regrid: same look as the county list; click a row to fly to it. Hidden until pins exist. -->
+        <Grid Width="155" Margin="8 0 0 0">
+        <Grid.Style>
+            <Style TargetType="Grid">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Markers.Count}" Value="0">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Style>
+        <Border Background="#90FFFFFF">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" Background="{DynamicResource Brush.Accent}" Margin="0 0 0 4" Padding="12 10 12 8">
+                    <StackPanel>
+                    <!-- Clear pins / Export, one in each corner above the total. -->
+                    <Grid Margin="0 0 0 8">
+                        <Button HorizontalAlignment="Left" Style="{StaticResource HomePinTrash}" Padding="0"
+                                Command="{Binding ClearMarkersCommand}" ToolTip="Clear: removes all pins from the map and closes this list. You can send them again from Real Auction or Regrid.">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Width="14" Height="14" Stretch="Uniform" Fill="White" Data="{StaticResource Icon.Delete}"/>
+                                <TextBlock Text="Clear" Margin="4 0 0 0" FontSize="12" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button HorizontalAlignment="Right" Style="{StaticResource HomePinTrash}" Padding="0"
+                                Command="{Binding ExportMapCommand}" ToolTip="Export: saves the current pins as a standalone HTML map (parcel list, fly-to and popups) that opens in any browser.">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Width="16" Height="16" Stretch="Uniform" Fill="White" Data="{StaticResource Icon.Html}"/>
+                                <TextBlock Text="Export" Margin="4 0 0 0" FontSize="12" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                    <TextBlock FontWeight="Bold" FontSize="12" Foreground="White">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding Markers.Count, StringFormat='Total Properties: {0}'}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Markers.Count}" Value="1">
+                                        <Setter Property="Text" Value="Total Properties: 1"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    </StackPanel>
+                </Border>
+                <ListBox ItemsSource="{Binding Markers}"
+                         Background="Transparent" BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.CanContentScroll="False">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource HomeCountyItem}">
+                            <!-- Click (not selection change) so re-clicking the same parcel flies back to it. -->
+                            <EventSetter Event="PreviewMouseLeftButtonUp" Handler="OnParcelClicked"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid x:Name="PinRow" Background="Transparent" ToolTip="{Binding Address}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding ParcelID}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                <!-- Trash can follows the row's text colour (accent, or white on the selected row); shown on hover only. -->
+                                <Button x:Name="PinRemove" Grid.Column="1" Opacity="0" ToolTip="Remove pin"
+                                        Style="{StaticResource HomePinTrash}"
+                                        Command="{Binding DataContext.RemoveMarkerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}">
+                                    <Path Width="12" Height="12" Stretch="Uniform" Data="{StaticResource Icon.Delete}"
+                                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+                                </Button>
+                            </Grid>
+                            <DataTemplate.Triggers>
+                                <Trigger SourceName="PinRow" Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="PinRemove" Property="Opacity" Value="1"/>
+                                </Trigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
         </Border>
+
         </Grid>
         </StackPanel>
     </Grid>

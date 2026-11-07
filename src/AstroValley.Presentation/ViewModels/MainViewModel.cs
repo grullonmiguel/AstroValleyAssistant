@@ -23,9 +23,19 @@ public partial class MainViewModel : ObservableObject
         get;
         set
         {
-            if (SetProperty(ref field, value)) OnPropertyChanged(nameof(IsFullBleed));
+            if (!SetProperty(ref field, value)) return;
+            OnPropertyChanged(nameof(IsFullBleed));
+            OnPropertyChanged(nameof(IsHomeActive));
+            OnPropertyChanged(nameof(IsRegridActive));
+            OnPropertyChanged(nameof(IsRealAuctionActive));
         }
     }
+
+    // Header tab state follows the current page, so code that navigates (e.g. the Map button) updates the tabs too.
+    // The no-op setters exist only so the RadioButtons can bind TwoWay (a OneWay binding is dropped on the first click).
+    public bool IsHomeActive { get => CurrentViewModel is HomeViewModel; set { } }
+    public bool IsRegridActive { get => CurrentViewModel is RegridViewModel; set { } }
+    public bool IsRealAuctionActive { get => CurrentViewModel is RealAuctionViewModel; set { } }
 
     // Home's view is created once in MainView (not via DataTemplate) so the map persists.
     public HomeViewModel Home { get; }
