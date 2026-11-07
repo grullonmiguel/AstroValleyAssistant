@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Windows.Controls;
+using System.Windows.Media.Animation;
 
 namespace AstroValley.Presentation.Views;
 
@@ -64,6 +65,9 @@ public partial class HomeView : UserControl
             // homemaplibre.html = MapLibre globe; homeglobe.html = Cesium globe; homemap.html = Leaflet flat map.
             // Same functions/messages in all three, so switching is this one name.
             MapWebView.CoreWebView2.Navigate("https://appassets.local/homemaplibre.html");
+            // Safety net: never leave the cover up if the page can't report ready (e.g. offline tiles).
+            await Task.Delay(TimeSpan.FromSeconds(20));
+            HideLoading();
         };
     }
 
@@ -82,13 +86,23 @@ public partial class HomeView : UserControl
 
         using var doc = JsonDocument.Parse(e.WebMessageAsJson);
         var root = doc.RootElement;
-        if (root.GetProperty("type").GetString() != "counties") return;
+        var type = root.GetProperty("type").GetString();
+        if (type == "ready") { HideLoading(); return; }
+        if (type != "counties") return;
         // Ignore a late reply for a state that is no longer selected.
         if (root.GetProperty("state").GetString() != vm.SelectedState?.Name) return;
 
         vm.Counties.Clear();
         foreach (var item in root.GetProperty("items").EnumerateArray())
             vm.Counties.Add(new CountyItem(item.GetProperty("id").GetString()!, item.GetProperty("name").GetString()!));
+    }
+
+    private void HideLoading()
+    {
+        if (MapLoading.Visibility != System.Windows.Visibility.Visible) return;
+        var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(400));
+        fade.Completed += (_, _) => MapLoading.Visibility = System.Windows.Visibility.Collapsed;
+        MapLoading.BeginAnimation(OpacityProperty, fade);
     }
 
     // Before the page loads this is a no-op: NavigationCompleted pushes every stored pin.

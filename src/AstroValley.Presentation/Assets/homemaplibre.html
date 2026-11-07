@@ -69,6 +69,8 @@
         }
         // style.load (not load): 'load' waits for every first tile and could fire after a state was already selected.
         map.once('style.load', function () { map.fitBounds(US_BOUNDS, { padding: pad(false), duration: 0 }); });
+        // First tiles are on screen: tell WPF to drop its loading cover.
+        map.once('load', function () { if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'ready' }); });
 
         // [[west, south], [east, north]] of a geometry. skipEast drops positive longitudes (Alaska's Aleutians wrap past 180).
         function boundsOf(geom, skipEast) {
