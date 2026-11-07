@@ -10,7 +10,8 @@
         <!-- Header / Title -->
         <TextBlock Text="Quick Links" Style="{StaticResource Theme.TextBlock.Sidebar.Title}" />
 
-        <Border Grid.Row="1" Style="{StaticResource Theme.Border.Sidebar}" Padding="6 4">
+        <!-- Parcel badge straddling the top border shows which row these links belong to -->
+        <Border Grid.Row="1" Style="{StaticResource Theme.Border.Sidebar}" Padding="6 14 6 4" Margin="0 11 0 0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition />
@@ -49,6 +50,27 @@
                                         Style="{StaticResource Theme.Button.IconText.Sidebar}"
                                         IsEnabled="{Binding HasGoogleUrl, FallbackValue=False}"/>
             </Grid>
+        </Border>
+
+        <Border Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Top"
+                Background="{DynamicResource Brush.Accent.Secondary}"
+                CornerRadius="11" Padding="12 3" MaxWidth="170"
+                ToolTip="{Binding ParcelId}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ParcelId}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ParcelId}" Value="">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <TextBlock Text="{Binding ParcelId}" FontSize="11" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.Accent}"
+                       TextTrimming="CharacterEllipsis"/>
         </Border>
     </Grid>
 </UserControl>

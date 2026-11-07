@@ -153,7 +153,7 @@
                                                 Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
 
                         <!-- Scrape Regrid Data Button -->
-                        <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}" Command="{Binding EnrichWithRegridCommand}" />
+                        <Button Content="Scrape Regrid" Style="{StaticResource Theme.Button.Scrape}" Command="{Binding EnrichWithRegridCommand}" />
 
                     </StackPanel>
 

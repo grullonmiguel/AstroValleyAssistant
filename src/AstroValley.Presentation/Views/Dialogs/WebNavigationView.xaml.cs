@@ -21,6 +21,11 @@ public partial class WebNavigationView : UserControl
         // Intercept new window requests and navigate in the same window
         WebView.CoreWebView2InitializationCompleted += (s, e) =>
         {
+            // Otherwise a failed start-up just leaves a blank dialog.
+            if (!e.IsSuccess)
+                System.Windows.MessageBox.Show($"The browser could not start:\n{e.InitializationException?.Message}",
+                    "Real Auction", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+
             if (e.IsSuccess && WebView.CoreWebView2 != null)
             {
                 WebView.CoreWebView2.NewWindowRequested += (sender, args) =>

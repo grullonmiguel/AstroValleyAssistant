@@ -123,6 +123,38 @@
         </Setter>
     </Style>
 
+    <!-- Real Auction brand orange (#CD7B2E) call-to-action; fixed color so it stands out from the purple UI. -->
+    <Style x:Key="Theme.Button.Scrape" TargetType="{x:Type Button}">
+        <Setter Property="Background" Value="#CD7B2E" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="20,8" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" SnapsToDevicePixels="True">
+                        <ContentPresenter Focusable="False" Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#B96A22" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#A25C1C" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="VibrantButtonStyle" TargetType="Button">
         <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Subtle}"/>
         <Setter Property="FontWeight" Value="Normal"/>
@@ -164,6 +196,38 @@
         </Setter>
     </Style>
 
+    <!-- Outlined secondary button: pairs with Theme.Button.Primary -->
+    <Style x:Key="Theme.Button.Outline" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource Brush.Background.Secondary}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+        <Setter Property="Padding" Value="20,10"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Background.Hover}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Hyperlink-like Button style -->
     <Style x:Key="Theme.Button.Hyperlink" TargetType="Button">
         <Setter Property="Cursor" Value="Hand"/>
@@ -180,10 +244,13 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <TextBlock Text="{TemplateBinding Content}"
-                               FontSize="{TemplateBinding FontSize}"
-                               Foreground="{TemplateBinding Foreground}"
-                               TextDecorations="{TemplateBinding TextBlock.TextDecorations}" />
+                    <!-- Transparent Border makes the whole button area clickable, not just the glyphs -->
+                    <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+                        <TextBlock Text="{TemplateBinding Content}"
+                                   FontSize="{TemplateBinding FontSize}"
+                                   Foreground="{TemplateBinding Foreground}"
+                                   TextDecorations="{TemplateBinding TextBlock.TextDecorations}" />
+                    </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -194,6 +261,33 @@
                 <Setter Property="Foreground" Value="{DynamicResource Brush.Hyperlink.Primary.Foreground}"/>
             </Trigger>
 
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.3"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Icon-only button that follows Hyperlink colors (subtle -> primary on hover), no background -->
+    <Style x:Key="Theme.Button.Hyperlink.Icon" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Subtle}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Hyperlink.Primary.Foreground}"/>
+            </Trigger>
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Opacity" Value="0.3"/>
             </Trigger>
@@ -342,12 +436,18 @@
                         </Trigger>
 
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.3"/>
+                            <Setter Property="Opacity" Value="0.5"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="ToolTip" Value="Not available for the selected row"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>

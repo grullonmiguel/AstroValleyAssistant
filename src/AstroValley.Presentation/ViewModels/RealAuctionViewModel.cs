@@ -26,6 +26,7 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
 
     /// <summary>True when the AUCTIONDATE in the saved URL is before today.</summary>
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(LoadRealAuctionCommand))]
     public partial bool IsAuctionDateStale { get; private set; }
 
     public ObservableCollection<AuctionUrlEntry> RecentAuctionUrls { get; } = [];
@@ -184,13 +185,21 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
         Status = $"Switched to {entry.Alias}.";
     }
 
+    [RelayCommand]
+    private void RemoveRecentUrl(AuctionUrlEntry entry)
+    {
+        _realAuctionSettings.RecentUrls.Remove(entry.Url);
+        _realAuctionSettings.Save();
+        RecentAuctionUrls.Remove(entry);
+    }
+
     private bool CanOpenWebNavigation() => !IsScraping;
 
     [RelayCommand(CanExecute = nameof(CanOpenRealAuction))]
     private void OpenRealAuction() => _browserService!.Launch(CurrentAuctionUrl);
 
-    // Shared guard — used by both commands
-    private bool CanExecuteAuctionCommands() => !IsScraping && CurrentAuctionUrl is not null;
+    // Scraping a past auction is pointless, so a stale date disables only the scrape command.
+    private bool CanExecuteAuctionCommands() => !IsScraping && CurrentAuctionUrl is not null && !IsAuctionDateStale;
 
     private bool CanOpenRealAuction() => CurrentAuctionUrl is not null;
 

@@ -19,49 +19,54 @@
                 <TextBlock x:Name="StatusText" 
                        Text="--" 
                        Foreground="Gray" 
-                       FontSize="10" 
+                       FontSize="11" FontWeight="SemiBold"
                        HorizontalAlignment="Center"/>
             </Border>
 
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding Status}" Value="Loading">
-                    <Setter TargetName="StatusBadge" Property="Background" Value="#3000AEEF"/>
-                    <Setter TargetName="StatusText" Property="Foreground" Value="#00AEEF"/>
+                    <Setter TargetName="StatusBadge" Property="Background" Value="{DynamicResource Brush.Status.Info}"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource Brush.Status.Info.Foreground}"/>
                     <Setter TargetName="StatusText" Property="Text" Value="● Loading"/>
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Status}" Value="Success">
-                    <Setter TargetName="StatusBadge" Property="Background" Value="#3065B5A6"/>
-                    <Setter TargetName="StatusText" Property="Foreground" Value="#65B5A6"/>
+                    <Setter TargetName="StatusBadge" Property="Background" Value="{DynamicResource Brush.Status.Success}"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource Brush.Status.Success.Foreground}"/>
                     <Setter TargetName="StatusText" Property="Text" Value="✔ Success"/>
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Status}" Value="MultipleMatches">
-                    <Setter TargetName="StatusBadge" Property="Background" Value="#30FFB74D"/>
-                    <Setter TargetName="StatusText" Property="Foreground" Value="#FFB74D"/>
+                    <Setter TargetName="StatusBadge" Property="Background" Value="{DynamicResource Brush.Status.Warning}"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource Brush.Status.Warning.Foreground}"/>
                     <Setter TargetName="StatusText" Property="Text" Value="⚠ Multiple"/>
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Status}" Value="NotFound">
-                    <Setter TargetName="StatusBadge" Property="Background" Value="#30EF5350"/>
-                    <Setter TargetName="StatusText" Property="Foreground" Value="#EF5350"/>
+                    <Setter TargetName="StatusBadge" Property="Background" Value="{DynamicResource Brush.Status.Danger}"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource Brush.Status.Danger.Foreground}"/>
                     <Setter TargetName="StatusText" Property="Text" Value="? Not Found"/>
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Status}" Value="Error">
-                    <Setter TargetName="StatusBadge" Property="Background" Value="#30FF1744"/>
-                    <Setter TargetName="StatusText" Property="Foreground" Value="#FF1744"/>
+                    <Setter TargetName="StatusBadge" Property="Background" Value="{DynamicResource Brush.Status.Danger}"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource Brush.Status.Danger.Foreground}"/>
                     <Setter TargetName="StatusText" Property="Text" Value="✘ Failed"/>
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Status}" Value="RateLimited">
-                    <Setter TargetName="StatusBadge" Property="Background" Value="#30FFD700"/>
-                    <Setter TargetName="StatusText" Property="Foreground" Value="#FFD700"/>
+                    <Setter TargetName="StatusBadge" Property="Background" Value="{DynamicResource Brush.Status.Warning}"/>
+                    <Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource Brush.Status.Warning.Foreground}"/>
                     <Setter TargetName="StatusText" Property="Text" Value="⏱ Rate Limited"/>
                 </DataTrigger>
 
             </DataTemplate.Triggers>
         </DataTemplate>
+
+        <Style x:Key="NumericCellStyle" TargetType="TextBlock">
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid Style="{StaticResource ViewSlideInFromTopStyle}" Margin="0 0 16 16" >
@@ -99,19 +104,56 @@
                 <Border Grid.Row="1" Padding="8 8 8 0"
                         Visibility="{Binding RecentAuctionUrls.Count, Converter={StaticResource NullToBooleanConverter}}">
                     <StackPanel>
-                        <TextBlock Text="Recent" Style="{StaticResource Theme.TextBlock.Sidebar.Label}" Margin="4 0 0 4"/>
+                        <TextBlock Text="Recent Auctions" Style="{StaticResource Theme.TextBlock.Sidebar.Title}" Margin="8 0 0 4"/>
                         <ListBox ItemsSource="{Binding RecentAuctionUrls}"
-                                 Background="Transparent" BorderThickness="0"
+                                 Background="Transparent" BorderThickness="0" MaxHeight="200"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <!-- Border-less template: the default one paints a white disabled background while the sidebar is disabled during a scrape. -->
+                            <ListBox.Template>
+                                <ControlTemplate TargetType="ListBox">
+                                    <ScrollViewer Focusable="False" HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </ControlTemplate>
+                            </ListBox.Template>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Content="{Binding Alias}"
-                                            Command="{Binding DataContext.SelectRecentUrlCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"
-                                            HorizontalContentAlignment="Left"
-                                            Style="{StaticResource Theme.Button.Hyperlink}"
-                                            FontSize="11"
-                                            Padding="4 4"/>
+                                    <Grid x:Name="RecentRow" Background="Transparent">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Button Content="{Binding Alias}"
+                                                Command="{Binding DataContext.SelectRecentUrlCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                HorizontalContentAlignment="Left"
+                                                HorizontalAlignment="Stretch"
+                                                Style="{StaticResource Theme.Button.Hyperlink}"
+                                                FontSize="11"
+                                                Padding="4 2"/>
+                                        <Button x:Name="RemoveButton" Grid.Column="1" ToolTip="Remove from recent" Opacity="0"
+                                                Command="{Binding DataContext.RemoveRecentUrlCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource Theme.Button.Hyperlink.Icon}">
+                                            <Path Width="12" Height="12" Stretch="Uniform"
+                                                  Data="{StaticResource Icon.Delete}"
+                                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                        </Button>
+                                    </Grid>
+                                    <DataTemplate.Triggers>
+                                        <!-- Show the trash can only on hover or keyboard focus to cut clutter -->
+                                        <Trigger SourceName="RecentRow" Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="RemoveButton" Property="Opacity" Value="1"/>
+                                        </Trigger>
+                                        <Trigger SourceName="RemoveButton" Property="IsKeyboardFocused" Value="True">
+                                            <Setter TargetName="RemoveButton" Property="Opacity" Value="1"/>
+                                        </Trigger>
+                                    </DataTemplate.Triggers>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
@@ -170,10 +212,20 @@
                             IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}"/>
                         <Button 
                             Height="42"
-                            Content="Get Real Auction Data" 
-                            Command="{Binding LoadRealAuctionCommand}" 
-                            Style="{StaticResource Theme.Button.Primary}"
-                            IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}"/>
+                            Content="Scrape Real Auction"
+                            Command="{Binding LoadRealAuctionCommand}"
+                            ToolTipService.ShowOnDisabled="True"
+                            IsEnabled="{Binding IsScraping, Converter={StaticResource BooleanInvertConverter}}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource Theme.Button.Scrape}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAuctionDateStale}" Value="True">
+                                            <Setter Property="ToolTip" Value="This auction date has passed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </StackPanel>
 
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
@@ -200,7 +252,7 @@
                                                 Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
 
                         <!-- Scrape Regrid Data Button -->
-                        <Button Content="Get Regrid Data" Style="{StaticResource Theme.Button.Primary}" Command="{Binding EnrichWithRegridCommand}" />
+                        <Button Content="Scrape Regrid" Style="{StaticResource Theme.Button.Scrape}" Command="{Binding EnrichWithRegridCommand}" />
                     </StackPanel>
                     
                 </Grid>
@@ -215,15 +267,50 @@
             
             <!-- Row 2: Parcel List -->
             <FrameworkElement Grid.Row="2" x:Name="FrameWorkElementProxy" Visibility="Collapsed"/>
-            <DataGrid Grid.Row="2" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}">
+            <DataGrid Grid.Row="2" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}"
+                      FontSize="13" MinRowHeight="38">
+                <!-- Local RowStyle replaces the global one, so its hover/selected triggers are repeated here (must stay after the status triggers to win). -->
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Background.Secondary}"/>
+                        <Setter Property="BorderThickness" Value="4 0 0 0"/>
+                        <Setter Property="BorderBrush" Value="Transparent"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Status}" Value="MultipleMatches">
+                                <Setter Property="Background" Value="#30FFB74D"/>
+                                <Setter Property="BorderBrush" Value="#FFB74D"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Status}" Value="NotFound">
+                                <Setter Property="Background" Value="#30EF5350"/>
+                                <Setter Property="BorderBrush" Value="#EF5350"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Status}" Value="Error">
+                                <Setter Property="Background" Value="#30FF1744"/>
+                                <Setter Property="BorderBrush" Value="#FF1744"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Status}" Value="RateLimited">
+                                <Setter Property="Background" Value="#30FFD700"/>
+                                <Setter Property="BorderBrush" Value="#FFD700"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource Brush.Background.Primary}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource Brush.Accent.Secondary}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="Status" Width="85" CellTemplate="{StaticResource StatusBadgeTemplate}"/>
+                    <DataGridTemplateColumn Header="Status" Width="95" CellTemplate="{StaticResource StatusBadgeTemplate}"/>
                     <DataGridTextColumn Header="Parcel ID" Binding="{Binding ParcelId}" Width="Auto"/>
                     <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
-                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="Auto"/>
-                    <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="100"/>
-                    <DataGridTextColumn Header="Opening Bid" Binding="{Binding Bid, StringFormat={}{0:C}}" Width="100"/>
-                    <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="100"/>
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="*"/>
+                    <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="100" ElementStyle="{StaticResource NumericCellStyle}"/>
+                    <DataGridTextColumn Header="Opening Bid" Binding="{Binding Bid, StringFormat={}{0:C}}" Width="110" ElementStyle="{StaticResource NumericCellStyle}"/>
+                    <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="80" ElementStyle="{StaticResource NumericCellStyle}"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>

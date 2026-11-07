@@ -69,10 +69,10 @@
 
                     <!-- Navigation Buttons: Home | Regrid | Real Auction | Maps | Menu  -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                        <RadioButton Content="Home" Command="{Binding NavigateCommand}" CommandParameter="Home" IsChecked="True" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <RadioButton Content="Regrid" Command="{Binding NavigateCommand}" CommandParameter="Regrid" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <RadioButton Content="Real Auction" Command="{Binding NavigateCommand}" CommandParameter="RealAuction" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
-                        <RadioButton Content="Maps" Command="{Binding NavigateCommand}" CommandParameter="Map" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
+                        <RadioButton Content="Home" Command="{Binding NavigateCommand}" CommandParameter="Home" IsChecked="True" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
+                        <!--<RadioButton Content="Maps" Command="{Binding NavigateCommand}" CommandParameter="Map" Style="{StaticResource Theme.RadioButton.HeaderLink}" />-->
                         <Button x:Name="HamburgerMenuButton" Command="{Binding OpenMenuCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}" Style="{StaticResource Theme.Button.HamburgerMenu}" >
                             <Button.ContextMenu>
                                 <ContextMenu Style="{StaticResource Theme.ContextMenu}">

@@ -21,6 +21,14 @@ public partial class HomeView : UserControl
 
             if (DataContext is HomeViewModel vm) vm.PropertyChanged += OnViewModelPropertyChanged;
 
+            // Own browser profile, so Home's composition-hosted WebView2 never shares an environment with the
+            // regular WebView2 used by the Real Auction dialog (sharing one folder left that dialog blank).
+            MapWebView.CreationProperties = new Microsoft.Web.WebView2.Wpf.CoreWebView2CreationProperties
+            {
+                UserDataFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "AstroValleyAssistant", "WebView2Home")
+            };
             await MapWebView.EnsureCoreWebView2Async();
             // https origin (not file://) so OSM tile servers receive a Referer and don't block us.
             MapWebView.CoreWebView2.SetVirtualHostNameToFolderMapping("appassets.local",

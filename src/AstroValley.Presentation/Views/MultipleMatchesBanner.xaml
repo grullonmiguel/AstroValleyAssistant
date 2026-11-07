@@ -19,7 +19,35 @@
             ViewMatchesCommandParameter="{Binding PropertySelected}" />
     -->
     
-    <Border Style="{StaticResource MultipleMatchesBanner.Border}">
+    <UserControl.Resources>
+        <!-- Slides/fades in whenever the banner becomes visible (the host toggles Visibility). -->
+        <Style x:Key="AnimatedBanner" TargetType="Border" BasedOn="{StaticResource MultipleMatchesBanner.Border}">
+            <Setter Property="LayoutTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleY="1"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsVisible, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="LayoutTransform.(ScaleTransform.ScaleY)"
+                                                 From="0" To="1" Duration="0:0:0.3">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.4"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource AnimatedBanner}">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
