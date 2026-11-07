@@ -215,6 +215,7 @@ public partial class HomeViewModel : ObservableObject
         if (added.Count == 0) return 0;
 
         foreach (var m in added) Markers.Add(m);
+        IsSidebarOpen = false; // make room for the map and the parcel list
         MarkersAdded?.Invoke(added);
         return added.Count;
     }

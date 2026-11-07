@@ -63,8 +63,12 @@
         });
 
         // Padding clears the WPF overlays: sidebar (+ county list once a state is selected) on the left, header on top.
+        // The state sidebar is 195px wide open, 36px collapsed (WPF reports it via setSidebarOpen).
+        var sidebarOpen = true;
+        function setSidebarOpen(open) { sidebarOpen = open; }
+        function sideShift() { return sidebarOpen ? 0 : 159; }
         function pad(withCounties) {
-            return withCounties ? { left: 430, top: 110, right: 60, bottom: 40 } : { left: 260, top: 100, right: 40, bottom: 40 };
+            return withCounties ? { left: 430 - sideShift(), top: 110, right: 60, bottom: 40 } : { left: 260 - sideShift(), top: 100, right: 40, bottom: 40 };
         }
         // Slightly tighter than the full contiguous US (-125..-66.5, 24.5..49.5) so the start view is closer in.
         var US_BOUNDS = [[-120, 26], [-72, 47.5]];
@@ -235,7 +239,7 @@
         }
 
         // The parcel list adds a third panel on the left (county list too once a state is selected).
-        function pinPad() { return { left: countyFeatures.length ? 650 : 490, top: 110, right: 60, bottom: 40 }; }
+        function pinPad() { return { left: (countyFeatures.length ? 650 : 490) - sideShift(), top: 110, right: 60, bottom: 40 }; }
 
         // Flies to a pin and opens its popup once the camera arrives (other popups are closed first).
         function flyToMarker(lat, lon) {

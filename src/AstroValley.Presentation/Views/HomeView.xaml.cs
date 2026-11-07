@@ -79,6 +79,8 @@ public partial class HomeView : UserControl
     {
         if (e.PropertyName == nameof(HomeViewModel.SelectedState)) HighlightSelectedState();
         else if (e.PropertyName == nameof(HomeViewModel.SelectedCounty)) HighlightSelectedCounty();
+        else if (e.PropertyName == nameof(HomeViewModel.IsSidebarOpen) && sender is HomeViewModel sb)
+            _ = RunScript($"setSidebarOpen({(sb.IsSidebarOpen ? "true" : "false")});");
         else if (e.PropertyName == nameof(HomeViewModel.IsImagery) && _pageLoaded && sender is HomeViewModel vm)
             _ = MapWebView.CoreWebView2.ExecuteScriptAsync($"setImagery({(vm.IsImagery ? "true" : "false")});");
     }
