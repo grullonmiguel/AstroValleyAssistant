@@ -213,6 +213,11 @@
 
         // ---- filter chips, 3D terrain and tour (driven from WPF) -------------------------------------------------------
         var hiddenKeys = {}, terrain3d = false, overlayOn = { flood: false, wetlands: false };
+        // Called by the popup editor (pinpopup.js): status / notes changed, tell WPF so they are saved with the pins.
+        function onPinEdit(loc) {
+            if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({
+                type: 'pinEdit', lat: loc.Latitude, lon: loc.Longitude, status: loc.Status || null, notes: loc.Notes || null });
+        }
         function postMode() {
             if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({
                 type: 'mode', terrain: terrain3d, touring: TOUR.on, flood: overlayOn.flood, wetlands: overlayOn.wetlands });

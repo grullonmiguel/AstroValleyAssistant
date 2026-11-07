@@ -13,10 +13,21 @@ function popupHtml(loc) {
         return value ? '<div style="flex:1;min-width:0"><div class="pp-label">' + label + '</div><div class="pp-value">' + link(url, esc(value), true) + '</div></div>' : '';
     };
     var facts = cell('Acres', loc.Acres) + cell('Flood Zone', d['Flood Zone'], loc.FemaUrl) + cell('Owner', d['Owner']);
-    var bid = (d['Assessed'] || d['Minimum Bid']) ?
+    // a value of 0 (or none) means "not available": its cell is left out and no percentage is shown
+    var num = function (v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isNaN(n) ? 0 : n; };
+    var assessed = num(d['Assessed']), minBid = num(d['Minimum Bid']);
+    var equity = '';
+    if (assessed > 0 && minBid > 0) {
+        var pct = minBid / assessed * 100;
+        var label = pct < 1 ? '&lt;1' : pct < 10 ? pct.toFixed(1) : String(Math.round(pct));
+        equity = '<div class="pp-eq"><div class="pp-eqbar"><i style="width:' + Math.min(100, pct) + '%;background:' +
+            (pct <= 25 ? '#2E9E5B' : pct <= 60 ? '#CD7B2E' : '#9A9A9A') + '"></i></div>Bid is <b>' + label + '%</b> of assessed value</div>';
+    }
+    var bid = (assessed > 0 || minBid > 0) ?
         '<div class="pp-money">' +
-            (d['Assessed'] ? '<div style="flex:1"><div class="pp-label">Assessed Value</div><div class="pp-big">' + money(d['Assessed']) + '</div></div>' : '') +
-            (d['Minimum Bid'] ? '<div style="flex:1"><div class="pp-label">Minimum Bid</div><div class="pp-big">' + money(d['Minimum Bid']) + '</div></div>' : '') +
+            (assessed > 0 ? '<div style="flex:1"><div class="pp-label">Assessed Value</div><div class="pp-big">' + money(assessed) + '</div></div>' : '') +
+            (minBid > 0 ? '<div style="flex:1"><div class="pp-label">Minimum Bid</div><div class="pp-big">' + money(minBid) + '</div></div>' : '') +
+            equity +
         '</div>' : '';
     return '<div style="padding:14px 16px 16px;font-family:\'Segoe UI\',sans-serif">' +
         '<div style="font-size:16px;font-weight:700;color:#30294B;text-transform:uppercase">' + link(loc.GoogleMapsUrl, esc(loc.Address)) + '</div>' +
@@ -27,7 +38,7 @@ function popupHtml(loc) {
         '</div>' +
         auctionBadge(loc) +
         (facts ? '<div style="display:flex;gap:12px;margin-bottom:10px">' + facts + '</div>' : '') +
-        bid + '</div>';
+        bid + statusSection(loc) + '</div>';
 }
 
 // ---- pin colour by auction urgency (shared by Home and the exported map) -----------------------------------------
@@ -49,12 +60,53 @@ function pinScale(loc) {
 
 function makePin(loc, map) {
     var info = pinInfo(loc), scale = pinScale(loc);
+    var popup = new maplibregl.Popup({ offset: Math.round(25 * scale), maxWidth: '360px' }).setHTML(popupHtml(loc));
     var marker = new maplibregl.Marker({ color: info.color, scale: scale })
         .setLngLat([loc.Longitude, loc.Latitude])
-        .setPopup(new maplibregl.Popup({ offset: Math.round(25 * scale), maxWidth: '360px' }).setHTML(popupHtml(loc)))
+        .setPopup(popup)
         .addTo(map);
-    if (info.urgent) marker.getElement().classList.add('pin-urgent');
+    decoratePin(marker, loc);
+    popup.on('open', function () { wireEditor(popup, loc, marker); });
     return marker;
+}
+
+// ---- research status + notes (editable on Home, read-only in the exported map) -----------------------------------
+var STATUS_COLORS = { Interested: '#2F80ED', Visited: '#17A2B8', Bid: '#E0A800', Skip: '#777777' };
+
+// urgent pulse, status dot on the pin, and a greyed-out look for Skip
+function decoratePin(marker, loc) {
+    var el = marker.getElement(), st = loc.Status;
+    el.classList.toggle('pin-urgent', pinInfo(loc).urgent && st !== 'Skip');
+    el.classList.toggle('pin-skip', st === 'Skip');
+    if (st && st !== 'Skip' && STATUS_COLORS[st]) { el.setAttribute('data-status', st); el.style.setProperty('--st', STATUS_COLORS[st]); }
+    else el.removeAttribute('data-status');
+}
+
+function statusSection(loc) {
+    var chip = function (st) { return '<button type="button" class="pp-st' + (loc.Status === st ? ' on' : '') + '" data-st="' + st + '" style="--c:' + STATUS_COLORS[st] + '">' + st + '</button>'; };
+    if (typeof onPinEdit === 'function') // Home: editable
+        return '<div class="pp-sec"><div class="pp-label">Status</div><div class="pp-sts">' + Object.keys(STATUS_COLORS).map(chip).join('') + '</div>' +
+            '<textarea class="pp-notes" rows="2" placeholder="Notes...">' + esc(loc.Notes) + '</textarea></div>';
+    if (!loc.Status && !loc.Notes) return '';
+    return '<div class="pp-sec">' + (loc.Status ? '<div class="pp-sts">' + chip(loc.Status).replace('class="pp-st', 'class="pp-st on') + '</div>' : '') +
+        (loc.Notes ? '<div class="pp-notes-ro">' + esc(loc.Notes) + '</div>' : '') + '</div>';
+}
+
+function wireEditor(popup, loc, marker) {
+    if (typeof onPinEdit !== 'function') return;
+    var root = popup.getElement();
+    if (!root) return;
+    root.querySelectorAll('.pp-st').forEach(function (b) {
+        b.onclick = function () {
+            loc.Status = loc.Status === b.dataset.st ? null : b.dataset.st; // click again to clear
+            decoratePin(marker, loc);
+            popup.setHTML(popupHtml(loc));
+            wireEditor(popup, loc, marker);
+            onPinEdit(loc);
+        };
+    });
+    var notes = root.querySelector('.pp-notes');
+    if (notes) notes.onchange = function () { loc.Notes = notes.value.trim() || null; onPinEdit(loc); }; // change fires when the box loses focus
 }
 
 // ---- 3D terrain + camera tour (shared) -----------------------------------------------------------------------------

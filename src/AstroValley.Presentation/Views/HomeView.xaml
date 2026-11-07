@@ -133,7 +133,9 @@
             <Style.Triggers>
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
-                        <Condition Binding="{Binding Filter}" Value="All"/>
+                        <Condition Binding="{Binding OnlyUnder5k}" Value="False"/>
+                        <Condition Binding="{Binding OnlyEquity}" Value="False"/>
+                        <Condition Binding="{Binding HideSkipped}" Value="False"/>
                         <Condition Binding="{Binding AcreStep}" Value="9"/>
                     </MultiDataTrigger.Conditions>
                     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
@@ -188,7 +190,23 @@
         </Style>
         <Style x:Key="HomeChip.Under5k" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Filter}" Value="Under5k">
+                <DataTrigger Binding="{Binding OnlyUnder5k}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeChip.Equity" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding OnlyEquity}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeChip.HideSkipped" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HideSkipped}" Value="True">
                     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
                     <Setter Property="Foreground" Value="White"/>
                 </DataTrigger>
@@ -283,6 +301,8 @@
                                       ToolTip="Add pins from a JSON file saved earlier. Pins already on the map are skipped."/>
                             <MenuItem Header="Save pins (JSON)…" Command="{Binding SavePinsCommand}"
                                       ToolTip="Save the current pins to a JSON file you can load again later."/>
+                            <MenuItem Header="Plan site-visit route…" Command="{Binding PlanRouteCommand}"
+                                      ToolTip="Open one Google Maps driving route through the pins that are showing (up to 10; skipped pins are left out)."/>
                             <Separator/>
                             <MenuItem Header="Export map (HTML)…" Command="{Binding ExportMapCommand}"
                                       ToolTip="Save the current pins as a standalone HTML map (parcel list, fly-to and popups) that opens in any browser."/>
@@ -308,9 +328,14 @@
                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
                 </Border.Effect>
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="All" Style="{StaticResource HomeChip.All}" Command="{Binding SetFilterCommand}" CommandParameter="All"/>
-                    <Button Content="Under $5k" Style="{StaticResource HomeChip.Under5k}" Command="{Binding SetFilterCommand}" CommandParameter="Under5k"
-                            ToolTip="Minimum bid under $5,000"/>
+                    <Button Content="All" Style="{StaticResource HomeChip.All}" Command="{Binding ClearFiltersCommand}"
+                            ToolTip="Show everything: clears all filters and the acre limit"/>
+                    <Button Content="Under $5k" Style="{StaticResource HomeChip.Under5k}" Command="{Binding ToggleFilterCommand}" CommandParameter="Under5k"
+                            ToolTip="Minimum bid under $5,000. Pins with no bid are hidden."/>
+                    <Button Content="Bid ≤ 25%" Style="{StaticResource HomeChip.Equity}" Command="{Binding ToggleFilterCommand}" CommandParameter="Equity"
+                            ToolTip="Minimum bid is at most 25% of the assessed value. Pins missing either value are hidden."/>
+                    <Button Content="Hide skipped" Style="{StaticResource HomeChip.HideSkipped}" Command="{Binding ToggleFilterCommand}" CommandParameter="Skipped"
+                            ToolTip="Hide pins you marked Skip"/>
                 </StackPanel>
             </Border>
 

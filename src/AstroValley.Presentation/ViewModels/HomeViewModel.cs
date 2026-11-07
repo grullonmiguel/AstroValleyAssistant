@@ -44,14 +44,21 @@ public partial class HomeViewModel : ObservableObject
         {
             SavePinsCommand.NotifyCanExecuteChanged();
             ExportMapCommand.NotifyCanExecuteChanged();
+            PlanRouteCommand.NotifyCanExecuteChanged();
         };
         // The parcel list binds to Markers, i.e. this default view, so filtering it filters the list too.
         CollectionViewSource.GetDefaultView(Markers).Filter = o => Matches((MarkerLocation)o);
     }
 
-    // Chips under the map: All | Under5k. The acre slider is a second, independent filter.
+    // Chips under the map are independent toggles; the acre slider is one more filter. "All" clears them.
     [ObservableProperty]
-    private string _filter = "All";
+    private bool _onlyUnder5k;
+
+    [ObservableProperty]
+    private bool _onlyEquity;
+
+    [ObservableProperty]
+    private bool _hideSkipped;
 
     // Slider positions for "max acres"; the last position means no limit.
     private static readonly double[] AcreSteps = [0.25, 0.5, 1, 2, 5, 10, 25, 50, 100];
@@ -84,7 +91,11 @@ public partial class HomeViewModel : ObservableObject
 
     public IEnumerable<MarkerLocation> HiddenMarkers => Markers.Where(m => !Matches(m));
 
-    partial void OnFilterChanged(string value) => ApplyFilter();
+    partial void OnOnlyUnder5kChanged(bool value) => ApplyFilter();
+
+    partial void OnOnlyEquityChanged(bool value) => ApplyFilter();
+
+    partial void OnHideSkippedChanged(bool value) => ApplyFilter();
 
     partial void OnAcreStepChanged(int value) => ApplyFilter();
 
@@ -96,20 +107,75 @@ public partial class HomeViewModel : ObservableObject
 
     private bool Matches(MarkerLocation m)
     {
-        var bidOk = Filter != "Under5k"
-            || (m.ExtraDetails?.GetValueOrDefault("Minimum Bid") is { } bid
-                && decimal.TryParse(bid, System.Globalization.NumberStyles.Currency, null, out var amount) && amount < 5000);
-        // pins without an acreage are hidden once the slider is below "any"
-        var acresOk = AcreStep >= AcreSteps.Length
+        // pins missing the number a filter needs (no bid, no assessed value, no acreage) are hidden by that filter
+        if (OnlyUnder5k && !(m.BidAmount is { } bid && bid < 5000)) return false;
+        if (OnlyEquity && !(m.BidToAssessedPercent is { } percent && percent <= 25)) return false;
+        if (HideSkipped && m.Status == "Skip") return false;
+        return AcreStep >= AcreSteps.Length
             || (double.TryParse(m.Acres, out var acres) && acres <= AcreSteps[AcreStep]);
-        return bidOk && acresOk;
     }
 
     [RelayCommand]
-    private void SetFilter(string filter)
+    private void ToggleFilter(string name)
     {
-        Filter = filter;
-        if (filter == "All") AcreStep = AcreSteps.Length; // "All" also clears the slider
+        switch (name)
+        {
+            case "Under5k": OnlyUnder5k = !OnlyUnder5k; break;
+            case "Equity": OnlyEquity = !OnlyEquity; break;
+            case "Skipped": HideSkipped = !HideSkipped; break;
+        }
+    }
+
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        OnlyUnder5k = OnlyEquity = HideSkipped = false;
+        AcreStep = AcreSteps.Length;
+    }
+
+    /// <summary>Status / notes edited in a map popup.</summary>
+    public void UpdatePin(double lat, double lon, string? status, string? notes)
+    {
+        var pin = Markers.FirstOrDefault(m => Math.Abs(m.Latitude - lat) < 1e-9 && Math.Abs(m.Longitude - lon) < 1e-9);
+        if (pin is null) return;
+        pin.Status = status;
+        pin.Notes = notes;
+        if (HideSkipped) ApplyFilter(); // a pin just marked Skip drops out
+    }
+
+    // Opens one Google Maps driving route through the pins that are showing (filters applied, skipped ones left out).
+    [RelayCommand(CanExecute = nameof(HasMarkers))]
+    private void PlanRoute()
+    {
+        const int MaxStops = 10; // Google Maps links take a destination plus 9 waypoints
+        var pins = Markers.Where(m => Matches(m) && m.Status != "Skip").ToList();
+        if (pins.Count == 0)
+        {
+            System.Windows.MessageBox.Show("No pins to route: all are hidden by a filter or marked Skip.", "Plan route");
+            return;
+        }
+
+        // shortcut: greedy nearest-neighbour from the first pin, not an optimal tour; fine for a day of drive-bys
+        var route = new List<MarkerLocation> { pins[0] };
+        pins.RemoveAt(0);
+        while (pins.Count > 0)
+        {
+            var last = route[^1];
+            var next = pins.MinBy(p => Math.Pow((p.Longitude - last.Longitude) * Math.Cos(last.Latitude * Math.PI / 180), 2) + Math.Pow(p.Latitude - last.Latitude, 2))!;
+            route.Add(next);
+            pins.Remove(next);
+        }
+
+        var total = route.Count;
+        route = route.Take(MaxStops).ToList();
+        var points = route.Select(m => FormattableString.Invariant($"{m.Latitude},{m.Longitude}")).ToList();
+        var url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + points[^1];
+        if (points.Count > 1) url += "&waypoints=" + string.Join("%7C", points.Take(points.Count - 1));
+
+        if (total > MaxStops)
+            System.Windows.MessageBox.Show($"Google Maps takes up to {MaxStops} stops, so the route covers {MaxStops} of {total} pins. " +
+                "Use the filters or mark pins as Skip to choose which ones.", "Plan route");
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = url, UseShellExecute = true });
     }
 
     [RelayCommand]

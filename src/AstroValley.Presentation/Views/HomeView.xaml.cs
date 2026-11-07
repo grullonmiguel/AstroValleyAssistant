@@ -94,6 +94,12 @@ public partial class HomeView : UserControl
         var root = doc.RootElement;
         var type = root.GetProperty("type").GetString();
         if (type == "ready") { HideLoading(); return; }
+        if (type == "pinEdit")
+        {
+            vm.UpdatePin(root.GetProperty("lat").GetDouble(), root.GetProperty("lon").GetDouble(),
+                root.GetProperty("status").GetString(), root.GetProperty("notes").GetString());
+            return;
+        }
         if (type == "mode")
         {
             vm.IsTerrain = root.GetProperty("terrain").GetBoolean();

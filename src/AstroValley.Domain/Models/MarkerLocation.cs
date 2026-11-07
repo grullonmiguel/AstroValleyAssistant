@@ -20,6 +20,23 @@ public record MarkerLocation
     public string? AppraiserUrl { get; init; }
     public Dictionary<string, string>? ExtraDetails { get; init; }
 
+    // Research workflow, edited in the map popup and saved with the pins: Interested | Visited | Bid | Skip (null = none).
+    public string? Status { get; set; }
+    public string? Notes { get; set; }
+
+    // Numbers parsed from ExtraDetails, written to the JSON as plain values (handy for a later Excel export). Missing or 0 = null.
+    public decimal? BidAmount => Money("Minimum Bid");
+    public decimal? AssessedAmount => Money("Assessed");
+
+    /// <summary>Minimum bid as a percent of assessed value; null when either value is missing or 0.</summary>
+    public double? BidToAssessedPercent =>
+        BidAmount is { } bid && AssessedAmount is { } assessed ? Math.Round((double)(bid / assessed * 100), 1) : null;
+
+    private decimal? Money(string key) =>
+        ExtraDetails?.GetValueOrDefault(key) is { } text
+        && decimal.TryParse(text, System.Globalization.NumberStyles.Currency, System.Globalization.CultureInfo.CurrentCulture, out var value)
+        && value > 0 ? value : null;
+
     /// <summary>
     /// Validates that the coordinates are within valid geographic bounds.
     /// </summary>

@@ -12,3 +12,20 @@
 /* auctions within 7 days: pin glows */
 @keyframes pin-pulse { 0%, 100% { filter: drop-shadow(0 0 0 rgba(214,69,69,0)); } 50% { filter: drop-shadow(0 0 10px rgba(214,69,69,.95)); } }
 .pin-urgent { animation: pin-pulse 1.6s ease-in-out infinite; }
+
+/* bid as a share of assessed value */
+.pp-money { flex-wrap: wrap; }
+.pp-eq { flex-basis: 100%; font-size: 12px; color: #30294B; }
+.pp-eqbar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.7); margin-bottom: 4px; overflow: hidden; }
+.pp-eqbar i { display: block; height: 100%; border-radius: 3px; }
+
+/* research status + notes */
+.pp-sec { margin-top: 10px; }
+.pp-sts { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 8px; }
+.pp-st { border: 1.5px solid var(--c); background: #fff; color: var(--c); border-radius: 12px; padding: 2px 10px; font: 600 11px 'Segoe UI', sans-serif; cursor: pointer; }
+.pp-st.on { background: var(--c); color: #fff; }
+.pp-notes { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid #DBD8E9; border-radius: 8px; padding: 6px 8px; font: 12px 'Segoe UI', sans-serif; color: #30294B; }
+.pp-notes-ro { font-size: 12px; color: #30294B; white-space: pre-wrap; }
+.maplibregl-marker[data-status]::after { content: ''; position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--st); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.pin-skip { filter: grayscale(1) opacity(.45); }
