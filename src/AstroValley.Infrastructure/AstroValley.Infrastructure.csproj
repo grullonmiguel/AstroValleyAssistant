@@ -19,6 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Export\logo.png" LogicalName="logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Settings\" />
   </ItemGroup>
 

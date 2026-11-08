@@ -31,7 +31,7 @@ public class PinResearchSheetExporter : IPinSheetExporter
         cell.Value = text;
         if (string.IsNullOrEmpty(text) || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return;
         cell.SetHyperlink(new XLHyperlink(uri));
-        cell.Style.Font.SetFontColor(Accent).Font.SetUnderline();
+        cell.Style.Font.SetFontColor(XLColor.FromHtml("#0563C1")).Font.SetUnderline(); // the usual link blue
     }
 
     public Task ExportAsync(IEnumerable<MarkerLocation> pins, string filePath)
@@ -55,8 +55,11 @@ public class PinResearchSheetExporter : IPinSheetExporter
         ws.Range(1, 1, last + 2, 1).Style.Fill.BackgroundColor = Accent;
         ws.Range(1, 2, 1, 4).Style.Fill.BackgroundColor = Accent;
 
-        ws.Cell(2, 3).Value = "County Name";
-        ws.Cell(2, 3).Style.Font.SetBold().Font.SetFontSize(16).Font.SetFontColor(Accent);
+        ws.Cell(2, 4).Value = "County Name";
+        ws.Cell(2, 4).Style.Font.SetBold().Font.SetFontSize(16).Font.SetFontColor(Accent);
+
+        using var logo = typeof(PinResearchSheetExporter).Assembly.GetManifestResourceStream("logo.png")!;
+        ws.AddPicture(logo).MoveTo(ws.Cell(2, 3), 5, 6).WithSize(35, 28);
 
         foreach (var (from, title, cols) in Groups)
         {
@@ -79,6 +82,9 @@ public class PinResearchSheetExporter : IPinSheetExporter
             // Skipped or possibly landlocked pins start as C; A and B are for the user to give
             if (p.Status == "Skip" || p.AccessStatus == "None") ws.Cell(row, 3).Value = "C";
             ws.Cell(row, 4).Value = string.Join(" | ", new[] { p.Status, p.Notes, p.AccessText }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            ws.Cell(row, 6).Value = d?.GetValueOrDefault("Type");
+            ws.Cell(row, 7).Value = d?.GetValueOrDefault("Zoning");
+            ws.Cell(row, 8).Value = d?.GetValueOrDefault("City");
             ws.Cell(row, 9).Value = p.ParcelID;
             Link(ws.Cell(row, 11), p.RegridUrl is null ? null : "Regrid", p.RegridUrl);
             ws.Cell(row, 12).Value = d?.GetValueOrDefault("Owner");
@@ -87,12 +93,20 @@ public class PinResearchSheetExporter : IPinSheetExporter
             if (double.TryParse(p.Acres, NumberStyles.Float, CultureInfo.InvariantCulture, out var acres)) ws.Cell(row, 15).Value = acres;
             Link(ws.Cell(row, 17), p.Address, p.GoogleMapsUrl);
             Link(ws.Cell(row, 23), d?.GetValueOrDefault("Flood Zone"), p.FemaUrl);
+            var elevation = d?.GetValueOrDefault("Elevation");
+            if (elevation is not null && p.SlopePercent is { } slope) elevation += $" ({slope}%)";
+            ws.Cell(row, 33).Value = elevation;
+            if (p.SlopePercent is >= 10) ws.Cell(row, 33).Style.Font.SetFontColor(XLColor.FromHtml("#D64545")).Font.SetBold(); // steep
             ws.Cell(row, 32).Value = string.Create(CultureInfo.InvariantCulture, $"{p.Latitude:F6}, {p.Longitude:F6}");
             row++;
         }
 
         // Market Value = Acres x Avg Price / Acre, for the pin rows plus spare rows for the user's own entries
-        for (var r = FirstRow; r <= last; r++) ws.Cell(r, 26).FormulaA1 = $"=O{r}*Y{r}";
+        for (var r = FirstRow; r <= last; r++)
+        {
+            ws.Cell(r, 26).FormulaA1 = $"=O{r}*Y{r}";             // Market Value = Acres x Avg Price / Acre
+            ws.Cell(r, 30).FormulaA1 = $"=Z{r}/(1+100%)-AC{r}";   // Max Bid = Market Value / 2 - lien amount
+        }
         ws.Range(FirstRow, 13, last, 14).Style.NumberFormat.Format = "$#,##0.00";
         ws.Range(FirstRow, 25, last, 26).Style.NumberFormat.Format = "$#,##0.00";
         ws.Range(FirstRow, 29, last, 30).Style.NumberFormat.Format = "$#,##0.00";
@@ -118,6 +132,13 @@ public class PinResearchSheetExporter : IPinSheetExporter
         rating.Style.Fill.BackgroundColor = Light;
         rating.Style.Border.SetTopBorder(XLBorderStyleValues.Thin).Border.SetTopBorderColor(Backdrop)
             .Border.SetBottomBorder(XLBorderStyleValues.Thin).Border.SetBottomBorderColor(Backdrop);
+        foreach (var c in new[] { 26, 30 }) // Market Value and Max Bid: tinted from row 5, with white lines between rows
+        {
+            var tint = ws.Range(5, c, last, c);
+            tint.Style.Fill.BackgroundColor = Light;
+            tint.Style.Border.SetTopBorder(XLBorderStyleValues.Thin).Border.SetTopBorderColor(XLColor.White)
+                .Border.SetBottomBorder(XLBorderStyleValues.Thin).Border.SetBottomBorderColor(XLColor.White);
+        }
         ws.Cell(4, 3).Style.Fill.BackgroundColor = Dark; // C4 and D4 are separate cells, as in the template
         ws.Cell(5, 3).Style.Fill.BackgroundColor = Accent;
         ws.Cell(5, 3).Style.Font.FontColor = XLColor.White;
@@ -126,7 +147,7 @@ public class PinResearchSheetExporter : IPinSheetExporter
         foreach (var c in new[] { 2, 5, 10, 16, 22, 24, 27, 31 }) ws.Column(c).Width = 2;
         ws.Columns("C,F:I,K:O,R:U,W,Y:Z,AB:AD,AF:AG").AdjustToContents(5, last);
         // widths in Excel units, from pixels: (px - 5) / 7
-        ws.Column(1).Width = 2.1; ws.Column(4).Width = 27.9; ws.Column(17).Width = 25; ws.Column(23).Width = 16.4; ws.Column(12).Width = 26; ws.Column(32).Width = 22;
+        ws.Column(1).Width = 2.1; ws.Column(4).Width = 27.9; ws.Column(17).Width = 25; ws.Column(23).Width = 16.4; ws.Column(8).Width = 13.6; ws.Column(12).Width = 26; ws.Column(32).Width = 22;
         ws.SheetView.FreezeRows(5);
 
         ws.Rows(1, last + 2).Height = 22.5; // 30 px

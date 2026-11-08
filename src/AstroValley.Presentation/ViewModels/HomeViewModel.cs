@@ -63,6 +63,9 @@ public partial class HomeViewModel : ObservableObject
     private bool _onlyEquity;
 
     [ObservableProperty]
+    private bool _onlySteep;
+
+    [ObservableProperty]
     private bool _hideSkipped;
 
     // Slider positions for "max acres"; the last position means no limit.
@@ -103,6 +106,8 @@ public partial class HomeViewModel : ObservableObject
 
     partial void OnOnlyEquityChanged(bool value) => ApplyFilter();
 
+    partial void OnOnlySteepChanged(bool value) => ApplyFilter();
+
     partial void OnHideSkippedChanged(bool value) => ApplyFilter();
 
     partial void OnAcreStepChanged(int value) => ApplyFilter();
@@ -113,11 +118,14 @@ public partial class HomeViewModel : ObservableObject
         FilterChanged?.Invoke();
     }
 
+    public const double SteepPercent = 10; // grade at or above this counts as steep
+
     private bool Matches(MarkerLocation m)
     {
         // pins missing the number a filter needs (no bid, no assessed value, no acreage) are hidden by that filter
         if (OnlyUnder5k && !(m.BidAmount is { } bid && bid < 5000)) return false;
         if (OnlyEquity && !(m.BidToAssessedPercent is { } percent && percent <= 25)) return false;
+        if (OnlySteep && !(m.SlopePercent is >= SteepPercent)) return false;
         if (HideSkipped && m.Status == "Skip") return false;
         return AcreStep >= AcreSteps.Length
             || (double.TryParse(m.Acres, out var acres) && acres <= AcreSteps[AcreStep]);
@@ -130,6 +138,7 @@ public partial class HomeViewModel : ObservableObject
         {
             case "Under5k": OnlyUnder5k = !OnlyUnder5k; break;
             case "Equity": OnlyEquity = !OnlyEquity; break;
+            case "Steep": OnlySteep = !OnlySteep; break;
             case "Skipped": HideSkipped = !HideSkipped; break;
         }
     }
@@ -137,7 +146,7 @@ public partial class HomeViewModel : ObservableObject
     [RelayCommand]
     private void ClearFilters()
     {
-        OnlyUnder5k = OnlyEquity = HideSkipped = false;
+        OnlyUnder5k = OnlyEquity = OnlySteep = HideSkipped = false;
         AcreStep = AcreSteps.Length;
     }
 
@@ -238,6 +247,7 @@ public partial class HomeViewModel : ObservableObject
                 .Replace("{{PINS_JSON}}", pinsJson); // last, so pin text can never be mistaken for a placeholder
 
             await File.WriteAllTextAsync(dialog.FileName, html);
+            OpenFile(dialog.FileName);
         }
         catch (Exception ex)
         {
@@ -251,9 +261,13 @@ public partial class HomeViewModel : ObservableObject
     {
         var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "Excel Workbook (*.xlsx)|*.xlsx", FileName = "AstroValley-Research.xlsx" };
         if (dialog.ShowDialog() != true) return;
-        try { await _sheetExporter.ExportAsync(Markers, dialog.FileName); }
+        try { await _sheetExporter.ExportAsync(Markers, dialog.FileName); OpenFile(dialog.FileName); }
         catch (Exception ex) { System.Windows.MessageBox.Show($"Could not export the sheet: {ex.Message}", "Export research sheet"); }
     }
+
+    // Opens a file we just wrote in its default app (browser for .html, Excel for .xlsx)
+    private static void OpenFile(string path) =>
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
 
     private static readonly JsonSerializerOptions PinJson = new() { PropertyNamingPolicy = null, WriteIndented = true };
 

@@ -289,6 +289,13 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
             var details = new Dictionary<string, string>();
             if (!string.IsNullOrEmpty(record.FloodZone)) details.Add("Flood Zone", record.FloodZone);
             if (!string.IsNullOrEmpty(record.Owner)) details.Add("Owner", record.Owner);
+            if (!string.IsNullOrEmpty(record.City)) details.Add("City", record.City);          // City, Zoning and Type feed the Excel sheet
+            if (!string.IsNullOrEmpty(record.ZoningCode)) details.Add("Zoning", record.ZoningCode);
+            if (!string.IsNullOrEmpty(record.ZoningType)) details.Add("Type", record.ZoningType);
+            if (!string.IsNullOrWhiteSpace(record.ElevationLow)) details.Add("Elevation Low", record.ElevationLow);   // raw values: the pin computes its slope from these
+            if (!string.IsNullOrWhiteSpace(record.ElevationHigh)) details.Add("Elevation High", record.ElevationHigh);
+            var elevations = new[] { record.ElevationLow, record.ElevationHigh }.Where(e => !string.IsNullOrWhiteSpace(e)).Distinct().ToList();
+            if (elevations.Count > 0) details.Add("Elevation", string.Join(" - ", elevations)); // "low - high", or one value when equal
             if (!string.IsNullOrEmpty(record.AssessedValue?.ToString() ?? "")) details.Add("Assessed", record.AssessedValue?.ToString() ?? "");
             if (!string.IsNullOrEmpty(record.Bid?.ToString() ?? "")) details.Add("Minimum Bid", record.Bid?.ToString() ?? "");
 

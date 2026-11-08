@@ -42,6 +42,14 @@ function popupHtml(loc, message) {
             : '<span class="pp-pill">' + esc(d['Flood Zone']) + '</span>') + '</div>') : '') +
         (d['Owner'] ? fact(ico('person'), 'Owner', '<div class="pp-fval">' + esc(d['Owner']) + '</div>') : '');
 
+    // slope across the parcel (Regrid high minus low elevation over the longest side): flat is quiet, steep is loud
+    var slope = '';
+    if (loc.SlopePercent != null) {
+        var sp = loc.SlopePercent;
+        var tier = sp < 2 ? ['Flat', '#2E9E5B'] : sp < 5 ? ['Gentle', '#2E9E5B'] : sp < 10 ? ['Moderate', '#CD7B2E'] : sp < 15 ? ['Steep', '#D64545'] : ['Very steep', '#D64545'];
+        slope = '<div class="pp-slope" style="--c:' + tier[1] + '">' + ico('trend') + 'Slope <b>' + sp + '%</b> &middot; ' + tier[0] + '</div>';
+    }
+
     // value box: collapsed when both are missing or 0; one missing shows --
     var cellMoney = function (label, n) {
         return '<div class="pp-mcell"><span class="pp-badge">' + ico('dollar') + '</span><div><div class="pp-label">' + label + '</div>' +
@@ -63,7 +71,7 @@ function popupHtml(loc, message) {
     var actions = (access || appraiser) ? '<div class="pp-actions">' + access + appraiser + '</div>' : '';
 
     return head + '<div class="pp-body">' + auctionBadge(loc) +
-        (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + box + equity + statusSection(loc) + actions + '</div>';
+        (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + slope + box + equity + statusSection(loc) + actions + '</div>';
 }
 
 // ---- pin colour by auction urgency (shared by Home and the exported map) -----------------------------------------

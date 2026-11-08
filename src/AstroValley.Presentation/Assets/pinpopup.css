@@ -26,6 +26,10 @@
 .pp-pill { display: inline-block; background: #DBD8E9; color: #4F4486; font-size: 13px; font-weight: 700; border-radius: 12px; padding: 2px 16px; }
 a.pp-pill:hover { background: #cfcae3; text-decoration: none; }
 
+/* slope line, coloured by steepness */
+.pp-slope { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--c); background: color-mix(in srgb, var(--c) 12%, white); border-radius: 8px; padding: 5px 10px; margin-bottom: 12px; }
+.pp-slope b { font-weight: 700; }
+
 /* value box (app's light purple) and the bid / assessed bar below it */
 .pp-money { display: flex; background: #DBD8E9; border-radius: 10px; padding: 12px 14px; }
 .pp-mcell { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
