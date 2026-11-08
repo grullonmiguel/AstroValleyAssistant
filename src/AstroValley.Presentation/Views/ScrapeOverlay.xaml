@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}">
     <!-- Covers the parcel list while a scrape or load runs. DataContext is the screen's view model (IsScraping, ProgressText, ProgressValue). -->
-    <Grid Background="{DynamicResource Brush.Accent}" Opacity="0.95">
+    <Grid Background="Transparent">
+        <Border Width="300" Height="190" CornerRadius="16" Background="#CC1E1E1E" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
             <Grid Width="56" Height="56" HorizontalAlignment="Center">
                 <Ellipse Stroke="#33FFFFFF" StrokeThickness="4"/>

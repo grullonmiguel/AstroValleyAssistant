@@ -227,6 +227,7 @@ public partial class HomeViewModel : ObservableObject
         var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "HTML File (*.html)|*.html", FileName = "AstroValley-Pins.html" };
         if (dialog.ShowDialog() != true) return;
 
+        BeginExport("Exporting map...");
         try
         {
             var assets = Path.Combine(AppContext.BaseDirectory, "Assets");
@@ -246,6 +247,22 @@ public partial class HomeViewModel : ObservableObject
         {
             System.Windows.MessageBox.Show($"Could not export the map: {ex.Message}", "Export map");
         }
+        finally { IsScraping = false; }
+    }
+
+    // Busy overlay state (ScrapeOverlay binds these); the export has no known total, so no percent bar.
+    [ObservableProperty]
+    private bool _isScraping;
+
+    [ObservableProperty]
+    private string? _progressText;
+
+    public bool IsProgressIndeterminate => true;
+
+    private void BeginExport(string message)
+    {
+        ProgressText = message;
+        IsScraping = true;
     }
 
     // Excel research sheet: the pins fill the template's columns; the rest is left for the manual research steps.
@@ -254,8 +271,10 @@ public partial class HomeViewModel : ObservableObject
     {
         var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "Excel Workbook (*.xlsx)|*.xlsx", FileName = "AstroValley-Research.xlsx" };
         if (dialog.ShowDialog() != true) return;
+        BeginExport("Exporting research sheet...");
         try { await _sheetExporter.ExportAsync(Markers, dialog.FileName); OpenFile(dialog.FileName); }
         catch (Exception ex) { System.Windows.MessageBox.Show($"Could not export the sheet: {ex.Message}", "Export research sheet"); }
+        finally { IsScraping = false; }
     }
 
     // Opens a file we just wrote in its default app (browser for .html, Excel for .xlsx)
