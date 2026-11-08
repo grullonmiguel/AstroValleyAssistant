@@ -6,6 +6,7 @@
 /// Rules:
 /// - Never overwrite RealAuction fields.
 /// - Only fill fields that are empty or null.
+/// - The assessed value counts as empty when RealAuction gave 0 (it parses a missing value as 0), so Regrid's fills it.
 /// </summary>
 public static class PropertyRecordMerger
 {
@@ -33,6 +34,8 @@ public static class PropertyRecordMerger
                 : original.Zip,
 
             Acres = original.Acres ?? regrid.Acres,
+
+            AssessedValue = original.AssessedValue is > 0 ? original.AssessedValue : regrid.AssessedValue ?? original.AssessedValue,
 
             Owner = string.IsNullOrWhiteSpace(original.Owner)
                 ? regrid.Owner

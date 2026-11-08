@@ -6,7 +6,7 @@
 /* header band in the app's accent purple */
 .pp-head { display: flex; align-items: center; gap: 12px; background: #4F4486; color: #fff; padding: 14px 48px 14px 16px; font-family: 'Segoe UI', sans-serif; }
 .pp-ico { flex: none; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.16); display: flex; align-items: center; justify-content: center; }
-.pp-title { font-size: 15px; font-weight: 700; text-transform: uppercase; line-height: 1.25; word-wrap: break-word; }
+.pp-title { font-size: 12px; font-weight: 600; text-transform: uppercase; line-height: 1.25; word-wrap: break-word; }
 .pp-pid { font-size: 12px; opacity: .85; margin-top: 2px; }
 .pp-head .pp-link { color: #fff; }
 
@@ -26,13 +26,14 @@
 
 /* facts: three columns with thin dividers */
 .pp-facts { display: flex; margin-bottom: 12px; }
-.pp-fact { flex: 1; min-width: 0; padding: 0 12px; border-left: 1px solid #E2DFEE; }
+.pp-fact { flex: none; min-width: 0; padding: 0 12px; border-left: 1px solid #E2DFEE; }
+.pp-fact.pp-grow { flex: 1; } /* the owner takes the room acres and flood zone do not need */
 .pp-fact:first-child { padding-left: 0; border-left: 0; }
 .pp-flabel { white-space: nowrap; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #777; margin-bottom: 4px; }
 .pp-flabel svg { color: #4F4486; flex: none; }
-.pp-fval { font-size: 13px; font-weight: 700; color: #222; word-wrap: break-word; }
-.pp-fbig { font-size: 18px; }
-.pp-pill { display: inline-block; background: #DBD8E9; color: #4F4486; font-size: 13px; font-weight: 700; border-radius: 12px; padding: 2px 16px; }
+.pp-fval { font-size: 12px; font-weight: 600; color: #222; word-wrap: break-word; }
+.pp-fbig { font-size: 14px; }
+.pp-pill { display: inline-block; background: #DBD8E9; color: #4F4486; font-size: 11px; font-weight: 700; border-radius: 10px; padding: 1px 10px; }
 a.pp-pill:hover { background: #cfcae3; text-decoration: none; }
 
 /* slope line, coloured by steepness */
@@ -45,17 +46,13 @@ a.pp-pill:hover { background: #cfcae3; text-decoration: none; }
 .pp-mcell + .pp-mcell { border-left: 1px solid rgba(79,68,134,.25); padding-left: 14px; margin-left: 14px; }
 .pp-badge { flex: none; width: 28px; height: 28px; border-radius: 50%; background: #4F4486; color: #fff; display: flex; align-items: center; justify-content: center; }
 .pp-badge svg { width: 16px; height: 16px; }
-.pp-big { font-size: 19px; font-weight: 700; color: #30294B; }
-.pp-eq { margin-top: 10px; }
-.pp-eqbar { height: 8px; border-radius: 4px; background: #E8E6F1; overflow: hidden; }
-.pp-eqbar i { display: block; height: 100%; border-radius: 4px; }
-.pp-eqtext { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-top: 6px; }
+.pp-big { font-size: 14px; font-weight: 700; color: #30294B; }
+.pp-eq { margin-top: 8px; }
+.pp-eqtext { display: flex; align-items: center; gap: 6px; font-size: 12px; }
 
 /* research status + notes */
 .pp-sec { margin-top: 12px; padding-top: 12px; border-top: 1px solid #E2DFEE; }
-.pp-slabel { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #30294B; }
-.pp-slabel svg { color: #2F80ED; width: 16px; height: 16px; }
-.pp-sts { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 10px; }
+.pp-sts { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
 .pp-st { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--c); background: #fff; color: var(--c); border-radius: 16px; padding: 4px 12px; font: 600 12px 'Segoe UI', sans-serif; cursor: pointer; }
 .pp-st.on { background: var(--c); color: #fff; }
 .pp-notes-wrap { position: relative; }

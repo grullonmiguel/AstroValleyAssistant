@@ -34,13 +34,13 @@ function popupHtml(loc, message) {
         '<div class="pp-pid">' + link(loc.RegridUrl, esc(loc.ParcelID)) + '</div></div></div>';
 
     // facts row: acres | flood zone (pill, opens FEMA) | owner; a fact is left out when its data is missing
-    var fact = function (icon, label, value) {
-        return '<div class="pp-fact"><div class="pp-flabel">' + icon + label + '</div>' + value + '</div>';
+    var fact = function (icon, label, value, grow) {
+        return '<div class="pp-fact' + (grow ? ' pp-grow' : '') + '"><div class="pp-flabel">' + icon + label + '</div>' + value + '</div>';
     };
     var facts = (loc.Acres ? fact(ico('acres'), 'Acres', '<div class="pp-fval pp-fbig">' + (isNaN(parseFloat(loc.Acres)) ? esc(loc.Acres) : parseFloat(loc.Acres).toFixed(2)) + '</div>') : '') +
         (d['Flood Zone'] ? fact(WAVES, 'Flood Zone', '<div>' + (loc.FemaUrl ? '<a class="pp-pill pp-link" href="' + esc(loc.FemaUrl).replace(/"/g, '&quot;') + '" target="_blank">' + esc(d['Flood Zone']) + '</a>'
             : '<span class="pp-pill">' + esc(d['Flood Zone']) + '</span>') + '</div>') : '') +
-        (d['Owner'] ? fact(ico('person'), 'Owner', '<div class="pp-fval">' + esc(d['Owner']) + '</div>') : '');
+        (d['Owner'] ? fact(ico('person'), 'Owner', '<div class="pp-fval">' + esc(d['Owner']) + '</div>', true) : '');
 
     // slope across the parcel (Regrid high minus low elevation over the longest side): flat is quiet, steep is loud
     var slope = '';
@@ -61,7 +61,7 @@ function popupHtml(loc, message) {
         var pct = minBid / assessed * 100;
         var label = pct < 1 ? '&lt;1' : pct < 10 ? pct.toFixed(1) : String(Math.round(pct));
         var color = pct <= 25 ? '#2E9E5B' : pct <= 60 ? '#CD7B2E' : '#9A9A9A';
-        equity = '<div class="pp-eq"><div class="pp-eqbar"><i style="width:' + Math.min(100, pct) + '%;background:' + color + '"></i></div>' +
+        equity = '<div class="pp-eq">' +
             '<div class="pp-eqtext" style="color:' + color + '">' + ico('trend') + '<span style="color:#30294B">Bid is <b>' + label + '%</b> of assessed value</span></div></div>';
     }
 
@@ -123,7 +123,7 @@ function statusSection(loc) {
         return '<button type="button" class="pp-st' + (on ? ' on' : '') + '" data-st="' + st + '" style="--c:' + STATUS_COLORS[st] + '">' + ico(STATUS_ICONS[st]) + st + '</button>';
     };
     if (typeof onPinEdit === 'function') // Home: editable
-        return '<div class="pp-sec"><div class="pp-slabel">' + ico('info') + 'Status</div><div class="pp-sts">' +
+        return '<div class="pp-sec"><div class="pp-sts">' +
             Object.keys(STATUS_COLORS).map(function (st) { return chip(st, loc.Status === st); }).join('') + '</div>' +
             '<div class="pp-notes-wrap">' + ico('note') + '<textarea class="pp-notes" rows="2" placeholder="Notes...">' + esc(loc.Notes) + '</textarea></div></div>';
     if (!loc.Status && !loc.Notes) return '';

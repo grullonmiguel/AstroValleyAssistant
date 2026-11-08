@@ -136,7 +136,6 @@
                         <Condition Binding="{Binding OnlyUnder5k}" Value="False"/>
                         <Condition Binding="{Binding OnlyEquity}" Value="False"/>
                         <Condition Binding="{Binding OnlySteep}" Value="False"/>
-                        <Condition Binding="{Binding HideSkipped}" Value="False"/>
                         <Condition Binding="{Binding AcreStep}" Value="9"/>
                     </MultiDataTrigger.Conditions>
                     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
@@ -208,14 +207,6 @@
         <Style x:Key="HomeChip.Steep" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding OnlySteep}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="HomeChip.HideSkipped" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding HideSkipped}" Value="True">
                     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
                     <Setter Property="Foreground" Value="White"/>
                 </DataTrigger>
@@ -302,6 +293,31 @@
                 <StackPanel Orientation="Horizontal">
                     <Button Content="Map" Style="{StaticResource HomeSegment.Map}" Command="{Binding ShowMapCommand}"/>
                     <Button Content="Satellite" Style="{StaticResource HomeSegment.Satellite}" Command="{Binding ShowSatelliteCommand}"/>
+                    <!-- Map tools: only while pins exist. -->
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Markers.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Rectangle Width="1" Height="18" Margin="4 0" Fill="{DynamicResource Brush.Accent}" Opacity="0.3"/>
+                        <Button Content="3D" Style="{StaticResource HomeChip.Terrain}" Command="{Binding ToggleTerrainCommand}"
+                                ToolTip="Tilt the map and show terrain (switches from the globe to a flat map)"/>
+                        <Button Content="Tour" Style="{StaticResource HomeChip.Tour}" Command="{Binding ToggleTourCommand}"
+                                ToolTip="Fly through the pins one by one in 3D. Click the map to stop."/>
+                        <Rectangle Width="1" Height="18" Margin="4 0" Fill="{DynamicResource Brush.Accent}" Opacity="0.3"/>
+                        <!-- Due-diligence layers; with one on, clicking the map shows what is at that spot. -->
+                        <Button Content="Flood" Style="{StaticResource HomeChip.Flood}" Command="{Binding ToggleOverlayCommand}" CommandParameter="flood"
+                                ToolTip="FEMA flood zones (draws when zoomed in to about street level). Click the map to see the zone at that spot."/>
+                        <Button Content="Wetlands" Style="{StaticResource HomeChip.Wetlands}" Command="{Binding ToggleOverlayCommand}" CommandParameter="wetlands"
+                                ToolTip="National Wetlands Inventory (draws from about county zoom). Click the map to see the wetland type at that spot."/>
+                        <Button Content="EPA" Style="{StaticResource HomeChip.Epa}" Command="{Binding ToggleOverlayCommand}" CommandParameter="epa"
+                                ToolTip="EPA Superfund (magenta) and brownfield (brown) sites. Shows when zoomed in to about county level; click a dot for details."/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -325,13 +341,16 @@
                                       ToolTip="Save the pins into the research template (tax office, appraiser, maps, FEMA, market value, clerk). Market Value = Acres x Avg Price / Acre."/>
                             <MenuItem Header="Export map (HTML)…" Command="{Binding ExportMapCommand}"
                                       ToolTip="Save the current pins as a standalone HTML map (parcel list, fly-to and popups) that opens in any browser."/>
+                            <Separator/>
+                            <MenuItem Header="Clear pins" Command="{Binding ClearMarkersCommand}"
+                                      ToolTip="Remove all pins from the map and close the parcel list. You can send them again from Real Auction or Regrid."/>
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>
             </Border>
         </StackPanel>
 
-        <!-- Filter chips, 3D terrain and tour; only while pins exist. -->
+        <!-- Filter chips and the acre slider; only while pins exist. -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0 0 0 28">
             <StackPanel.Style>
                 <Style TargetType="StackPanel">
@@ -355,8 +374,6 @@
                             ToolTip="Minimum bid is at most 25% of the assessed value. Pins missing either value are hidden."/>
                     <Button Content="Steep ≥ 10%" Style="{StaticResource HomeChip.Steep}" Command="{Binding ToggleFilterCommand}" CommandParameter="Steep"
                             ToolTip="Show only parcels with a ground slope of 10% or more (Regrid's high minus low elevation over the parcel's longest side)."/>
-                    <Button Content="Hide skipped" Style="{StaticResource HomeChip.HideSkipped}" Command="{Binding ToggleFilterCommand}" CommandParameter="Skipped"
-                            ToolTip="Hide pins you marked Skip"/>
                 </StackPanel>
             </Border>
 
@@ -371,33 +388,6 @@
                                Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
                     <Slider Style="{StaticResource HomeSlider}" Width="110" Minimum="0" Maximum="9"
                             TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding AcreStep, Mode=TwoWay}"/>
-                </StackPanel>
-            </Border>
-
-            <Border Margin="8 0 0 0" CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
-                </Border.Effect>
-                <StackPanel Orientation="Horizontal">
-                    <Button Content="3D" Style="{StaticResource HomeChip.Terrain}" Command="{Binding ToggleTerrainCommand}"
-                            ToolTip="Tilt the map and show terrain (switches from the globe to a flat map)"/>
-                    <Button Content="Tour" Style="{StaticResource HomeChip.Tour}" Command="{Binding ToggleTourCommand}"
-                            ToolTip="Fly through the pins one by one in 3D. Click the map to stop."/>
-                </StackPanel>
-            </Border>
-
-            <!-- Due-diligence layers; with one on, clicking the map shows what is at that spot. -->
-            <Border Margin="8 0 0 0" CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
-                </Border.Effect>
-                <StackPanel Orientation="Horizontal">
-                    <Button Content="Flood" Style="{StaticResource HomeChip.Flood}" Command="{Binding ToggleOverlayCommand}" CommandParameter="flood"
-                            ToolTip="FEMA flood zones (draws when zoomed in to about street level). Click the map to see the zone at that spot."/>
-                    <Button Content="Wetlands" Style="{StaticResource HomeChip.Wetlands}" Command="{Binding ToggleOverlayCommand}" CommandParameter="wetlands"
-                            ToolTip="National Wetlands Inventory (draws from about county zoom). Click the map to see the wetland type at that spot."/>
-                    <Button Content="EPA" Style="{StaticResource HomeChip.Epa}" Command="{Binding ToggleOverlayCommand}" CommandParameter="epa"
-                            ToolTip="EPA Superfund (magenta) and brownfield (brown) sites. Shows when zoomed in to about county level; click a dot for details."/>
                 </StackPanel>
             </Border>
         </StackPanel>
@@ -485,7 +475,7 @@
                     </Style.Triggers>
                 </Style>
             </Grid.Style>
-        <Border Background="#90FFFFFF">
+        <Border Background="#90FFFFFF" CornerRadius="12">
             <Border.Style>
                 <Style TargetType="Border">
                     <Style.Triggers>
@@ -497,7 +487,7 @@
             </Border.Style>
             <DockPanel>
                 <!-- Header: "75 counties" with a divider underneath. -->
-                <Border DockPanel.Dock="Top" Background="{DynamicResource Brush.Accent}" Margin="0 0 0 4" Padding="12 10 12 8">
+                <Border DockPanel.Dock="Top" Background="{DynamicResource Brush.Accent}" CornerRadius="12 12 0 0" Margin="0 0 0 4" Padding="12 10 12 8">
                     <StackPanel>
                     <Border HorizontalAlignment="Left" Margin="0 0 0 8" CornerRadius="10" Padding="8 2" Background="{DynamicResource Brush.Status.Success}">
                         <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Status.Success.Foreground}"
@@ -540,20 +530,10 @@
                 </Style.Triggers>
             </Style>
         </Grid.Style>
-        <Border Background="#90FFFFFF">
+        <Border Background="#90FFFFFF" CornerRadius="12">
             <DockPanel>
-                <Border DockPanel.Dock="Top" Background="{DynamicResource Brush.Accent}" Margin="0 0 0 4" Padding="12 10 12 8">
+                <Border DockPanel.Dock="Top" Background="{DynamicResource Brush.Accent}" CornerRadius="12 12 0 0" Margin="0 0 0 4" Padding="12 10 12 8">
                     <StackPanel>
-                    <!-- Clear pins / Export, one in each corner above the total. -->
-                    <Grid Margin="0 0 0 8">
-                        <Button HorizontalAlignment="Left" Style="{StaticResource HomePinTrash}" Padding="0"
-                                Command="{Binding ClearMarkersCommand}" ToolTip="Clear: removes all pins from the map and closes this list. You can send them again from Real Auction or Regrid.">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Width="14" Height="14" Stretch="Uniform" Fill="White" Data="{StaticResource Icon.Delete}"/>
-                                <TextBlock Text="Clear" Margin="4 0 0 0" FontSize="12" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                    </Grid>
                     <TextBlock FontWeight="Bold" FontSize="12" Foreground="White">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">

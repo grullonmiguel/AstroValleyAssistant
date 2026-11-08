@@ -49,6 +49,7 @@ public partial class HomeViewModel : ObservableObject
             SavePinsCommand.NotifyCanExecuteChanged();
             ExportMapCommand.NotifyCanExecuteChanged();
             ExportSheetCommand.NotifyCanExecuteChanged();
+            ClearMarkersCommand.NotifyCanExecuteChanged();
             PlanRouteCommand.NotifyCanExecuteChanged();
         };
         // The parcel list binds to Markers, i.e. this default view, so filtering it filters the list too.
@@ -64,9 +65,6 @@ public partial class HomeViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _onlySteep;
-
-    [ObservableProperty]
-    private bool _hideSkipped;
 
     // Slider positions for "max acres"; the last position means no limit.
     private static readonly double[] AcreSteps = [0.25, 0.5, 1, 2, 5, 10, 25, 50, 100];
@@ -108,8 +106,6 @@ public partial class HomeViewModel : ObservableObject
 
     partial void OnOnlySteepChanged(bool value) => ApplyFilter();
 
-    partial void OnHideSkippedChanged(bool value) => ApplyFilter();
-
     partial void OnAcreStepChanged(int value) => ApplyFilter();
 
     private void ApplyFilter()
@@ -126,7 +122,6 @@ public partial class HomeViewModel : ObservableObject
         if (OnlyUnder5k && !(m.BidAmount is { } bid && bid < 5000)) return false;
         if (OnlyEquity && !(m.BidToAssessedPercent is { } percent && percent <= 25)) return false;
         if (OnlySteep && !(m.SlopePercent is >= SteepPercent)) return false;
-        if (HideSkipped && m.Status == "Skip") return false;
         return AcreStep >= AcreSteps.Length
             || (double.TryParse(m.Acres, out var acres) && acres <= AcreSteps[AcreStep]);
     }
@@ -139,14 +134,13 @@ public partial class HomeViewModel : ObservableObject
             case "Under5k": OnlyUnder5k = !OnlyUnder5k; break;
             case "Equity": OnlyEquity = !OnlyEquity; break;
             case "Steep": OnlySteep = !OnlySteep; break;
-            case "Skipped": HideSkipped = !HideSkipped; break;
         }
     }
 
     [RelayCommand]
     private void ClearFilters()
     {
-        OnlyUnder5k = OnlyEquity = OnlySteep = HideSkipped = false;
+        OnlyUnder5k = OnlyEquity = OnlySteep = false;
         AcreStep = AcreSteps.Length;
     }
 
@@ -162,7 +156,6 @@ public partial class HomeViewModel : ObservableObject
         pin.AccessDistanceFt = accessFt;
         pin.AccessRoad = accessRoad;
         pin.AccessChecked = accessChecked;
-        if (HideSkipped) ApplyFilter(); // a pin just marked Skip drops out
     }
 
     // Opens one Google Maps driving route through the pins that are showing (filters applied, skipped ones left out).
@@ -301,7 +294,7 @@ public partial class HomeViewModel : ObservableObject
 
     private bool HasMarkers() => Markers.Count > 0;
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasMarkers))]
     private void ClearMarkers()
     {
         Markers.Clear();
