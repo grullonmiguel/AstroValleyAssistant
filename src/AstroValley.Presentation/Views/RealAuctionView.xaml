@@ -198,8 +198,6 @@
                     <TextBlock Text="{Binding Status}" Foreground="{StaticResource Brush.Text.Light}" VerticalAlignment="Center" />
 
 
-                    <ProgressBar IsIndeterminate="True" Height="16" Grid.Column="1" Width="200"
-                             Visibility="{Binding IsScraping, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
                                 Visibility="{Binding IsScrapeVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -312,6 +310,7 @@
                     <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="80" ElementStyle="{StaticResource NumericCellStyle}"/>
                 </DataGrid.Columns>
             </DataGrid>
+            <local:ScrapeOverlay Grid.Row="2"/>
         </Grid>
     </Grid>
 </UserControl>

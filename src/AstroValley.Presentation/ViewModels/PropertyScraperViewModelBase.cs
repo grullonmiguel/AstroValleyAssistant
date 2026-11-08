@@ -28,6 +28,16 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
     [ObservableProperty]
     public partial string? Status { get; set; }
 
+    // Shown on the loading overlay: the message, and a percent when the total is known (a Regrid scrape).
+    [ObservableProperty]
+    public partial string? ProgressText { get; set; }
+
+    [ObservableProperty]
+    public partial double ProgressValue { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsProgressIndeterminate { get; set; } = true;
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EnrichWithRegridCommand))]
     [NotifyCanExecuteChangedFor(nameof(ViewInMapCommand))]
@@ -70,7 +80,8 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         if (saveDialog.ShowDialog() == true)
         {
             IsScraping = true;
-            Status = "Generating Excel file with images...";
+            Status = ProgressText = "Generating Excel file with images...";
+            IsProgressIndeterminate = true;
             try
             {
                 await _excelExporter!.ExportAsync(PropertyRecords.Select(vm => vm.Record), saveDialog.FileName);
@@ -129,7 +140,12 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
             var progress = new Progress<int>(count =>
             {
                 Status = $"Processed {count} of {PropertyRecords.Count}";
+                ProgressText = $"Scraping {count} of {PropertyRecords.Count}";
+                ProgressValue = count * 100.0 / PropertyRecords.Count;
             });
+
+            ProgressText = $"Scraping 0 of {queries.Count}";
+            IsProgressIndeterminate = false;
 
             int index = 0;
 
@@ -399,7 +415,9 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         CancelOperation();
         _cts = new CancellationTokenSource();
         IsScraping = true;
-        Status = message;
+        Status = ProgressText = message;
+        ProgressValue = 0;
+        IsProgressIndeterminate = true; // a caller that knows the total switches this off
     }
 
     protected void SetIdle(string message)

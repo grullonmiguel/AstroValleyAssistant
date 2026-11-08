@@ -146,6 +146,7 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
             var progress = new Progress<int>(count =>
             {
                 Status = $"Items Found: {count}";
+                ProgressText = $"Loading auction... {count} found";
             });
 
             var records = await _realScraper
