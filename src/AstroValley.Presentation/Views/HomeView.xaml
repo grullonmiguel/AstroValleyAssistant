@@ -312,6 +312,8 @@
                             <MenuItem Header="Plan site-visit route…" Command="{Binding PlanRouteCommand}"
                                       ToolTip="Open one Google Maps driving route through the pins that are showing (up to 10; skipped pins are left out)."/>
                             <Separator/>
+                            <MenuItem Header="Export research sheet (Excel)…" Command="{Binding ExportSheetCommand}"
+                                      ToolTip="Save the pins into the research template (tax office, appraiser, maps, FEMA, market value, clerk). Market Value = Acres x Avg Price / Acre."/>
                             <MenuItem Header="Export map (HTML)…" Command="{Binding ExportMapCommand}"
                                       ToolTip="Save the current pins as a standalone HTML map (parcel list, fly-to and popups) that opens in any browser."/>
                         </ContextMenu>

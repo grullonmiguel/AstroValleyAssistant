@@ -1,3 +1,4 @@
+using AstroValley.Application.Interfaces.Export;
 using AstroValley.Domain.Enums;
 using AstroValley.Domain.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -38,12 +39,16 @@ public partial class HomeViewModel : ObservableObject
     // Pins sent from Real Auction / Regrid. The map page is kept alive, so these live for the whole app session.
     public ObservableCollection<MarkerLocation> Markers { get; } = [];
 
-    public HomeViewModel()
+    private readonly IPinSheetExporter _sheetExporter;
+
+    public HomeViewModel(IPinSheetExporter sheetExporter)
     {
+        _sheetExporter = sheetExporter;
         Markers.CollectionChanged += (_, _) =>
         {
             SavePinsCommand.NotifyCanExecuteChanged();
             ExportMapCommand.NotifyCanExecuteChanged();
+            ExportSheetCommand.NotifyCanExecuteChanged();
             PlanRouteCommand.NotifyCanExecuteChanged();
         };
         // The parcel list binds to Markers, i.e. this default view, so filtering it filters the list too.
@@ -238,6 +243,16 @@ public partial class HomeViewModel : ObservableObject
         {
             System.Windows.MessageBox.Show($"Could not export the map: {ex.Message}", "Export map");
         }
+    }
+
+    // Excel research sheet: the pins fill the template's columns; the rest is left for the manual research steps.
+    [RelayCommand(CanExecute = nameof(HasMarkers))]
+    private async Task ExportSheet()
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "Excel Workbook (*.xlsx)|*.xlsx", FileName = "AstroValley-Research.xlsx" };
+        if (dialog.ShowDialog() != true) return;
+        try { await _sheetExporter.ExportAsync(Markers, dialog.FileName); }
+        catch (Exception ex) { System.Windows.MessageBox.Show($"Could not export the sheet: {ex.Message}", "Export research sheet"); }
     }
 
     private static readonly JsonSerializerOptions PinJson = new() { PropertyNamingPolicy = null, WriteIndented = true };
