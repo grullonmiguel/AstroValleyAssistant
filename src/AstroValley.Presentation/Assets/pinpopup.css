@@ -3,20 +3,30 @@
 .maplibregl-popup-close-button { width: 32px; height: 32px; margin: 10px 10px 0 0; border-radius: 50%; background: transparent; font-size: 24px; line-height: 1; color: #fff; }
 .maplibregl-popup-close-button:hover { background: rgba(255,255,255,.18); }
 
-/* header band in the app's accent purple */
-.pp-head { display: flex; align-items: center; gap: 12px; background: #4F4486; color: #fff; padding: 14px 48px 14px 16px; font-family: 'Segoe UI', sans-serif; }
-.pp-ico { flex: none; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.16); display: flex; align-items: center; justify-content: center; }
-.pp-title { font-size: 12px; font-weight: 600; text-transform: uppercase; line-height: 1.25; word-wrap: break-word; }
-.pp-pid { font-size: 12px; opacity: .85; margin-top: 2px; }
-.pp-head .pp-link { color: #fff; }
+/* pin popup: fixed card at the bottom right of the map (not next to the pin); header stays, body scrolls */
+.pin-popup { position: fixed !important; transform: none !important; left: auto !important; top: auto !important; right: 16px; bottom: 100px; width: 372px; max-width: calc(100vw - 32px) !important; z-index: 5; }
+.pin-popup .maplibregl-popup-tip { display: none; }
+.pin-popup .maplibregl-popup-content { display: flex; flex-direction: column; max-height: min(600px, calc(100vh - 160px)); }
+.pin-popup .maplibregl-popup-close-button { color: #30294B; }
+.pin-popup .maplibregl-popup-close-button:hover { background: rgba(48,41,75,.1); }
+.pin-popup .pp-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
 
-/* aerial photo card, bottom right of the map while a pin popup is open */
-#aerial-card { display: none; position: fixed; right: 16px; bottom: 44px; width: 340px; height: 210px; z-index: 5; pointer-events: none; overflow: hidden;
-    border-radius: 12px; background: #E8E6F1; box-shadow: 0 6px 24px rgba(48,41,75,.4); border: 2px solid #fff; }
-#aerial-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
-#aerial-card svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-#aerial-card polygon { fill: rgba(255,255,255,.12); stroke: #fff; stroke-width: 2; stroke-linejoin: round; }
-#aerial-card circle { fill: none; stroke: #fff; stroke-width: 3; }
+/* white header: address, parcel ID */
+.pp-head { flex: none; background: #fff; color: #30294B; padding: 16px 48px 8px 16px; font-family: 'Segoe UI', sans-serif; }
+.pp-title { font-size: 17px; font-weight: 700; line-height: 1.25; word-wrap: break-word; }
+.pp-pid { font-size: 12px; color: #777; margin-top: 2px; }
+
+/* auction pill on the left, zoom link on the right */
+.pp-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.pp-zoom { margin-left: auto; font: 600 12px 'Segoe UI', sans-serif; color: #4F4486; text-decoration: none; white-space: nowrap; }
+.pp-zoom:hover { text-decoration: underline; }
+
+/* aerial photo with the parcel outline, inside the scrolling body */
+.pp-aerial { position: relative; aspect-ratio: 340 / 210; margin-bottom: 12px; overflow: hidden; border-radius: 10px; background: #E8E6F1; }
+.pp-aerial img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pp-aerial svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pp-aerial polygon { fill: rgba(255,255,255,.12); stroke: #fff; stroke-width: 2; stroke-linejoin: round; }
+.pp-aerial circle { fill: none; stroke: #fff; stroke-width: 3; }
 .pp-acap { position: absolute; left: 8px; bottom: 6px; font: 600 10px 'Segoe UI', sans-serif; color: #fff; background: rgba(48,41,75,.75); border-radius: 6px; padding: 2px 8px; }
 
 .pp-body { padding: 14px 16px 16px; font-family: 'Segoe UI', sans-serif; color: #30294B; }

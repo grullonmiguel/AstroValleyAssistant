@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:AstroValley.Presentation.Views"
+             xmlns:vm="clr-namespace:AstroValley.Presentation.ViewModels"
              xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
     <UserControl.Resources>
         <!-- Theme hamburger icon, with a soft white hover/press tint that suits the purple sidebar. -->
@@ -129,117 +130,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Chips under the map: the filter ones show the active filter; 3D / Tour show the map's state. -->
-        <Style x:Key="HomeChip.All" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
-            <Style.Triggers>
-                <MultiDataTrigger>
-                    <MultiDataTrigger.Conditions>
-                        <Condition Binding="{Binding OnlyUnder5k}" Value="False"/>
-                        <Condition Binding="{Binding OnlyEquity}" Value="False"/>
-                        <Condition Binding="{Binding OnlySteep}" Value="False"/>
-                        <Condition Binding="{Binding OnlyUndivided}" Value="False"/>
-                        <Condition Binding="{Binding OnlyVacant}" Value="False"/>
-                        <Condition Binding="{Binding OnlyStructures}" Value="False"/>
-                        <Condition Binding="{Binding AcreStep}" Value="9"/>
-                    </MultiDataTrigger.Conditions>
-                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </MultiDataTrigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- Slim rounded slider in the accent colour: filled part left of the thumb. -->
-        <Style x:Key="HomeSlider" TargetType="Slider">
-            <Setter Property="Focusable" Value="False"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Slider">
-                        <Grid Height="20" Background="Transparent">
-                            <Border Height="4" CornerRadius="2" Background="#33534B80" VerticalAlignment="Center"/>
-                            <Track x:Name="PART_Track">
-                                <Track.DecreaseRepeatButton>
-                                    <RepeatButton Command="Slider.DecreaseLarge" Focusable="False">
-                                        <RepeatButton.Template>
-                                            <ControlTemplate TargetType="RepeatButton">
-                                                <Grid Background="Transparent">
-                                                    <Border Height="4" CornerRadius="2" Background="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
-                                                </Grid>
-                                            </ControlTemplate>
-                                        </RepeatButton.Template>
-                                    </RepeatButton>
-                                </Track.DecreaseRepeatButton>
-                                <Track.IncreaseRepeatButton>
-                                    <RepeatButton Command="Slider.IncreaseLarge" Focusable="False">
-                                        <RepeatButton.Template>
-                                            <ControlTemplate TargetType="RepeatButton">
-                                                <Grid Background="Transparent"/>
-                                            </ControlTemplate>
-                                        </RepeatButton.Template>
-                                    </RepeatButton>
-                                </Track.IncreaseRepeatButton>
-                                <Track.Thumb>
-                                    <Thumb Focusable="False" Cursor="Hand">
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Ellipse Width="16" Height="16" Fill="{DynamicResource Brush.Accent}" Stroke="White" StrokeThickness="2"/>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="HomeChip.Under5k" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding OnlyUnder5k}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="HomeChip.Equity" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding OnlyEquity}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="HomeChip.Steep" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding OnlySteep}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="HomeChip.Undivided" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding OnlyUndivided}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="HomeChip.Vacant" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding OnlyVacant}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="HomeChip.Structures" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding OnlyStructures}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
+        <!-- Chips in the top-right switch: they show the map's state. -->
         <Style x:Key="HomeChip.Terrain" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsTerrain}" Value="True">
@@ -359,73 +250,79 @@
                     <Path Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource Brush.Accent}" Data="{StaticResource Icon.DotsVertical}"/>
                     <Button.ContextMenu>
                         <ContextMenu x:Name="PinsMenu" Placement="Bottom">
-                            <MenuItem Header="Load pins (JSON)…" Command="{Binding LoadPinsCommand}"
-                                      ToolTip="Add pins from a JSON file saved earlier. Pins already on the map are skipped."/>
-                            <MenuItem Header="Save pins (JSON)…" Command="{Binding SavePinsCommand}"
-                                      ToolTip="Save the current pins to a JSON file you can load again later."/>
-                            <MenuItem Header="Plan site-visit route…" Command="{Binding PlanRouteCommand}"
-                                      ToolTip="Open one Google Maps driving route through the pins that are showing (up to 10; skipped pins are left out)."/>
+                            <MenuItem Header="Clear Map" Command="{Binding ClearMarkersCommand}"
+                                      ToolTip="Remove all pins from the map.">
+                                <MenuItem.Icon>
+                                    <Path Width="14" Height="14" Stretch="Uniform" Data="{StaticResource Icon.Delete}"
+                                          Fill="{DynamicResource Brush.Accent}"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
                             <Separator/>
-                            <MenuItem Header="Export research sheet (Excel)…" Command="{Binding ExportSheetCommand}"
-                                      ToolTip="Save the pins into the research template (tax office, appraiser, maps, FEMA, market value, clerk). Market Value = Acres x Avg Price / Acre."/>
-                            <MenuItem Header="Export map (HTML)…" Command="{Binding ExportMapCommand}"
-                                      ToolTip="Save the current pins as a standalone HTML map (parcel list, fly-to and popups) that opens in any browser."/>
+                            <MenuItem Header="Plan Route" Command="{Binding PlanRouteCommand}"
+                                      ToolTip="Open one Google Maps driving route through the pins that are showing.">
+                                <MenuItem.Icon>
+                                    <Path Width="14" Height="14" Stretch="Uniform" Data="{StaticResource Icon.MapMarker}"
+                                          Fill="{DynamicResource Brush.Accent}"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Import Pins" Command="{Binding LoadPinsCommand}"
+                                      ToolTip="Add pins from a JSON file.">
+                                <MenuItem.Icon>
+                                    <Path Width="14" Height="14" Stretch="Uniform" Data="{StaticResource Icon.TrayDown}"
+                                          Fill="{DynamicResource Brush.Accent}"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
                             <Separator/>
-                            <MenuItem Header="Clear pins" Command="{Binding ClearMarkersCommand}"
-                                      ToolTip="Remove all pins from the map and close the parcel list. You can send them again from Real Auction or Regrid."/>
+                            <MenuItem Header="Export Pins" Command="{Binding SavePinsCommand}"
+                                      ToolTip="Save the current pins to a JSON file.">
+                                <MenuItem.Icon>
+                                    <Path Width="14" Height="14" Stretch="Uniform" Data="{StaticResource Icon.Save}"
+                                          Fill="{DynamicResource Brush.Accent}"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Export Excel" Command="{Binding ExportSheetCommand}"
+                                      ToolTip="Save parcel information to an Excel file.">
+                                <MenuItem.Icon>
+                                    <Path Width="14" Height="14" Stretch="Uniform" Data="{StaticResource Icon.Excel}"
+                                          Fill="{DynamicResource Brush.Accent}"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Export HTML" Command="{Binding ExportMapCommand}"
+                                      ToolTip="Save the current pins as a standalone HTML map.">
+                                <MenuItem.Icon>
+                                    <Path Width="14" Height="14" Stretch="Uniform" Data="{StaticResource Icon.Html}"
+                                          Fill="{DynamicResource Brush.Accent}"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>
             </Border>
         </StackPanel>
 
-        <!-- Filter chips and the acre slider; only while pins exist. -->
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0 0 0 28">
-            <StackPanel.Style>
-                <Style TargetType="StackPanel">
+        <!-- Tools button, bottom right; only while pins exist. Opens the filter dialog below. -->
+        <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0 0 16 40" CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
+            </Border.Effect>
+            <Border.Style>
+                <Style TargetType="Border">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Markers.Count}" Value="0">
                             <Setter Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-            </StackPanel.Style>
-            <Border CornerRadius="12" Background="{DynamicResource Brush.Pill.Background}">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
-                </Border.Effect>
+            </Border.Style>
+            <Button Style="{StaticResource HomeSegment}" Command="{Binding OpenToolsCommand}"
+                    ToolTip="Filter the pins: bid, assessed value, acres, slope, type">
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="All" Style="{StaticResource HomeChip.All}" Command="{Binding ClearFiltersCommand}"
-                            ToolTip="Show everything: clears all filters and the acre limit"/>
-                    <Button Content="Under $5k" Style="{StaticResource HomeChip.Under5k}" Command="{Binding ToggleFilterCommand}" CommandParameter="Under5k"
-                            ToolTip="Minimum bid under $5,000. Pins with no bid are hidden."/>
-                    <Button Content="Bid ≤ 25%" Style="{StaticResource HomeChip.Equity}" Command="{Binding ToggleFilterCommand}" CommandParameter="Equity"
-                            ToolTip="Minimum bid is at most 25% of the assessed value. Pins missing either value are hidden."/>
-                    <Button Content="Steep ≥ 10%" Style="{StaticResource HomeChip.Steep}" Command="{Binding ToggleFilterCommand}" CommandParameter="Steep"
-                            ToolTip="Show only parcels with a ground slope of 10% or more (Regrid's high minus low elevation over the parcel's longest side)."/>
-                    <Button Content="Undivided" Style="{StaticResource HomeChip.Undivided}" Command="{Binding ToggleFilterCommand}" CommandParameter="Undivided"
-                            ToolTip="Show only pins whose legal description mentions undivided / fractional / partial interest or tenants in common (possible co-owners)."/>
-                    <Button Content="Vacant land" Style="{StaticResource HomeChip.Vacant}" Command="{Binding ToggleFilterCommand}" CommandParameter="Vacant"
-                            ToolTip="Show only parcels known to be vacant land. Pins with an unknown type are hidden; turn on both chips to hide only those."/>
-                    <Button Content="Structures" Style="{StaticResource HomeChip.Structures}" Command="{Binding ToggleFilterCommand}" CommandParameter="Structures"
-                            ToolTip="Show only parcels known to have a building. Pins with an unknown type are hidden."/>
+                    <Path Width="16" Height="16" Stretch="Uniform" Margin="0 0 6 0" VerticalAlignment="Center"
+                          Fill="{DynamicResource Brush.Accent}" Data="{StaticResource Icon.Cog}"/>
+                    <TextBlock Text="Filters" VerticalAlignment="Center"/>
                 </StackPanel>
-            </Border>
-
-            <!-- Acre slider: pins with more acres than the slider are hidden (far right = no limit). -->
-            <Border Margin="8 0 0 0" CornerRadius="12" Padding="12 4" Background="{DynamicResource Brush.Pill.Background}"
-                    ToolTip="Show only pins up to this many acres. Pins without acreage are hidden while a limit is set.">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.35"/>
-                </Border.Effect>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{Binding AcreLabel}" Width="78" FontSize="11" FontWeight="SemiBold"
-                               Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
-                    <Slider Style="{StaticResource HomeSlider}" Width="110" Minimum="0" Maximum="9"
-                            TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding AcreStep, Mode=TwoWay}"/>
-                </StackPanel>
-            </Border>
-        </StackPanel>
+            </Button>
+        </Border>
 
         <!-- Left side: state sidebar, then the county list of the selected state to its right. -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="40 86 0 24">
@@ -652,6 +549,102 @@
 
         </Grid>
         </StackPanel>
+
+        <!-- Tools dialog: filters with from / to boxes. The count follows every edit; Show applies them to the map and list. -->
+        <Grid Background="#80000000" Visibility="{Binding IsToolsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.Resources>
+                <Style TargetType="TextBox">
+                    <Setter Property="Padding" Value="6 4"/>
+                    <Setter Property="FontSize" Value="13"/>
+                </Style>
+                <Style x:Key="ToolsLabel" TargetType="TextBlock">
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Margin" Value="0 0 0 4"/>
+                </Style>
+                <Style x:Key="ToolsRow" TargetType="StackPanel">
+                    <Setter Property="Margin" Value="0 0 16 16"/>
+                </Style>
+            </Grid.Resources>
+            <Border Width="620" MaxHeight="620" VerticalAlignment="Center" HorizontalAlignment="Center" CornerRadius="14"
+                    Background="White" Padding="24 16">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top" Margin="0 0 0 12">
+                        <Button DockPanel.Dock="Right" Content="✕" Style="{StaticResource HomeSegment}" Command="{Binding CloseToolsCommand}" ToolTip="Close without applying"/>
+                        <TextBlock Text="Filters" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}"/>
+                    </DockPanel>
+                    <Border DockPanel.Dock="Top" CornerRadius="8" Padding="0 6" Margin="0 0 0 16" Background="{DynamicResource Brush.Pill.Background}">
+                        <TextBlock HorizontalAlignment="Center" FontSize="15" Foreground="{DynamicResource Brush.Accent}">
+                            <Run Text="Matching Properties:"/> <Run FontWeight="Bold" Text="{Binding MatchCount, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Border>
+                    <!-- Actions at the bottom -->
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 8 0 0">
+                        <Button Content="Clear Filters" Style="{StaticResource Theme.Button.Outline}" Command="{Binding ClearFiltersCommand}" Margin="0 0 8 0"/>
+                        <Button Content="Show" Style="{StaticResource Theme.Button.Primary}" Command="{Binding ApplyToolsCommand}" MinWidth="100"/>
+                    </StackPanel>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <UniformGrid Columns="2">
+                            <StackPanel Style="{StaticResource ToolsRow}">
+                                <TextBlock Text="Minimum Bid ($)" Style="{StaticResource ToolsLabel}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                    <TextBox Text="{Binding Draft.MinBid, UpdateSourceTrigger=PropertyChanged}" ToolTip="From (blank = no limit)"/>
+                                    <TextBlock Grid.Column="1" Text="to" Margin="8 0" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="2" Text="{Binding Draft.MaxBid, UpdateSourceTrigger=PropertyChanged}" ToolTip="To (blank = no limit). Pins with no bid are hidden while a limit is set."/>
+                                </Grid>
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource ToolsRow}">
+                                <TextBlock Text="Assessed Value ($)" Style="{StaticResource ToolsLabel}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                    <TextBox Text="{Binding Draft.MinAssessed, UpdateSourceTrigger=PropertyChanged}" ToolTip="From (blank = no limit)"/>
+                                    <TextBlock Grid.Column="1" Text="to" Margin="8 0" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="2" Text="{Binding Draft.MaxAssessed, UpdateSourceTrigger=PropertyChanged}" ToolTip="To (blank = no limit)"/>
+                                </Grid>
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource ToolsRow}">
+                                <TextBlock Text="Bid % of Assessed" Style="{StaticResource ToolsLabel}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                    <TextBox Text="{Binding Draft.MinBidPercent, UpdateSourceTrigger=PropertyChanged}" ToolTip="From (blank = no limit)"/>
+                                    <TextBlock Grid.Column="1" Text="to" Margin="8 0" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="2" Text="{Binding Draft.MaxBidPercent, UpdateSourceTrigger=PropertyChanged}" ToolTip="To (blank = no limit). Pins missing the bid or the assessed value are hidden."/>
+                                </Grid>
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource ToolsRow}">
+                                <TextBlock Text="Acres" Style="{StaticResource ToolsLabel}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                    <TextBox Text="{Binding Draft.MinAcres, UpdateSourceTrigger=PropertyChanged}" ToolTip="From (blank = no limit)"/>
+                                    <TextBlock Grid.Column="1" Text="to" Margin="8 0" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="2" Text="{Binding Draft.MaxAcres, UpdateSourceTrigger=PropertyChanged}" ToolTip="To (blank = no limit)"/>
+                                </Grid>
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource ToolsRow}">
+                                <TextBlock Text="Slope %" Style="{StaticResource ToolsLabel}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                    <TextBox Text="{Binding Draft.MinSlope, UpdateSourceTrigger=PropertyChanged}" ToolTip="From (blank = no limit). 10 and up is steep."/>
+                                    <TextBlock Grid.Column="1" Text="to" Margin="8 0" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="2" Text="{Binding Draft.MaxSlope, UpdateSourceTrigger=PropertyChanged}" ToolTip="To (blank = no limit)"/>
+                                </Grid>
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource ToolsRow}">
+                                <TextBlock Text="Property Type" Style="{StaticResource ToolsLabel}"/>
+                                <ComboBox ItemsSource="{x:Static vm:PinFilter.Types}" SelectedItem="{Binding Draft.PropertyType}"
+                                          ToolTip="Vacant land or Structures hides pins whose type is unknown."/>
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource ToolsRow}">
+                                <TextBlock Text="Co-ownership" Style="{StaticResource ToolsLabel}"/>
+                                <CheckBox Content="Possible undivided interest only" IsChecked="{Binding Draft.UndividedOnly}"
+                                          ToolTip="Legal description mentions undivided / fractional / partial interest or tenants in common."/>
+                            </StackPanel>
+                        </UniformGrid>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
 
         <!-- Shown while an export runs (IsScraping / ProgressText on the view model). -->
         <local:ScrapeOverlay/>

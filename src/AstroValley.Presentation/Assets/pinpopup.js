@@ -28,10 +28,9 @@ function popupHtml(loc, message) {
     var num = function (v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isNaN(n) ? 0 : n; };
     var assessed = num(d['Assessed']), minBid = num(d['Minimum Bid']);
 
-    // header: house badge, address (Google Maps) and parcel ID (Regrid)
-    var head = '<div class="pp-head"><div class="pp-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="' + ICONS.home + '"/></svg></div>' +
-        '<div style="min-width:0"><div class="pp-title">' + link(loc.GoogleMapsUrl, esc(loc.Address)) + '</div>' +
-        '<div class="pp-pid">' + link(loc.RegridUrl, esc(loc.ParcelID)) + '</div></div></div>';
+    // header: address (Google Maps) and parcel ID (Regrid); stays put while the body below scrolls
+    var head = '<div class="pp-head"><div class="pp-title">' + link(loc.GoogleMapsUrl, esc(loc.Address)) + '</div>' +
+        '<div class="pp-pid">' + link(loc.RegridUrl, esc(loc.ParcelID)) + '</div></div>';
 
     // facts row: acres | flood zone (pill, opens FEMA) | owner; a fact is left out when its data is missing
     var fact = function (icon, label, value, grow) {
@@ -70,7 +69,7 @@ function popupHtml(loc, message) {
     var appraiser = loc.AppraiserUrl ? '<a class="pp-btn" href="' + esc(loc.AppraiserUrl).replace(/"/g, '&quot;') + '" target="_blank">Property Appraiser &#8599;</a>' : '';
     var actions = (access || appraiser) ? '<div class="pp-actions">' + access + appraiser + '</div>' : '';
 
-    return head + '<div class="pp-body">' + auctionBadge(loc) +
+    return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<a href="#" class="pp-zoom">Zoom to parcel</a></div><div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' +
         (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + slope + box + equity + statusSection(loc) + actions + '</div>';
 }
 
@@ -94,14 +93,24 @@ function pinScale(loc) {
 function makePin(loc, map) {
     if (loc.Status === 'Bid') loc.Status = 'Interested'; // "Bid" status was retired; saved pins keep working
     var info = pinInfo(loc), scale = pinScale(loc);
-    var popup = new maplibregl.Popup({ offset: Math.round(25 * scale), maxWidth: '380px' }).setHTML(popupHtml(loc));
+    // pin-popup: pinned to the bottom right of the map instead of next to the pin (see pinpopup.css)
+    var popup = new maplibregl.Popup({ offset: Math.round(25 * scale), maxWidth: '372px', className: 'pin-popup' }).setHTML(popupHtml(loc));
     var marker = new maplibregl.Marker({ color: info.color, scale: scale })
         .setLngLat([loc.Longitude, loc.Latitude])
         .setPopup(popup)
         .addTo(map);
     decoratePin(marker, loc);
-    popup.on('open', function () { wireEditor(popup, loc, marker); showAerial(loc); });
-    popup.on('close', function () { hideAerial(loc); });
+    popup.on('open', function () {
+        wireEditor(popup, loc, marker); aerialCaption(loc, popup);
+        // delegated: the popup's content is replaced on every edit, its root element is not
+        popup.getElement().addEventListener('click', function (e) {
+            if (!e.target.closest('.pp-zoom')) return;
+            e.preventDefault();
+            var pad = typeof pinPad === 'function' ? pinPad() : { left: 40, top: 40, bottom: 40, right: 40 }; // Home: clear the side panels
+            pad.right = 420; // and the popup
+            map.flyTo({ center: [loc.Longitude, loc.Latitude], zoom: 18, padding: pad, essential: true });
+        });
+    });
     return marker;
 }
 
@@ -318,7 +327,7 @@ function auctionBadge(loc) {
     var pill = '<span style="background:' + info.color + ';color:#fff;border-radius:10px;padding:2px 10px;font-size:11px;font-weight:600">Auction &middot; ' + date + ' &middot; ' + rel + '</span>';
     // same pill; it opens the auction page when the pin knows its URL
     if (loc.AuctionUrl) pill = '<a class="pp-link" style="text-decoration:none" href="' + esc(loc.AuctionUrl).replace(/"/g, '&quot;') + '" target="_blank">' + pill + '</a>';
-    return '<div style="margin:0 0 10px">' + pill + '</div>';
+    return pill;
 }
 
 // ---- due-diligence overlays: FEMA flood zones + USFWS wetlands (shared) -------------------------------------------
@@ -461,7 +470,7 @@ var AERIAL = { url: 'https://services.arcgisonline.com/arcgis/rest/services/Worl
 
 function merc(lon, lat) { return [6378137 * lon * Math.PI / 180, 6378137 * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360))]; }
 
-// the photo sits in a card at the bottom right of the map while a pin's popup is open (the popup itself stays short)
+// photo with the parcel outline, shown inside the popup under the auction pill
 function aerialCardHtml(loc) {
     var W = AERIAL.w, H = AERIAL.h, rings = [], pts = [];
     try { if (loc.ParcelLines) rings = geomRings(JSON.parse(loc.ParcelLines), []); } catch (e) { rings = []; }
@@ -479,23 +488,8 @@ function aerialCardHtml(loc) {
         '<svg viewBox="0 0 ' + W + ' ' + H + '">' + shape + '</svg><div class="pp-acap">' + esc(loc._aerial || 'Aerial: Esri World Imagery') + '</div>';
 }
 
-function showAerial(loc) {
-    var card = document.getElementById('aerial-card');
-    if (!card) { card = document.createElement('div'); card.id = 'aerial-card'; document.body.appendChild(card); }
-    card._loc = loc;
-    card.innerHTML = aerialCardHtml(loc);
-    card.style.display = 'block';
-    aerialCaption(loc);
-}
-
-// hides the card, unless another pin has already taken it over
-function hideAerial(loc) {
-    var card = document.getElementById('aerial-card');
-    if (card && card._loc === loc) { card.style.display = 'none'; card._loc = null; }
-}
-
 // capture date and resolution of the imagery at this spot, from Esri's metadata layers (60 cm, then 1.2 m), looked up when the popup opens
-function aerialCaption(loc) {
+function aerialCaption(loc, popup) {
     if (loc._aerial) return;
     var ask = function (layer) {
         return fetch(AERIAL.url + '/' + layer + '/query?geometry=' + loc.Longitude + ',' + loc.Latitude + '&geometryType=esriGeometryPoint&inSR=4326' +
@@ -506,7 +500,7 @@ function aerialCaption(loc) {
         if (!a || !a.SRC_DATE2) return;
         var date = new Date(a.SRC_DATE2).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
         loc._aerial = 'Aerial: Esri ' + date + (a.SRC_RES ? ' · ' + a.SRC_RES + ' m' : '');
-        var card = document.getElementById('aerial-card'), cap = card && card._loc === loc && card.querySelector('.pp-acap');
+        var root = popup.getElement(), cap = root && root.querySelector('.pp-acap');
         if (cap) cap.textContent = loc._aerial;
     }).catch(function () { /* service down: keep the plain caption */ });
 }

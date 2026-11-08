@@ -47,6 +47,7 @@ public partial class HomeViewModel : ObservableObject
         _sheetExporter = sheetExporter;
         Markers.CollectionChanged += (_, _) =>
         {
+            OnPropertyChanged(nameof(MatchCount));
             SavePinsCommand.NotifyCanExecuteChanged();
             ExportMapCommand.NotifyCanExecuteChanged();
             ExportSheetCommand.NotifyCanExecuteChanged();
@@ -57,34 +58,27 @@ public partial class HomeViewModel : ObservableObject
         CollectionViewSource.GetDefaultView(Markers).Filter = o => Matches((MarkerLocation)o);
     }
 
-    // Chips under the map are independent toggles; the acre slider is one more filter. "All" clears them.
-    [ObservableProperty]
-    private bool _onlyUnder5k;
+    // Tools dialog: Draft is what the dialog edits (the match count follows it); Show copies it into _applied, which filters the map and list.
+    private PinFilter _applied = new();
 
     [ObservableProperty]
-    private bool _onlyEquity;
+    private PinFilter _draft = new();
 
     [ObservableProperty]
-    private bool _onlySteep;
+    private bool _isToolsOpen;
 
-    [ObservableProperty]
-    private bool _onlyUndivided;
+    /// <summary>"Matching Properties" at the top of the dialog: pins the draft filter would show.</summary>
+    public int MatchCount => Markers.Count(Draft.Matches);
 
-    // Both off = everything (including parcels whose type is unknown); either on = only pins of the chosen type(s).
-    [ObservableProperty]
-    private bool _onlyVacant;
+    partial void OnDraftChanging(PinFilter value) => Draft.PropertyChanged -= OnDraftEdited;
 
-    [ObservableProperty]
-    private bool _onlyStructures;
+    partial void OnDraftChanged(PinFilter value)
+    {
+        value.PropertyChanged += OnDraftEdited;
+        OnPropertyChanged(nameof(MatchCount));
+    }
 
-    // Slider positions for "max acres"; the last position means no limit.
-    private static readonly double[] AcreSteps = [0.25, 0.5, 1, 2, 5, 10, 25, 50, 100];
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(AcreLabel))]
-    private int _acreStep = AcreSteps.Length;
-
-    public string AcreLabel => AcreStep >= AcreSteps.Length ? "Acres: any" : $"Acres: ≤ {AcreSteps[AcreStep]}";
+    private void OnDraftEdited(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => OnPropertyChanged(nameof(MatchCount));
 
     [ObservableProperty]
     private bool _isTerrain;
@@ -111,61 +105,35 @@ public partial class HomeViewModel : ObservableObject
 
     public IEnumerable<MarkerLocation> HiddenMarkers => Markers.Where(m => !Matches(m));
 
-    partial void OnOnlyUnder5kChanged(bool value) => ApplyFilter();
-
-    partial void OnOnlyEquityChanged(bool value) => ApplyFilter();
-
-    partial void OnOnlySteepChanged(bool value) => ApplyFilter();
-
-    partial void OnOnlyUndividedChanged(bool value) => ApplyFilter();
-
-    partial void OnOnlyVacantChanged(bool value) => ApplyFilter();
-
-    partial void OnOnlyStructuresChanged(bool value) => ApplyFilter();
-
-    partial void OnAcreStepChanged(int value) => ApplyFilter();
-
     private void ApplyFilter()
     {
         CollectionViewSource.GetDefaultView(Markers).Refresh();
+        OnPropertyChanged(nameof(MatchCount));
         FilterChanged?.Invoke();
     }
 
-    public const double SteepPercent = 10; // grade at or above this counts as steep
+    private bool Matches(MarkerLocation m) => _applied.Matches(m);
 
-    private bool Matches(MarkerLocation m)
+    [RelayCommand]
+    private void OpenTools()
     {
-        // pins missing the number a filter needs (no bid, no assessed value, no acreage) are hidden by that filter
-        if (OnlyUnder5k && !(m.BidAmount is { } bid && bid < 5000)) return false;
-        if (OnlyEquity && !(m.BidToAssessedPercent is { } percent && percent <= 25)) return false;
-        if (OnlySteep && !(m.SlopePercent is >= SteepPercent)) return false;
-        if (OnlyUndivided && !m.UndividedInterest) return false;
-        if ((OnlyVacant || OnlyStructures)
-            && !((OnlyVacant && m.PropertyType == StructureKind.Vacant) || (OnlyStructures && m.PropertyType == StructureKind.Structures))) return false;
-        return AcreStep >= AcreSteps.Length
-            || (double.TryParse(m.Acres, out var acres) && acres <= AcreSteps[AcreStep]);
+        Draft = _applied.Clone(); // drop edits that were never applied
+        IsToolsOpen = true;
     }
 
     [RelayCommand]
-    private void ToggleFilter(string name)
+    private void ClearFilters() => Draft = new(); // applied when the user presses Show
+
+    [RelayCommand]
+    private void ApplyTools()
     {
-        switch (name)
-        {
-            case "Under5k": OnlyUnder5k = !OnlyUnder5k; break;
-            case "Equity": OnlyEquity = !OnlyEquity; break;
-            case "Steep": OnlySteep = !OnlySteep; break;
-            case "Undivided": OnlyUndivided = !OnlyUndivided; break;
-            case "Vacant": OnlyVacant = !OnlyVacant; break;
-            case "Structures": OnlyStructures = !OnlyStructures; break;
-        }
+        _applied = Draft.Clone();
+        IsToolsOpen = false;
+        ApplyFilter();
     }
 
     [RelayCommand]
-    private void ClearFilters()
-    {
-        OnlyUnder5k = OnlyEquity = OnlySteep = OnlyUndivided = OnlyVacant = OnlyStructures = false;
-        AcreStep = AcreSteps.Length;
-    }
+    private void CloseTools() => IsToolsOpen = false;
 
     /// <summary>Status, notes or access check changed in a map popup.</summary>
     public void UpdatePin(double lat, double lon, string? status, string? notes,
