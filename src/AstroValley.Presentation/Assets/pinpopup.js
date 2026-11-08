@@ -37,7 +37,7 @@ function popupHtml(loc, message) {
     var fact = function (icon, label, value) {
         return '<div class="pp-fact"><div class="pp-flabel">' + icon + label + '</div>' + value + '</div>';
     };
-    var facts = (loc.Acres ? fact(ico('acres'), 'Acres', '<div class="pp-fval pp-fbig">' + esc(loc.Acres) + '</div>') : '') +
+    var facts = (loc.Acres ? fact(ico('acres'), 'Acres', '<div class="pp-fval pp-fbig">' + (isNaN(parseFloat(loc.Acres)) ? esc(loc.Acres) : parseFloat(loc.Acres).toFixed(2)) + '</div>') : '') +
         (d['Flood Zone'] ? fact(WAVES, 'Flood Zone', '<div>' + (loc.FemaUrl ? '<a class="pp-pill pp-link" href="' + esc(loc.FemaUrl).replace(/"/g, '&quot;') + '" target="_blank">' + esc(d['Flood Zone']) + '</a>'
             : '<span class="pp-pill">' + esc(d['Flood Zone']) + '</span>') + '</div>') : '') +
         (d['Owner'] ? fact(ico('person'), 'Owner', '<div class="pp-fval">' + esc(d['Owner']) + '</div>') : '');
@@ -100,7 +100,8 @@ function makePin(loc, map) {
         .setPopup(popup)
         .addTo(map);
     decoratePin(marker, loc);
-    popup.on('open', function () { wireEditor(popup, loc, marker); });
+    popup.on('open', function () { wireEditor(popup, loc, marker); showAerial(loc); });
+    popup.on('close', function () { hideAerial(loc); });
     return marker;
 }
 
@@ -312,7 +313,10 @@ function auctionBadge(loc) {
     if (info.days == null) return '';
     var date = new Date(loc.AuctionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     var rel = info.days === 0 ? 'today' : info.days === 1 ? 'tomorrow' : info.days > 0 ? 'in ' + info.days + ' days' : -info.days + ' days ago';
-    return '<div style="margin:0 0 10px"><span style="background:' + info.color + ';color:#fff;border-radius:10px;padding:2px 10px;font-size:11px;font-weight:600">Auction &middot; ' + date + ' &middot; ' + rel + '</span></div>';
+    var pill = '<span style="background:' + info.color + ';color:#fff;border-radius:10px;padding:2px 10px;font-size:11px;font-weight:600">Auction &middot; ' + date + ' &middot; ' + rel + '</span>';
+    // same pill; it opens the auction page when the pin knows its URL
+    if (loc.AuctionUrl) pill = '<a class="pp-link" style="text-decoration:none" href="' + esc(loc.AuctionUrl).replace(/"/g, '&quot;') + '" target="_blank">' + pill + '</a>';
+    return '<div style="margin:0 0 10px">' + pill + '</div>';
 }
 
 // ---- due-diligence overlays: FEMA flood zones + USFWS wetlands (shared) -------------------------------------------
@@ -445,4 +449,62 @@ function wireEpa(map, isOn) {
             (p.FAC_URL ? '<div style="margin-top:8px;font-size:12px"><a class="pp-link pp-accent" href="' + esc(p.FAC_URL).replace(/"/g, '&quot;') + '" target="_blank">EPA facility page &#8599;</a></div>' : '') +
             '</div>').addTo(map);
     });
+}
+
+// ---- aerial photo of the parcel: Esri World Imagery, free public service (no key), the same imagery as the Satellite view (shared) ----
+// The image is requested straight from the service by the browser, so nothing is stored. The parcel outline is drawn over it.
+// shortcut: imagery age varies by area, so the caption shows the capture date from Esri's metadata layers; Esri asks for attribution
+// (the caption names it) and bulk or commercial use is not checked against its terms.
+var AERIAL = { url: 'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer', w: 340, h: 210 };
+
+function merc(lon, lat) { return [6378137 * lon * Math.PI / 180, 6378137 * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360))]; }
+
+// the photo sits in a card at the bottom right of the map while a pin's popup is open (the popup itself stays short)
+function aerialCardHtml(loc) {
+    var W = AERIAL.w, H = AERIAL.h, rings = [], pts = [];
+    try { if (loc.ParcelLines) rings = geomRings(JSON.parse(loc.ParcelLines), []); } catch (e) { rings = []; }
+    rings.forEach(function (r) { r.forEach(function (c) { pts.push(merc(c[0], c[1])); }); });
+    if (!pts.length) pts.push(merc(loc.Longitude, loc.Latitude));
+    var xs = pts.map(function (p) { return p[0]; }), ys = pts.map(function (p) { return p[1]; });
+    var minx = Math.min.apply(null, xs), maxx = Math.max.apply(null, xs), miny = Math.min.apply(null, ys), maxy = Math.max.apply(null, ys);
+    var mpp = Math.max((maxx - minx) * 1.6 / W, (maxy - miny) * 1.6 / H, 120 / W); // parcel plus margin, never closer than ~120 m wide
+    var cx = (minx + maxx) / 2, cy = (miny + maxy) / 2, x0 = cx - mpp * W / 2, y1 = cy + mpp * H / 2;
+    var src = AERIAL.url + '/export?bbox=' + [x0, cy - mpp * H / 2, cx + mpp * W / 2, y1].join(',') + '&bboxSR=3857&imageSR=3857&size=' + (W * 2) + ',' + (H * 2) + '&format=jpg&f=image';
+    var shape = rings.map(function (r) {
+        return '<polygon points="' + r.map(function (c) { var m = merc(c[0], c[1]); return ((m[0] - x0) / mpp).toFixed(1) + ',' + ((y1 - m[1]) / mpp).toFixed(1); }).join(' ') + '"/>';
+    }).join('') || '<circle cx="' + W / 2 + '" cy="' + H / 2 + '" r="8"/>';
+    return '<img src="' + src + '" alt="" onerror="if(this.dataset.r){this.parentNode.style.display=&quot;none&quot;}else{this.dataset.r=1;this.src=this.src+&quot;&amp;r=1&quot;}">' +
+        '<svg viewBox="0 0 ' + W + ' ' + H + '">' + shape + '</svg><div class="pp-acap">' + esc(loc._aerial || 'Aerial: Esri World Imagery') + '</div>';
+}
+
+function showAerial(loc) {
+    var card = document.getElementById('aerial-card');
+    if (!card) { card = document.createElement('div'); card.id = 'aerial-card'; document.body.appendChild(card); }
+    card._loc = loc;
+    card.innerHTML = aerialCardHtml(loc);
+    card.style.display = 'block';
+    aerialCaption(loc);
+}
+
+// hides the card, unless another pin has already taken it over
+function hideAerial(loc) {
+    var card = document.getElementById('aerial-card');
+    if (card && card._loc === loc) { card.style.display = 'none'; card._loc = null; }
+}
+
+// capture date and resolution of the imagery at this spot, from Esri's metadata layers (60 cm, then 1.2 m), looked up when the popup opens
+function aerialCaption(loc) {
+    if (loc._aerial) return;
+    var ask = function (layer) {
+        return fetch(AERIAL.url + '/' + layer + '/query?geometry=' + loc.Longitude + ',' + loc.Latitude + '&geometryType=esriGeometryPoint&inSR=4326' +
+            '&outFields=SRC_DATE2,SRC_RES&returnGeometry=false&f=json').then(function (r) { return r.json(); })
+            .then(function (d) { return d.features && d.features[0] && d.features[0].attributes; });
+    };
+    ask(10).then(function (a) { return a || ask(11); }).then(function (a) {
+        if (!a || !a.SRC_DATE2) return;
+        var date = new Date(a.SRC_DATE2).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+        loc._aerial = 'Aerial: Esri ' + date + (a.SRC_RES ? ' · ' + a.SRC_RES + ' m' : '');
+        var card = document.getElementById('aerial-card'), cap = card && card._loc === loc && card.querySelector('.pp-acap');
+        if (cap) cap.textContent = loc._aerial;
+    }).catch(function () { /* service down: keep the plain caption */ });
 }

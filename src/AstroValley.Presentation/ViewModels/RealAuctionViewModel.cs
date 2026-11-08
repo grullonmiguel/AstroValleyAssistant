@@ -64,6 +64,8 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
     /// Extracts a friendly "County - M/d/yy" label from a realtaxdeed.com auction URL.
     /// Falls back to the raw URL if parsing fails.
     /// </summary>
+    protected override string? AuctionUrl => CurrentAuctionUrl;
+
     private static string BuildAlias(string url)
     {
         try

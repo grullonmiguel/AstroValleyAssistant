@@ -15,6 +15,8 @@ public record MarkerLocation : INotifyPropertyChanged
     public double Longitude { get; init; }
     public string? Acres { get; init; }
     public string? ParcelLines { get; init; }
+    public string? County { get; init; }     // e.g. "Marion County", from the auction site
+    public string? AuctionUrl { get; init; } // the RealAuction page the pin came from
     public DateTime? AuctionDate { get; init; } // drives pin colour and the "This week" filter
 
     // Links shown in the Home map popup (null = not available, so the text is not a link).

@@ -296,6 +296,13 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         }
     }
 
+    /// <summary>The auction page the records were loaded from (RealAuction screen only); stored on each pin.</summary>
+    protected virtual string? AuctionUrl => null;
+
+    // shortcut: "marion.realtaxdeed.com" -> "Marion County"; a multi-word county shows as one word, as in the auction alias
+    private static string? CountyFrom(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Host.Split('.')[0] is { Length: > 0 } h ? char.ToUpper(h[0]) + h[1..] + " County" : null;
+
     [RelayCommand(CanExecute = nameof(CanMap))]
     protected void ViewInMap()
     {
@@ -324,6 +331,8 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
                     Latitude = (double)record.Latitude.TryParseDouble(),
                     Longitude = (double)record.Longitude.TryParseDouble(),
                     ParcelLines = record.ParcelLines,
+                    County = CountyFrom(AuctionUrl),
+                    AuctionUrl = AuctionUrl,
                     AuctionDate = record.Record.AuctionDate.Year > 1 ? record.Record.AuctionDate : null,
                     RegridUrl = string.IsNullOrWhiteSpace(record.RegridUrl) ? null : record.RegridUrl,
                     GoogleMapsUrl = UrlBuilder.BuildGoogleMapsUrl(record.Record),

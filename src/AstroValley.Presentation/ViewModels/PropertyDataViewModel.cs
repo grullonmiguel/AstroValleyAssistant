@@ -79,6 +79,47 @@ public partial class PropertyDataViewModel : ObservableObject
     public string ParcelLines => Record.ParcelLines;
     public string RegridUrl => Record.RegridUrl;
 
+    // Aerial photo for the details panel (null until the Regrid scrape gives coordinates)
+    private AerialImage.Result? _aerial;
+    public AerialImage.Result? Aerial => _aerial ??= AerialImage.Build(Latitude, Longitude, ParcelLines, 168, 110);
+
+    private string? _aerialCaption;
+    private bool _aerialLoading;
+    private static readonly System.Net.Http.HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
+
+    // Reading it the first time starts a one-off lookup of the capture date (Esri metadata layers: 60 cm, then 1.2 m)
+    public string AerialCaption
+    {
+        get
+        {
+            if (_aerialCaption is null && !_aerialLoading && Aerial is not null) { _aerialLoading = true; _ = LoadAerialCaptionAsync(); }
+            return _aerialCaption ?? "Aerial: Esri World Imagery";
+        }
+    }
+
+    private async Task LoadAerialCaptionAsync()
+    {
+        try
+        {
+            foreach (var layer in new[] { 10, 11 })
+            {
+                var json = await Http.GetStringAsync(FormattableString.Invariant(
+                    $"{AerialImage.ServiceUrl}/{layer}/query?geometry={Longitude},{Latitude}&geometryType=esriGeometryPoint&inSR=4326&outFields=SRC_DATE2,SRC_RES&returnGeometry=false&f=json"));
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                if (!doc.RootElement.TryGetProperty("features", out var features) || features.GetArrayLength() == 0) continue;
+                var a = features[0].GetProperty("attributes");
+                if (a.GetProperty("SRC_DATE2").ValueKind != System.Text.Json.JsonValueKind.Number) continue;
+                var date = DateTimeOffset.FromUnixTimeMilliseconds(a.GetProperty("SRC_DATE2").GetInt64()).UtcDateTime;
+                var res = a.GetProperty("SRC_RES").ValueKind == System.Text.Json.JsonValueKind.Number ? $" · {a.GetProperty("SRC_RES").GetDouble():0.##} m" : "";
+                _aerialCaption = $"Aerial: Esri {date:MMM yyyy}{res}";
+                OnPropertyChanged(nameof(AerialCaption));
+                return;
+            }
+        }
+        catch { /* service down or slow: keep the plain caption */ }
+        finally { _aerialLoading = false; }
+    }
+
     public bool HasGoogleUrl => UrlBuilder.BuildGoogleMapsUrl(Record) != null;
     public bool HasFemaUrl => UrlBuilder.BuildFemaFloodUrl(Record) != null;
 
@@ -101,6 +142,9 @@ public partial class PropertyDataViewModel : ObservableObject
         OnPropertyChanged(nameof(ElevationHigh));
         OnPropertyChanged(nameof(GeoCoordinates));
         OnPropertyChanged(nameof(RegridUrl));
+        _aerial = null; _aerialCaption = null; // a new scrape result can move the pin
+        OnPropertyChanged(nameof(Aerial));
+        OnPropertyChanged(nameof(AerialCaption));
         OnPropertyChanged(nameof(HasFemaUrl));
         OnPropertyChanged(nameof(HasGoogleUrl));
     }

@@ -55,8 +55,16 @@ public class PinResearchSheetExporter : IPinSheetExporter
         ws.Range(1, 1, last + 2, 1).Style.Fill.BackgroundColor = Accent;
         ws.Range(1, 2, 1, 4).Style.Fill.BackgroundColor = Accent;
 
-        ws.Cell(2, 4).Value = "County Name";
+        ws.Cell(2, 4).Value = pinList.Select(p => p.County).FirstOrDefault(c => !string.IsNullOrEmpty(c)) ?? "County Name";
         ws.Cell(2, 4).Style.Font.SetBold().Font.SetFontSize(16).Font.SetFontColor(Accent);
+
+        // auction date next to the county name; it links to the auction page
+        if (pinList.Select(p => p.AuctionDate).FirstOrDefault(d => d.HasValue) is { } auctionDate)
+        {
+            ws.Range(2, 6, 2, 8).Merge();
+            Link(ws.Cell(2, 6), $"Auction {auctionDate:MMM d, yyyy}", pinList.Select(p => p.AuctionUrl).FirstOrDefault(u => !string.IsNullOrEmpty(u)));
+            ws.Cell(2, 6).Style.Font.SetFontSize(10);
+        }
 
         using var logo = typeof(PinResearchSheetExporter).Assembly.GetManifestResourceStream("logo.png")!;
         ws.AddPicture(logo).MoveTo(ws.Cell(2, 3), 5, 6).WithSize(35, 28);
