@@ -3,7 +3,9 @@ using AstroValley.Application.Interfaces.Export;
 using AstroValley.Application.Interfaces.Scraping;
 using AstroValley.Application.Interfaces.Settings;
 using AstroValley.Application.Services;
+using AstroValley.Application.Interfaces.Import;
 using AstroValley.Infrastructure.Data;
+using AstroValley.Infrastructure.Import;
 using AstroValley.Infrastructure.Export;
 using AstroValley.Infrastructure.Scraping;
 using AstroValley.Presentation.Export;
@@ -65,7 +67,6 @@ namespace AstroValley.Presentation
             services.AddSingleton<MapViewModel>();
 
             // ── Dialog ViewModels (Transient) ────────────────────────────────
-            services.AddTransient<ImportViewModel>();
             services.AddTransient<RegridSettingsViewModel>();
             services.AddTransient<ThemeSettingsViewModel>();
             services.AddTransient<ResolveMatchesViewModel>();
@@ -86,6 +87,10 @@ namespace AstroValley.Presentation
 
             // ── Application: Use-case Services ──────────────────────────────
             services.AddSingleton<IRegridService, RegridService>();
+
+            // ── Infrastructure: Spreadsheet importers (first one that recognizes the headers wins; generic must stay last)
+            services.AddSingleton<IPropertyImporter, ParcelFairImporter>();
+            services.AddSingleton<IPropertyImporter, GenericImporter>();
 
             // ── Infrastructure: Data Services ────────────────────────────────
             services.AddSingleton<IGeographyDataService, GeographyDataService>();

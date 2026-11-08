@@ -65,8 +65,14 @@
             </DataTemplate.Triggers>
         </DataTemplate>
 
+
+        <Style x:Key="NumericCellStyle" TargetType="TextBlock">
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
     </UserControl.Resources>
-    <Grid Style="{StaticResource ViewSlideInFromTopStyle}" Margin="0 0 16 16" >
+    <Grid Style="{StaticResource ViewSlideInFromTopStyle}" Margin="0 0 16 16"
+          AllowDrop="True" DragEnter="OnDragEnter" DragOver="OnDragOver">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="*"/>
@@ -165,18 +171,62 @@
                                                 Visibility="{Binding PropertySelected.HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"/>
             <!-- Parcel List -->
             <FrameworkElement Grid.Row="2" x:Name="FrameWorkElementProxy" Visibility="Collapsed"/>
-            <DataGrid Grid.Row="2" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}">
+            <DataGrid Grid.Row="2" x:Name="AuctionGrid" ItemsSource="{Binding PropertyRecords}" SelectedItem="{Binding PropertySelected, Mode=TwoWay}"
+                      FontSize="13" MinRowHeight="38">
+                <!-- Same look as the RealAuction grid. Local RowStyle replaces the global one, so its hover/selected triggers are repeated here (must stay after the status triggers to win). -->
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Background.Secondary}"/>
+                        <Setter Property="BorderThickness" Value="4 0 0 0"/>
+                        <Setter Property="BorderBrush" Value="Transparent"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Status}" Value="MultipleMatches">
+                                <Setter Property="Background" Value="#30FFB74D"/>
+                                <Setter Property="BorderBrush" Value="#FFB74D"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Status}" Value="NotFound">
+                                <Setter Property="Background" Value="#30EF5350"/>
+                                <Setter Property="BorderBrush" Value="#EF5350"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Status}" Value="Error">
+                                <Setter Property="Background" Value="#30FF1744"/>
+                                <Setter Property="BorderBrush" Value="#FF1744"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Status}" Value="RateLimited">
+                                <Setter Property="Background" Value="#30FFD700"/>
+                                <Setter Property="BorderBrush" Value="#FFD700"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource Brush.Background.Primary}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource Brush.Accent.Secondary}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="Status" Width="85" CellTemplate="{StaticResource StatusBadgeTemplate}"   />
+                    <DataGridTemplateColumn Header="Status" Width="95" CellTemplate="{StaticResource StatusBadgeTemplate}"/>
                     <DataGridTextColumn Header="Parcel ID" Binding="{Binding ParcelId}" Width="Auto"/>
                     <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
-                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="Auto" />
-                    <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="100"/>
-                    <DataGridTextColumn Header="Opening Bid" Binding="{Binding Bid, StringFormat={}{0:C}}" Width="100"/>
-                    <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="100"  />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="*"/>
+                    <DataGridTextColumn Header="Type" Binding="{Binding PropertyType}" Width="Auto"/>
+                    <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="100" ElementStyle="{StaticResource NumericCellStyle}"/>
+                    <DataGridTextColumn Header="Opening Bid" Binding="{Binding Bid, StringFormat={}{0:C}}" Width="110" ElementStyle="{StaticResource NumericCellStyle}"/>
+                    <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="80" ElementStyle="{StaticResource NumericCellStyle}"/>
                 </DataGrid.Columns>
             </DataGrid>
             <local:ScrapeOverlay Grid.Row="2"/>
+        </Grid>
+
+        <!-- Shown while a file is dragged over the view; its children ignore the mouse so the drag does not flicker in and out. -->
+        <Grid x:Name="DropOverlay" Grid.ColumnSpan="2" Visibility="Collapsed" Background="#B31E1E1E"
+              AllowDrop="True" DragOver="OnDragOver" DragLeave="OnOverlayDragLeave" Drop="OnDrop">
+            <Rectangle Margin="24" RadiusX="12" RadiusY="12" Stroke="White" StrokeThickness="2" StrokeDashArray="6 3" IsHitTestVisible="False"/>
+            <TextBlock Text="Drop a CSV or Excel file to add its parcels" FontSize="20" FontWeight="SemiBold" Foreground="White"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
         </Grid>
     </Grid>
 </UserControl>

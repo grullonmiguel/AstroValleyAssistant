@@ -61,6 +61,9 @@ public record MarkerLocation : INotifyPropertyChanged
     public decimal? BidAmount => Money("Minimum Bid");
     public decimal? AssessedAmount => Money("Assessed");
 
+    /// <summary>"Vacant land" / "Structures", or null when unknown (see StructureKind); drives the map filter and the Excel Type column.</summary>
+    public string? PropertyType => ExtraDetails?.GetValueOrDefault("Property Type");
+
     /// <summary>True when the legal description uses co-ownership wording (undivided / fractional / partial interest, tenants in common).
     /// shortcut: wording match only, so it can miss unusual phrasing or flag a description that merely mentions it; always read the legal description.</summary>
     public bool UndividedInterest => ExtraDetails?.GetValueOrDefault("Legal Description") is { } legal && UndividedWording.IsMatch(legal);

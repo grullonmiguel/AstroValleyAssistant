@@ -32,9 +32,6 @@
         <DataTemplate DataType="{x:Type dialogs:ThemeSettingsViewModel}">
             <viewDialogs:ThemeSettingsView/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type dialogs:ImportViewModel}">
-            <viewDialogs:ImportView/>
-        </DataTemplate>
         <DataTemplate DataType="{x:Type dialogs:ResolveMatchesViewModel}">
             <viewDialogs:ResolveMatchesView />
         </DataTemplate>

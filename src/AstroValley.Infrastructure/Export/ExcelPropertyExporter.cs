@@ -24,6 +24,7 @@ public class ExcelPropertyExporter : IExcelExporter
         ws.Cell(1, 2).Value = "Address";
         ws.Cell(1, 3).Value = "Image";
         ws.Cell(1, 4).Value = "Legal Description";
+        ws.Cell(1, 5).Value = "Type";
 
         int row = 2;
         foreach (var record in records)
@@ -32,6 +33,7 @@ public class ExcelPropertyExporter : IExcelExporter
             ws.Cell(row, 1).Value = record.ParcelId;
             ws.Cell(row, 2).Value = record.Address;
             ws.Cell(row, 4).Value = record.LegalDescription;
+            ws.Cell(row, 5).Value = record.PropertyType;
 
             if (!string.IsNullOrEmpty(record.BirdseyeUrl))
             {

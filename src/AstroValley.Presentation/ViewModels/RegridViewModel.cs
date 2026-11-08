@@ -1,25 +1,34 @@
 ﻿using AstroValley.Application.Interfaces.Export;
+using AstroValley.Application.Interfaces.Import;
 using AstroValley.Application.Interfaces.Scraping;
 using AstroValley.Domain.Entities;
 using AstroValley.Domain.Enums;
+using AstroValley.Infrastructure.Import;
 using AstroValley.Presentation.Services;
-using AstroValley.Presentation.ViewModels.Dialogs;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using System.IO;
 using System.Windows;
 
 namespace AstroValley.Presentation.ViewModels;
 
 public partial class RegridViewModel : PropertyScraperViewModelBase
 {
+    private readonly IFileService _fileService;
+    private readonly List<IPropertyImporter> _importers;
+
     public RegridViewModel(
         IRegridService regridService,
         IBrowserService browserService,
         IDialogService dialogService, 
         IServiceProvider serviceProvider,
         IClipboardExporter clipboardExporter,
-        IExcelExporter excelExporter)
+        IExcelExporter excelExporter,
+        IFileService fileService,
+        IEnumerable<IPropertyImporter> importers)
     {
+        _fileService = fileService;
+        _importers = importers.ToList();
         _regridService = regridService;
         _browserService = browserService;
         _dialogService = dialogService;
@@ -61,51 +70,39 @@ public partial class RegridViewModel : PropertyScraperViewModelBase
         IsResultButtonsVisible = PropertyRecords.Count > 0;
     }
 
-    private async Task ShowImportView()
+    /// <summary>Reads a .csv/.xlsx (dropped on the view or picked with Import) and adds its rows to the list; parcel IDs already listed are skipped.</summary>
+    public async Task ImportFile(string path)
     {
-        // 1. Resolve the ViewModel from the DI container
-        var vm = _serviceProvider!.GetRequiredService<ImportViewModel>();
+        if (IsScraping) return; // BeginOperation would cancel the scrape in progress
 
-        // 2. Show the dialog
-        _dialogService?.ShowDialog(vm);
-
-        // 3. Await the result
+        BeginOperation($"Reading {Path.GetFileName(path)}...");
         try
         {
-            var records = await vm.Result;
-            LoadImportedRecords(records);
+            var (headers, rows) = await Task.Run(() => SpreadsheetReader.Read(path));
+            var importer = _importers.First(i => i.CanRead(headers)); // the generic importer, registered last, accepts anything
+
+            var listed = PropertyRecords.Select(p => p.ParcelId).Where(id => id != "").ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var records = rows.Select(importer.Map).Where(r => r.ParcelId == "" || listed.Add(r.ParcelId)).ToList();
+
+            foreach (var record in records)
+                PropertyRecords.Add(new PropertyDataViewModel(record, _browserService));
+
+            // Auto-detect scrape mode based on what the list contains
+            var all = PropertyRecords.Select(p => p.Record).ToList();
+            if (all.All(r => !string.IsNullOrWhiteSpace(r.ParcelId)))
+                ScrapeMode = RegridScrapeMode.ParcelId;
+            else if (all.All(r => !string.IsNullOrWhiteSpace(r.Address)))
+                ScrapeMode = RegridScrapeMode.Address;
+
+            IsScrapeVisible = PropertyRecords.Count == 0;
+            IsResultButtonsVisible = PropertyRecords.Count > 0;
+            var skipped = rows.Count - records.Count;
+            SetIdle($"Added {records.Count} records from {importer.Name}" + (skipped > 0 ? $" ({skipped} already in the list)." : "."));
         }
-        catch (TaskCanceledException)
+        catch (Exception ex)
         {
-            // User closed the dialog without importing
-            Status = "Import cancelled.";
+            SetIdle($"Import failed: {ex.Message}");
         }
-    }
-
-    private void LoadImportedRecords(List<PropertyRecord> records)
-    {
-        if (records == null || records.Count == 0)
-        {
-            Status = "No records imported.";
-            return;
-        }
-
-        PropertyRecords.Clear();
-
-        foreach (var record in records)
-            PropertyRecords.Add(new PropertyDataViewModel(record, _browserService));
-
-        // Auto-detect scrape mode based on what the imported file contains
-        if (records.All(r => !string.IsNullOrWhiteSpace(r.ParcelId)))
-            ScrapeMode = RegridScrapeMode.ParcelId;
-        else if (records.All(r => !string.IsNullOrWhiteSpace(r.Address)))
-            ScrapeMode = RegridScrapeMode.Address;
-
-        IsScrapeVisible = !PropertyRecords.Any();
-        IsResultButtonsVisible = PropertyRecords.Count > 0;
-        SetIdle($"Import complete. {records.Count} records loaded.");
-
-        _dialogService?.CloseDialog();
     }
 
     [RelayCommand]
@@ -115,5 +112,9 @@ public partial class RegridViewModel : PropertyScraperViewModelBase
     private void PasteAddresses() => PasteFromClipboard(RegridScrapeMode.Address);
 
     [RelayCommand]
-    private void OpenImport() => ShowImportView();
+    private async Task OpenImport()
+    {
+        var path = _fileService.OpenFile("Select Excel or CSV File", "Data Files (*.xlsx;*.csv)|*.xlsx;*.csv");
+        if (path != null) await ImportFile(path);
+    }
 }

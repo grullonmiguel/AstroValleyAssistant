@@ -1,4 +1,5 @@
 using AstroValley.Application.Interfaces.Export;
+using AstroValley.Domain.Entities;
 using AstroValley.Domain.Enums;
 using AstroValley.Domain.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -69,6 +70,13 @@ public partial class HomeViewModel : ObservableObject
     [ObservableProperty]
     private bool _onlyUndivided;
 
+    // Both off = everything (including parcels whose type is unknown); either on = only pins of the chosen type(s).
+    [ObservableProperty]
+    private bool _onlyVacant;
+
+    [ObservableProperty]
+    private bool _onlyStructures;
+
     // Slider positions for "max acres"; the last position means no limit.
     private static readonly double[] AcreSteps = [0.25, 0.5, 1, 2, 5, 10, 25, 50, 100];
 
@@ -111,6 +119,10 @@ public partial class HomeViewModel : ObservableObject
 
     partial void OnOnlyUndividedChanged(bool value) => ApplyFilter();
 
+    partial void OnOnlyVacantChanged(bool value) => ApplyFilter();
+
+    partial void OnOnlyStructuresChanged(bool value) => ApplyFilter();
+
     partial void OnAcreStepChanged(int value) => ApplyFilter();
 
     private void ApplyFilter()
@@ -128,6 +140,8 @@ public partial class HomeViewModel : ObservableObject
         if (OnlyEquity && !(m.BidToAssessedPercent is { } percent && percent <= 25)) return false;
         if (OnlySteep && !(m.SlopePercent is >= SteepPercent)) return false;
         if (OnlyUndivided && !m.UndividedInterest) return false;
+        if ((OnlyVacant || OnlyStructures)
+            && !((OnlyVacant && m.PropertyType == StructureKind.Vacant) || (OnlyStructures && m.PropertyType == StructureKind.Structures))) return false;
         return AcreStep >= AcreSteps.Length
             || (double.TryParse(m.Acres, out var acres) && acres <= AcreSteps[AcreStep]);
     }
@@ -141,13 +155,15 @@ public partial class HomeViewModel : ObservableObject
             case "Equity": OnlyEquity = !OnlyEquity; break;
             case "Steep": OnlySteep = !OnlySteep; break;
             case "Undivided": OnlyUndivided = !OnlyUndivided; break;
+            case "Vacant": OnlyVacant = !OnlyVacant; break;
+            case "Structures": OnlyStructures = !OnlyStructures; break;
         }
     }
 
     [RelayCommand]
     private void ClearFilters()
     {
-        OnlyUnder5k = OnlyEquity = OnlySteep = OnlyUndivided = false;
+        OnlyUnder5k = OnlyEquity = OnlySteep = OnlyUndivided = OnlyVacant = OnlyStructures = false;
         AcreStep = AcreSteps.Length;
     }
 

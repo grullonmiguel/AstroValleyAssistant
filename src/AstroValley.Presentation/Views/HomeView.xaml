@@ -138,6 +138,8 @@
                         <Condition Binding="{Binding OnlyEquity}" Value="False"/>
                         <Condition Binding="{Binding OnlySteep}" Value="False"/>
                         <Condition Binding="{Binding OnlyUndivided}" Value="False"/>
+                        <Condition Binding="{Binding OnlyVacant}" Value="False"/>
+                        <Condition Binding="{Binding OnlyStructures}" Value="False"/>
                         <Condition Binding="{Binding AcreStep}" Value="9"/>
                     </MultiDataTrigger.Conditions>
                     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
@@ -217,6 +219,22 @@
         <Style x:Key="HomeChip.Undivided" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding OnlyUndivided}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeChip.Vacant" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding OnlyVacant}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeChip.Structures" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding OnlyStructures}" Value="True">
                     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
                     <Setter Property="Foreground" Value="White"/>
                 </DataTrigger>
@@ -387,6 +405,10 @@
                             ToolTip="Show only parcels with a ground slope of 10% or more (Regrid's high minus low elevation over the parcel's longest side)."/>
                     <Button Content="Undivided" Style="{StaticResource HomeChip.Undivided}" Command="{Binding ToggleFilterCommand}" CommandParameter="Undivided"
                             ToolTip="Show only pins whose legal description mentions undivided / fractional / partial interest or tenants in common (possible co-owners)."/>
+                    <Button Content="Vacant land" Style="{StaticResource HomeChip.Vacant}" Command="{Binding ToggleFilterCommand}" CommandParameter="Vacant"
+                            ToolTip="Show only parcels known to be vacant land. Pins with an unknown type are hidden; turn on both chips to hide only those."/>
+                    <Button Content="Structures" Style="{StaticResource HomeChip.Structures}" Command="{Binding ToggleFilterCommand}" CommandParameter="Structures"
+                            ToolTip="Show only parcels known to have a building. Pins with an unknown type are hidden."/>
                 </StackPanel>
             </Border>
 

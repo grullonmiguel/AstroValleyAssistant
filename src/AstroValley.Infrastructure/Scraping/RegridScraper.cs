@@ -323,6 +323,11 @@ public class RegridScraper : IRegridScraper
             ElevationLow = f.GetJsonString("lowest_parcel_elevation"),
             FloodZone = f.GetJsonString("fema_flood_zone", "fema_flood_zone_subtype", "fema_nri_risk_rating"),
             LegalDescription = f.GetJsonString("legaldesc"),
+            PropertyType = StructureKind.FromRegrid(
+                f.TryGetProperty("struct", out var s) && s.ValueKind is JsonValueKind.True or JsonValueKind.False ? s.ValueKind == JsonValueKind.True : null,
+                f.GetJsonString("usedesc"), f.GetJsonString("lbcs_site_desc"), f.GetJsonString("lbcs_activity_desc"),
+                f.GetJsonDouble("ll_bldg_count"), f.GetJsonDouble("ll_bldg_footprint_sqft"),
+                f.GetJsonDecimal("improvval"), f.GetJsonDecimal("parval")),
             AssessedValue = GetAssessedValue(f),
             BirdseyeUrl = doc.RootElement.GetJsonString("birdseye"),
             ParcelLines = doc.RootElement.GetJsonString("geometry")

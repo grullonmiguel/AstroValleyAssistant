@@ -13,6 +13,7 @@ public record PropertyRecord
 
     // --- Regrid Data (Merged) ---
     public string City { get; init; } = string.Empty;
+    public string County { get; init; } = string.Empty;   // e.g. "Shelby County"; set by importers, else the pin takes it from the auction URL
     public string Zip { get; init; } = string.Empty;
     public double? Acres { get; init; }
     public string Owner { get; init; } = string.Empty;
@@ -25,6 +26,7 @@ public record PropertyRecord
     public string ElevationLow { get; init; } = string.Empty;
     public string FloodZone { get; init; } = string.Empty;
     public string LegalDescription { get; init; } = string.Empty;
+    public string PropertyType { get; init; } = string.Empty;   // StructureKind: "Vacant land", "Structures" or empty; a spreadsheet's value wins over Regrid's
     public string RegridUrl { get; init; } = string.Empty;
     public string BirdseyeUrl { get; init; } = string.Empty;
     public string? ParcelLines { get; init; } = string.Empty;

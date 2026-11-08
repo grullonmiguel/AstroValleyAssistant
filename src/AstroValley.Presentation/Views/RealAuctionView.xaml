@@ -305,6 +305,7 @@
                     <DataGridTextColumn Header="Parcel ID" Binding="{Binding ParcelId}" Width="Auto"/>
                     <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
                     <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="*"/>
+                    <DataGridTextColumn Header="Type" Binding="{Binding PropertyType}" Width="Auto"/>
                     <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="100" ElementStyle="{StaticResource NumericCellStyle}"/>
                     <DataGridTextColumn Header="Opening Bid" Binding="{Binding Bid, StringFormat={}{0:C}}" Width="110" ElementStyle="{StaticResource NumericCellStyle}"/>
                     <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="80" ElementStyle="{StaticResource NumericCellStyle}"/>

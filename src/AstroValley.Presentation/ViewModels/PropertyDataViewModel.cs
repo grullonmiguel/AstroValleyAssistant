@@ -70,6 +70,7 @@ public partial class PropertyDataViewModel : ObservableObject
     public string Owner => Record.Owner;
     public string ZoningCode => Record.ZoningCode;
     public string ZoningType => Record.ZoningType;
+    public string PropertyType => Record.PropertyType;
     public string FloodZone => Record.FloodZone;
     public string ElevationLow => Record.ElevationLow;
     public string ElevationHigh => Record.ElevationHigh;
@@ -137,6 +138,7 @@ public partial class PropertyDataViewModel : ObservableObject
         OnPropertyChanged(nameof(Zip));
         OnPropertyChanged(nameof(ZoningCode));
         OnPropertyChanged(nameof(ZoningType));
+        OnPropertyChanged(nameof(PropertyType));
         OnPropertyChanged(nameof(FloodZone));
         OnPropertyChanged(nameof(ElevationLow));
         OnPropertyChanged(nameof(ElevationHigh));

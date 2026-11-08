@@ -53,7 +53,7 @@
         // Plain data download: one row per pin, no styling. CSV (not .xlsx) so no library is needed; Excel opens it directly.
         document.getElementById('btn-csv').onclick = function () {
             // [header, pin field, or ExtraDetails key]; Assessed / Minimum Bid use the parsed numbers
-            var cols = [['AuctionDate'], ['Zoning', 'x'], ['Type', 'x'], ['County'], ['City', 'x'], ['ParcelID'], ['Owner', 'x'], ['Address'], ['Acres'],
+            var cols = [['AuctionDate'], ['Zoning', 'x'], ['Type', 'x'], ['Property Type', 'x'], ['County'], ['City', 'x'], ['ParcelID'], ['Owner', 'x'], ['Address'], ['Acres'],
                 ['Assessed', 'AssessedAmount'], ['Minimum Bid', 'BidAmount'], ['Flood Zone', 'x'], ['Elevation Low', 'x'], ['Elevation High', 'x'],
                 ['Latitude'], ['Longitude'], ['AuctionUrl'], ['RegridUrl'], ['GoogleMapsUrl'], ['FemaUrl'], ['AppraiserUrl'], ['Legal Description', 'x'], ['Undivided Interest', 'UndividedInterest']];
             var val = function (p, c) { var v = c[1] === 'x' ? (p.ExtraDetails || {})[c[0]] : p[c[1] || c[0]]; return c[1] === 'UndividedInterest' ? (v ? 'Yes' : '') : v; };

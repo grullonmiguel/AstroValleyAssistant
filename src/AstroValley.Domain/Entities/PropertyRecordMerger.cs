@@ -6,7 +6,8 @@
 /// Rules:
 /// - Never overwrite RealAuction fields.
 /// - Only fill fields that are empty or null.
-/// - The assessed value counts as empty when RealAuction gave 0 (it parses a missing value as 0), so Regrid's fills it.
+/// - The assessed value and acres count as empty when the source gave 0 (RealAuction parses a missing value as 0), so Regrid's fills them.
+///   "N/A" never gets here: importers turn it into null.
 /// </summary>
 public static class PropertyRecordMerger
 {
@@ -33,7 +34,7 @@ public static class PropertyRecordMerger
                 ? regrid.Zip
                 : original.Zip,
 
-            Acres = original.Acres ?? regrid.Acres,
+            Acres = original.Acres is > 0 ? original.Acres : regrid.Acres ?? original.Acres,
 
             AssessedValue = original.AssessedValue is > 0 ? original.AssessedValue : regrid.AssessedValue ?? original.AssessedValue,
 
@@ -80,6 +81,10 @@ public static class PropertyRecordMerger
             LegalDescription = string.IsNullOrWhiteSpace(original.LegalDescription)
                 ? regrid.LegalDescription
                 : original.LegalDescription,
+
+            PropertyType = string.IsNullOrWhiteSpace(original.PropertyType)
+                ? regrid.PropertyType
+                : original.PropertyType,
 
             BirdseyeUrl = string.IsNullOrWhiteSpace(original.BirdseyeUrl)
                 ? regrid.BirdseyeUrl

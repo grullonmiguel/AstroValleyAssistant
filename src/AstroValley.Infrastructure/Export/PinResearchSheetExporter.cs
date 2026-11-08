@@ -91,7 +91,7 @@ public class PinResearchSheetExporter : IPinSheetExporter
             // Skipped or possibly landlocked pins start as C; A and B are for the user to give
             if (p.Status == "Skip" || p.AccessStatus == "None") ws.Cell(row, 3).Value = "C";
             ws.Cell(row, 4).Value = string.Join(" | ", new[] { p.Status, p.Notes, p.AccessText }.Where(s => !string.IsNullOrWhiteSpace(s)));
-            ws.Cell(row, 6).Value = d?.GetValueOrDefault("Type");
+            ws.Cell(row, 6).Value = d?.GetValueOrDefault("Property Type"); // "Vacant land" / "Structures" / blank (the zoning type is no longer shown here)
             ws.Cell(row, 7).Value = d?.GetValueOrDefault("Zoning");
             ws.Cell(row, 8).Value = d?.GetValueOrDefault("City");
             ws.Cell(row, 9).Value = p.ParcelID;

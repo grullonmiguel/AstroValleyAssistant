@@ -132,28 +132,31 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         {
             var ct = _cts!.Token;
 
-            // 1. Build list of parcel queries
-            var queries = PropertyRecords
-                .Select(vm => ScrapeMode == RegridScrapeMode.ParcelId ? vm.ParcelId : vm.Address)
-                .ToList();
+            // 1. Only rows that have not already succeeded (new imports, and retries of NotFound / Error / Multiple / RateLimited)
+            var todo = PropertyRecords.Where(vm => vm.Status != ScrapeStatus.Success).ToList();
+            if (todo.Count == 0)
+            {
+                SetIdle("Nothing to scrape: every row has already been scraped.");
+                return;
+            }
 
             var progress = new Progress<int>(count =>
             {
-                Status = $"Processed {count} of {PropertyRecords.Count}";
-                ProgressText = $"Scraping {count} of {PropertyRecords.Count}";
-                ProgressValue = count * 100.0 / PropertyRecords.Count;
+                Status = $"Processed {count} of {todo.Count}";
+                ProgressText = $"Scraping {count} of {todo.Count}";
+                ProgressValue = count * 100.0 / todo.Count;
             });
 
-            ProgressText = $"Scraping 0 of {queries.Count}";
+            ProgressText = $"Scraping 0 of {todo.Count}";
             IsProgressIndeterminate = false;
 
             int index = 0;
 
-            foreach (var query in queries)
+            foreach (var vm in todo)
             {
                 ct.ThrowIfCancellationRequested();
 
-                var vm = PropertyRecords[index];
+                var query = ScrapeMode == RegridScrapeMode.ParcelId ? vm.ParcelId : vm.Address;
 
                 // 2. Show "Loading" BEFORE scraping begins
                 vm.Status = ScrapeStatus.Loading;
@@ -176,7 +179,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
             }
 
             IsRegridDataLoaded = true;
-            SetIdle($"Regrid complete. Processed {PropertyRecords.Count} properties.");
+            SetIdle($"Regrid complete. Scraped {todo.Count} of {PropertyRecords.Count} properties.");
         }
         catch (OperationCanceledException)
         {
@@ -313,6 +316,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
             if (!string.IsNullOrEmpty(record.FloodZone)) details.Add("Flood Zone", record.FloodZone);
             if (!string.IsNullOrEmpty(record.Owner)) details.Add("Owner", record.Owner);
             if (!string.IsNullOrWhiteSpace(record.Record.LegalDescription)) details.Add("Legal Description", record.Record.LegalDescription);
+            if (!string.IsNullOrWhiteSpace(record.PropertyType)) details.Add("Property Type", record.PropertyType); // "Vacant land" / "Structures"; absent when unknown
             if (!string.IsNullOrEmpty(record.City)) details.Add("City", record.City);          // City, Zoning and Type feed the Excel sheet
             if (!string.IsNullOrEmpty(record.ZoningCode)) details.Add("Zoning", record.ZoningCode);
             if (!string.IsNullOrEmpty(record.ZoningType)) details.Add("Type", record.ZoningType);
@@ -332,7 +336,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
                     Latitude = (double)record.Latitude.TryParseDouble(),
                     Longitude = (double)record.Longitude.TryParseDouble(),
                     ParcelLines = record.ParcelLines,
-                    County = CountyFrom(AuctionUrl),
+                    County = string.IsNullOrWhiteSpace(record.Record.County) ? CountyFrom(AuctionUrl) : record.Record.County,
                     AuctionUrl = AuctionUrl,
                     AuctionDate = record.Record.AuctionDate.Year > 1 ? record.Record.AuctionDate : null,
                     RegridUrl = string.IsNullOrWhiteSpace(record.RegridUrl) ? null : record.RegridUrl,
