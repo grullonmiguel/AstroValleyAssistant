@@ -114,6 +114,8 @@ function decoratePin(marker, loc) {
     var el = marker.getElement(), st = loc.Status;
     el.classList.toggle('pin-urgent', pinInfo(loc).urgent && st !== 'Skip');
     el.classList.toggle('pin-skip', st === 'Skip');
+    el.classList.toggle('pin-undiv', !!loc.UndividedInterest);
+    el.title = loc.UndividedInterest ? 'Possible undivided interest (see legal description)' : '';
     if (st && st !== 'Skip' && STATUS_COLORS[st]) { el.setAttribute('data-status', st); el.style.setProperty('--st', STATUS_COLORS[st]); }
     else el.removeAttribute('data-status');
 }

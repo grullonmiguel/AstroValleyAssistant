@@ -22,7 +22,8 @@ public class PinResearchSheetExporter : IPinSheetExporter
         (23, "STEP 4 - FEMA", ["Flood Zone"]),
         (25, "STEP 5 - MARKET VALUE", ["Avg Price / Acre", "Market Value"]),
         (28, "STEP 6 - CLERK'S OFFICE", ["Liens?", "Amount", "Max Bid"]),
-        (32, "MISCELLANEOUS", ["Coordinates", "Elevation"])
+        (32, "MISCELLANEOUS", ["Coordinates", "Elevation"]),
+        (35, "LEGAL", ["Legal Description", "Undivided Interest"])
     ];
 
     // Text that opens its page when clicked; plain text when there is no (valid) URL
@@ -46,7 +47,7 @@ public class PinResearchSheetExporter : IPinSheetExporter
 
         var pinList = pins.ToList();
         var last = Math.Max(pinList.Count + FirstRow - 1, FirstRow + 9);
-        const int lastCol = 34;
+        const int lastCol = 37;
 
         // light purple backdrop, a white title band, a purple strip down the left and a short one along the top
         ws.Range(1, 1, last + 2, lastCol).Style.Fill.BackgroundColor = Backdrop;
@@ -105,6 +106,8 @@ public class PinResearchSheetExporter : IPinSheetExporter
             if (elevation is not null && p.SlopePercent is { } slope) elevation += $" ({slope}%)";
             ws.Cell(row, 33).Value = elevation;
             if (p.SlopePercent is >= 10) ws.Cell(row, 33).Style.Font.SetFontColor(XLColor.FromHtml("#D64545")).Font.SetBold(); // steep
+            ws.Cell(row, 35).Value = d?.GetValueOrDefault("Legal Description");
+            if (p.UndividedInterest) ws.Cell(row, 36).Value = "Yes";
             ws.Cell(row, 32).Value = string.Create(CultureInfo.InvariantCulture, $"{p.Latitude:F6}, {p.Longitude:F6}");
             row++;
         }
@@ -152,8 +155,11 @@ public class PinResearchSheetExporter : IPinSheetExporter
         ws.Cell(5, 3).Style.Font.FontColor = XLColor.White;
         ws.Range(FirstRow, 15, last, 15).Style.NumberFormat.Format = "0.00";
 
-        foreach (var c in new[] { 2, 5, 10, 16, 22, 24, 27, 31 }) ws.Column(c).Width = 2;
-        ws.Columns("C,F:I,K:O,R:U,W,Y:Z,AB:AD,AF:AG").AdjustToContents(5, last);
+        foreach (var c in new[] { 2, 5, 10, 16, 22, 24, 27, 31, 34 }) ws.Column(c).Width = 2;
+        ws.Columns("C,F:I,K:O,R:U,W,Y:Z,AB:AD,AF:AG,AJ").AdjustToContents(5, last);
+        ws.Column(35).Width = 60; // legal descriptions are long; the cell text just runs on
+        ws.Range(FirstRow, 36, last, 36).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+        ws.Range(FirstRow, 36, last, 36).Style.Font.SetFontColor(XLColor.FromHtml("#D64545")).Font.SetBold(); // flagged
         // widths in Excel units, from pixels: (px - 5) / 7
         ws.Column(1).Width = 2.1; ws.Column(4).Width = 27.9; ws.Column(17).Width = 25; ws.Column(23).Width = 16.4; ws.Column(8).Width = 13.6; ws.Column(12).Width = 26; ws.Column(32).Width = 22;
         ws.SheetView.FreezeRows(5);

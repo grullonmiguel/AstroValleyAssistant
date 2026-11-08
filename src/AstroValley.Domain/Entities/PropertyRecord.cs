@@ -24,6 +24,7 @@ public record PropertyRecord
     public string ElevationHigh { get; init; } = string.Empty;
     public string ElevationLow { get; init; } = string.Empty;
     public string FloodZone { get; init; } = string.Empty;
+    public string LegalDescription { get; init; } = string.Empty;
     public string RegridUrl { get; init; } = string.Empty;
     public string BirdseyeUrl { get; init; } = string.Empty;
     public string? ParcelLines { get; init; } = string.Empty;

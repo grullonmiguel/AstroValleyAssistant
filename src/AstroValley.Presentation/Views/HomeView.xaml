@@ -137,6 +137,7 @@
                         <Condition Binding="{Binding OnlyUnder5k}" Value="False"/>
                         <Condition Binding="{Binding OnlyEquity}" Value="False"/>
                         <Condition Binding="{Binding OnlySteep}" Value="False"/>
+                        <Condition Binding="{Binding OnlyUndivided}" Value="False"/>
                         <Condition Binding="{Binding AcreStep}" Value="9"/>
                     </MultiDataTrigger.Conditions>
                     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
@@ -208,6 +209,14 @@
         <Style x:Key="HomeChip.Steep" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding OnlySteep}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HomeChip.Undivided" TargetType="Button" BasedOn="{StaticResource HomeSegment}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding OnlyUndivided}" Value="True">
                     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
                     <Setter Property="Foreground" Value="White"/>
                 </DataTrigger>
@@ -376,6 +385,8 @@
                             ToolTip="Minimum bid is at most 25% of the assessed value. Pins missing either value are hidden."/>
                     <Button Content="Steep ≥ 10%" Style="{StaticResource HomeChip.Steep}" Command="{Binding ToggleFilterCommand}" CommandParameter="Steep"
                             ToolTip="Show only parcels with a ground slope of 10% or more (Regrid's high minus low elevation over the parcel's longest side)."/>
+                    <Button Content="Undivided" Style="{StaticResource HomeChip.Undivided}" Command="{Binding ToggleFilterCommand}" CommandParameter="Undivided"
+                            ToolTip="Show only pins whose legal description mentions undivided / fractional / partial interest or tenants in common (possible co-owners)."/>
                 </StackPanel>
             </Border>
 
@@ -567,10 +578,15 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="{Binding ParcelID}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                <!-- Purple dot: the legal description suggests undivided interest / co-owners. -->
+                                <Ellipse Grid.Column="1" Width="9" Height="9" Margin="6 0 0 0" Fill="#8E44AD" Stroke="White" StrokeThickness="1"
+                                         ToolTip="Possible undivided interest (see legal description)"
+                                         Visibility="{Binding UndividedInterest, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                 <!-- Road access flag from the popup's "Check if landlocked": green road / amber near / red possibly landlocked; hidden until checked. -->
-                                <Ellipse Grid.Column="1" Width="9" Height="9" Margin="6 0 2 0" Stroke="White" StrokeThickness="1"
+                                <Ellipse Grid.Column="2" Width="9" Height="9" Margin="6 0 2 0" Stroke="White" StrokeThickness="1"
                                          ToolTip="{Binding AccessText}">
                                     <Ellipse.Style>
                                         <Style TargetType="Ellipse">
@@ -593,7 +609,7 @@
                                     </Ellipse.Style>
                                 </Ellipse>
                                 <!-- Trash can follows the row's text colour (accent, or white on the selected row); shown on hover only. -->
-                                <Button x:Name="PinRemove" Grid.Column="2" Opacity="0" ToolTip="Remove pin"
+                                <Button x:Name="PinRemove" Grid.Column="3" Opacity="0" ToolTip="Remove pin"
                                         Style="{StaticResource HomePinTrash}"
                                         Command="{Binding DataContext.RemoveMarkerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}">

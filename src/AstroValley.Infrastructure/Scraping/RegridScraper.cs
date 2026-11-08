@@ -322,6 +322,7 @@ public class RegridScraper : IRegridScraper
             ElevationHigh = f.GetJsonString("highest_parcel_elevation"),
             ElevationLow = f.GetJsonString("lowest_parcel_elevation"),
             FloodZone = f.GetJsonString("fema_flood_zone", "fema_flood_zone_subtype", "fema_nri_risk_rating"),
+            LegalDescription = f.GetJsonString("legaldesc"),
             AssessedValue = GetAssessedValue(f),
             BirdseyeUrl = doc.RootElement.GetJsonString("birdseye"),
             ParcelLines = doc.RootElement.GetJsonString("geometry")

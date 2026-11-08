@@ -66,6 +66,9 @@ public partial class HomeViewModel : ObservableObject
     [ObservableProperty]
     private bool _onlySteep;
 
+    [ObservableProperty]
+    private bool _onlyUndivided;
+
     // Slider positions for "max acres"; the last position means no limit.
     private static readonly double[] AcreSteps = [0.25, 0.5, 1, 2, 5, 10, 25, 50, 100];
 
@@ -106,6 +109,8 @@ public partial class HomeViewModel : ObservableObject
 
     partial void OnOnlySteepChanged(bool value) => ApplyFilter();
 
+    partial void OnOnlyUndividedChanged(bool value) => ApplyFilter();
+
     partial void OnAcreStepChanged(int value) => ApplyFilter();
 
     private void ApplyFilter()
@@ -122,6 +127,7 @@ public partial class HomeViewModel : ObservableObject
         if (OnlyUnder5k && !(m.BidAmount is { } bid && bid < 5000)) return false;
         if (OnlyEquity && !(m.BidToAssessedPercent is { } percent && percent <= 25)) return false;
         if (OnlySteep && !(m.SlopePercent is >= SteepPercent)) return false;
+        if (OnlyUndivided && !m.UndividedInterest) return false;
         return AcreStep >= AcreSteps.Length
             || (double.TryParse(m.Acres, out var acres) && acres <= AcreSteps[AcreStep]);
     }
@@ -134,13 +140,14 @@ public partial class HomeViewModel : ObservableObject
             case "Under5k": OnlyUnder5k = !OnlyUnder5k; break;
             case "Equity": OnlyEquity = !OnlyEquity; break;
             case "Steep": OnlySteep = !OnlySteep; break;
+            case "Undivided": OnlyUndivided = !OnlyUndivided; break;
         }
     }
 
     [RelayCommand]
     private void ClearFilters()
     {
-        OnlyUnder5k = OnlyEquity = OnlySteep = false;
+        OnlyUnder5k = OnlyEquity = OnlySteep = OnlyUndivided = false;
         AcreStep = AcreSteps.Length;
     }
 

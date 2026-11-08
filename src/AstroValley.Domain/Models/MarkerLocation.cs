@@ -61,6 +61,14 @@ public record MarkerLocation : INotifyPropertyChanged
     public decimal? BidAmount => Money("Minimum Bid");
     public decimal? AssessedAmount => Money("Assessed");
 
+    /// <summary>True when the legal description uses co-ownership wording (undivided / fractional / partial interest, tenants in common).
+    /// shortcut: wording match only, so it can miss unusual phrasing or flag a description that merely mentions it; always read the legal description.</summary>
+    public bool UndividedInterest => ExtraDetails?.GetValueOrDefault("Legal Description") is { } legal && UndividedWording.IsMatch(legal);
+
+    private static readonly System.Text.RegularExpressions.Regex UndividedWording = new(
+        @"UNDIV|\bUND\.?\s*INT|\d+\s*/\s*\d+\s*%?\s*INT|\d+(\.\d+)?\s*%\s*INT|(ONE|TWO|THREE|FOUR|FIVE)[- ](HALF|HALVES|THIRD|THIRDS|FOURTH|FOURTHS|QUARTER|QUARTERS|FIFTH|FIFTHS|SIXTH|EIGHTH)\s+INT|FRACTIONAL\s+INT|PARTIAL\s+INT|TENANT(S|CY)\s+IN\s+COMMON|\bTIC\b|SEV(ERED)?\.?\s*MIN|LIFE\s+EST",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+
     /// <summary>Minimum bid as a percent of assessed value; null when either value is missing or 0.</summary>
     public double? BidToAssessedPercent =>
         BidAmount is { } bid && AssessedAmount is { } assessed ? Math.Round((double)(bid / assessed * 100), 1) : null;

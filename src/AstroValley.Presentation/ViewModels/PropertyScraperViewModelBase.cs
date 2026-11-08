@@ -312,6 +312,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
             var details = new Dictionary<string, string>();
             if (!string.IsNullOrEmpty(record.FloodZone)) details.Add("Flood Zone", record.FloodZone);
             if (!string.IsNullOrEmpty(record.Owner)) details.Add("Owner", record.Owner);
+            if (!string.IsNullOrWhiteSpace(record.Record.LegalDescription)) details.Add("Legal Description", record.Record.LegalDescription);
             if (!string.IsNullOrEmpty(record.City)) details.Add("City", record.City);          // City, Zoning and Type feed the Excel sheet
             if (!string.IsNullOrEmpty(record.ZoningCode)) details.Add("Zoning", record.ZoningCode);
             if (!string.IsNullOrEmpty(record.ZoningType)) details.Add("Type", record.ZoningType);

@@ -23,6 +23,7 @@ public class ExcelPropertyExporter : IExcelExporter
         ws.Cell(1, 1).Value = "Parcel ID";
         ws.Cell(1, 2).Value = "Address";
         ws.Cell(1, 3).Value = "Image";
+        ws.Cell(1, 4).Value = "Legal Description";
 
         int row = 2;
         foreach (var record in records)
@@ -30,6 +31,7 @@ public class ExcelPropertyExporter : IExcelExporter
             // Populate standard text fields
             ws.Cell(row, 1).Value = record.ParcelId;
             ws.Cell(row, 2).Value = record.Address;
+            ws.Cell(row, 4).Value = record.LegalDescription;
 
             if (!string.IsNullOrEmpty(record.BirdseyeUrl))
             {

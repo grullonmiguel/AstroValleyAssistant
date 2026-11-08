@@ -77,6 +77,10 @@ public static class PropertyRecordMerger
                 ? regrid.FloodZone
                 : original.FloodZone,
 
+            LegalDescription = string.IsNullOrWhiteSpace(original.LegalDescription)
+                ? regrid.LegalDescription
+                : original.LegalDescription,
+
             BirdseyeUrl = string.IsNullOrWhiteSpace(original.BirdseyeUrl)
                 ? regrid.BirdseyeUrl
                 : original.BirdseyeUrl
