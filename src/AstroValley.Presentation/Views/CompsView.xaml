@@ -18,6 +18,59 @@
             <Setter Property="Margin" Value="0,0,6,0"/>
             <Setter Property="FontSize" Value="12"/>
         </Style>
+        <!-- hyperlink-looking button with an icon: Content = text, Tag = the icon's StreamGeometry; underlines on hover -->
+        <Style x:Key="IconLink" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="#534B80"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" Padding="4,2">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{TemplateBinding Tag}" Fill="{TemplateBinding Foreground}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,6,0"/>
+                                <TextBlock x:Name="Text" Text="{TemplateBinding Content}" FontSize="13" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Text" Property="TextDecorations" Value="Underline"/></Trigger>
+                            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- same look as the site switcher: Pill = a site that is not selected, PillOn = the selected one -->
+        <Style x:Key="Pill" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Pill" CornerRadius="14" Padding="16,6" Background="Transparent">
+                            <TextBlock x:Name="Text" Text="{TemplateBinding Content}" FontSize="13" FontWeight="SemiBold" Foreground="#534B80"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Pill" Property="Background" Value="#CFCBE2"/></Trigger>
+                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Text" Property="Opacity" Value="0.5"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="PillOn" TargetType="Button" BasedOn="{StaticResource Pill}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Pill" CornerRadius="14" Padding="16,6" Background="#534B80">
+                            <TextBlock x:Name="Text" Text="{TemplateBinding Content}" FontSize="13" FontWeight="SemiBold" Foreground="White"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Pill" Property="Background" Value="#665C9E"/></Trigger>
+                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Pill" Property="Opacity" Value="0.5"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="FilterBox" TargetType="TextBox">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Foreground" Value="#333333"/>
@@ -97,12 +150,23 @@
                 </Border>
             </DockPanel>
             <Border Grid.Row="1" BorderBrush="{DynamicResource Brush.Accent.Secondary}" BorderThickness="1" CornerRadius="4">
-                <wv2:WebView2 x:Name="WebView"/>
+                <wv2:WebView2 x:Name="WebView">
+                    <wv2:WebView2.Style>
+                        <!-- a WebView2 is a native window and paints over WPF dialogs, so hide it while one is open -->
+                        <Style TargetType="wv2:WebView2">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDialogOpen}" Value="True">
+                                    <Setter Property="Visibility" Value="Hidden"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </wv2:WebView2.Style>
+                </wv2:WebView2>
             </Border>
         </Grid>
 
         <!-- Sidebar -->
-        <Grid Grid.Column="1" Margin="12,0,0,0">
+        <Grid Grid.Column="1" Margin="12,0,8,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -110,20 +174,67 @@
             </Grid.RowDefinitions>
 
             <StackPanel>
+                
                 <!-- the property being valued: typed in by hand, or filled when opened from a pin / grid row -->
-                <Border Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#DBD8E9" CornerRadius="6" Padding="10,6" Margin="0,0,0,8">
-                    <TextBlock Text="{Binding TargetLabel, StringFormat='For: {0}'}" FontSize="12" FontWeight="SemiBold" Foreground="#30294B" TextTrimming="CharacterEllipsis"/>
+                <Border CornerRadius="6"
+                        Padding="10,6" 
+                        Margin="0,0,0,8"
+                        Background="#DBD8E9" 
+                        Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}" >
+                    <TextBlock FontSize="12"                                
+                               FontWeight="SemiBold"
+                               Foreground="#30294B" 
+                               TextTrimming="CharacterEllipsis"
+                               Text="{Binding TargetLabel, StringFormat='For: {0}'}" />
                 </Border>
+                
+                <!-- Action Buttons -->
+                <Border Background="#DBD8E9" CornerRadius="18" Padding="4" Margin="0,0,0,8">
+                    <Grid >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <!-- Clear Button -->
+                        <Button Content="Clear" 
+                                Padding="18,6" 
+                                Margin="2,0,2,0"
+                                Style="{StaticResource Pill}"
+                                Command="{Binding ClearCommand}"/>
+                        <!-- New Property Button -->
+                        <Button Grid.Column="1" 
+                                Padding="12,6"
+                                Margin="2,0,2,0"
+                                Content="New property" 
+                                Style="{StaticResource Pill}"
+                                Command="{Binding NewPropertyCommand}" />
+                        <!-- Analyze Button -->
+                        <Button Grid.Column="2" 
+                                Content="Analyze" 
+                                Padding="18,6" 
+                                Margin="2,0,2,0"
+                                Style="{StaticResource PillOn}"
+                                Command="{Binding AnalyzeCommand}" />
+                    </Grid>
+                </Border>
+
+                <!-- Property Address -->
                 <Grid Margin="0,0,0,6">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="60"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
-                        <RowDefinition/><RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
                     </Grid.RowDefinitions>
+                    <!-- Address -->
                     <TextBlock Text="Address" Style="{StaticResource Label}"/>
-                    <TextBox Grid.Column="1" Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Field}"/>
+                    <TextBox Grid.Column="1" 
+                             Style="{StaticResource Field}"
+                             Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" />
+                    <!-- Acres / Zip Code / Is House or Lot -->
                     <TextBlock Grid.Row="1" Text="Acres" Style="{StaticResource Label}"/>
                     <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
                         <TextBox Text="{Binding AcresText, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource Field}"/>
@@ -132,32 +243,70 @@
                         <CheckBox Content="House" ToolTip="Value by the median price of the comps instead of acres x $/acre" IsChecked="{Binding IsHome}" VerticalAlignment="Center" Margin="10,0,0,0"/>
                     </StackPanel>
                 </Grid>
+                
+                <!-- Status -->
+                <TextBlock Margin="0,0,0,8"
+                           TextWrapping="Wrap"
+                           Text="{Binding Message}" 
+                           Style="{StaticResource Label}" />
 
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                    <Button Content="Analyze" Command="{Binding AnalyzeCommand}" Style="{StaticResource Theme.Button.Primary}" Padding="18,6" Margin="0,0,8,0"/>
-                    <Button Content="Clear" Command="{Binding ClearCommand}" Style="{StaticResource Theme.Button.Outline}" Padding="18,6" Margin="0,0,8,0"/>
-                    <Button Content="New property" Command="{Binding NewPropertyCommand}" Style="{StaticResource Theme.Button.Outline}" Padding="12,6"/>
-                </StackPanel>
-                <TextBlock Text="{Binding Message}" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,8"/>
-
-                <!-- Filters: collapsible card; the lists filter as you type -->
-                <Border Background="White" CornerRadius="14" Padding="14,12" Margin="0,0,0,10">
-                    <Border.Effect><DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.12" Color="#30294B"/></Border.Effect>
+                <!-- Filters -->
+                <Border Background="White" CornerRadius="12" Padding="12 8" Margin="0,0,0,8"
+                        Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.12" Color="#30294B"/>
+                    </Border.Effect>
                     <StackPanel>
-                        <ToggleButton x:Name="FiltersToggle" IsChecked="True" Cursor="Hand" HorizontalAlignment="Left">
+                        <ToggleButton x:Name="FiltersToggle" IsChecked="True" Cursor="Hand" FocusVisualStyle="{x:Null}">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <StackPanel Orientation="Horizontal" Background="Transparent">
-                                        <Border Width="36" Height="36" CornerRadius="10" Background="#F3F0FC">
-                                            <Path Data="M4,7 H20 M7,12 H17 M10,17 H14" Stroke="#5B4BA6" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                                  HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="None"/>
-                                        </Border>
-                                        <TextBlock Text="Filters" FontSize="18" FontWeight="SemiBold" Foreground="#171528" VerticalAlignment="Center" Margin="14,0,16,0"/>
-                                        <Path x:Name="Chevron" Data="M1,1 L7,7 L13,1" Stroke="#8791A8" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                              VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
-                                            <Path.RenderTransform><RotateTransform x:Name="ChevronTurn" Angle="0"/></Path.RenderTransform>
+                                    <Grid Background="Transparent">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Width="28" Height="28" CornerRadius="8" Background="#F3F0FC">
+                                                <Path Stretch="None"
+                                                  Stroke="#5B4BA6" 
+                                                  StrokeThickness="2" 
+                                                  StrokeStartLineCap="Round" 
+                                                  StrokeEndLineCap="Round"
+                                                  HorizontalAlignment="Center" 
+                                                  VerticalAlignment="Center" 
+                                                  Data="M4,7 H20 M7,12 H17 M10,17 H14" />
+                                            </Border>
+                                            <TextBlock Text="Filters" 
+                                                       FontSize="14" 
+                                                       FontWeight="SemiBold" 
+                                                       Foreground="#171528" 
+                                                       VerticalAlignment="Center"
+                                                       Margin="14,0,16,0"/>
+                                        </StackPanel>
+                                        <!-- Comps Total -->
+                                        <TextBlock Grid.Column="1"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#8A7FCB"
+                                                   VerticalAlignment="Center">
+                                            <Run Text="("/><Run Text="{Binding Count, Mode=OneWay}"/><Run Text=" of "/><Run Text="{Binding TotalCount, Mode=OneWay}"/><Run Text=")"/>
+                                        </TextBlock>
+                                        <Path Grid.Column="2" 
+                                              x:Name="Chevron" 
+                                              Data="M1,1 L7,7 L13,1" 
+                                              Stroke="#8791A8" 
+                                              StrokeThickness="2" 
+                                              StrokeStartLineCap="Round" 
+                                              StrokeEndLineCap="Round"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Right"
+                                              RenderTransformOrigin="0.5,0.5">
+                                            <Path.RenderTransform>
+                                                <RotateTransform x:Name="ChevronTurn" Angle="0"/>
+                                            </Path.RenderTransform>
                                         </Path>
-                                    </StackPanel>
+                                    </Grid>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsChecked" Value="False">
                                             <Trigger.EnterActions>
@@ -174,7 +323,7 @@
 
                         <!-- body: squashes to nothing when collapsed -->
                         <Border ClipToBounds="True" Margin="0,8,0,0">
-                                            <Border.Style>
+                            <Border.Style>
                                 <Style TargetType="Border">
                                     <Setter Property="LayoutTransform"><Setter.Value><ScaleTransform ScaleY="1"/></Setter.Value></Setter>
                                     <Style.Triggers>
@@ -197,7 +346,9 @@
                             </Border.Style>
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Margin="0,0,6,0">
                                 <TextBlock Text="Acres" Style="{StaticResource FilterHead}"/>
@@ -225,96 +376,161 @@
                     </StackPanel>
                 </Border>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,8">
-                    <TextBlock Text="Sort by:" Style="{StaticResource Label}" Margin="0,0,6,0"/>
-                    <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding Sort}" MinWidth="170" FontSize="12"/>
-                </StackPanel>
-
-                <!-- stats -->
-                <Border Background="#F4F2FB" CornerRadius="10" Padding="12,8" Margin="0,0,0,8">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                        <TextBlock Text="{Binding Count, StringFormat='{}{0} comps'}" FontSize="11" Style="{StaticResource Label}"/>
-                        <TextBlock Grid.Column="1" Text="Acres" FontWeight="SemiBold" FontSize="12"/>
-                        <TextBlock Grid.Column="2" Text="Price" FontWeight="SemiBold" FontSize="12"/>
-                        <TextBlock Grid.Column="3" Text="$/Acre" FontWeight="SemiBold" FontSize="12"/>
-                        <TextBlock Grid.Row="1" Text="Avg" FontWeight="Bold" FontSize="12" Margin="0,4,0,0"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AvgAcres, StringFormat={}{0:0.00}}" FontSize="12" Margin="0,4,0,0"/>
-                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding AvgPrice, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
-                        <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding AvgPpa, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
-                        <TextBlock Grid.Row="2" Text="Median" FontWeight="Bold" FontSize="12" Margin="0,4,0,0"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MedianAcres, StringFormat={}{0:0.00}}" FontSize="12" Margin="0,4,0,0"/>
-                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding MedianPrice, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
-                        <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding MedianPpa, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
-                    </Grid>
-                </Border>
             </StackPanel>
 
-            <!-- comps -->
+            <!-- Comps -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding Visible}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="White" BorderBrush="#E2DFEE" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,10">
+                <Border Background="White" CornerRadius="12" Padding="12 8"
+                        Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.12" Color="#30294B"/>
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <!-- -->
+                        <StackPanel>
+
+                            <!-- Stats -->
+                            <Border  Padding="12,8" Margin="0,0,0,12" Background="#DBD8E9" CornerRadius="8">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <!-- Lot Size -->
-                                            <TextBlock Text="{Binding LotText}" FontSize="15" FontWeight="Bold" Foreground="#333333" VerticalAlignment="Center"/>
-                                            
-                                            <!-- SOLD -->
-                                            <Border Background="#E3F0FB" CornerRadius="6" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Badge}" FontSize="10" FontWeight="SemiBold" Foreground="#2F6DA3"/>
-                                            </Border>
-                                        </StackPanel>
-                                        
-                                        <TextBlock Text="{Binding LotDetail}" FontSize="11" Foreground="#555555" Margin="0,2,0,0"/>
-                                        <TextBlock Text="{Binding PriceMiles}" FontSize="11" Foreground="#555555" Margin="0,2,0,0"/>
-                                        
-                                        <TextBlock Text="{Binding HomeText}" FontSize="11" Foreground="#555555" Margin="0,2,0,0">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HomeText}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <!-- the address opens the listing in the default browser; a button looks like a link and, unlike a Hyperlink, its command binding works here -->
-                                        <Button Margin="0,4,0,0" HorizontalAlignment="Left" Cursor="Hand" ToolTip="Open in your browser" Click="OnListingClick">
-                                            <Button.Template>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="Transparent"><!-- a background so the whole text area catches the mouse -->
-                                                        <TextBlock x:Name="Link" Text="{Binding Address}" FontSize="12" Foreground="#4F4486" TextTrimming="CharacterEllipsis"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Link" Property="TextDecorations" Value="Underline"/></Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Button.Template>
-                                        </Button>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                                        <Button Content="✕" HorizontalAlignment="Right" Style="{StaticResource Theme.Button.IconOnly}" FontSize="11" Padding="4,0"
-                                                Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"/>
-                                        <TextBlock Text="{Binding Price, StringFormat='{}{0:C0}'}" FontSize="17" FontWeight="Bold" Foreground="#8E7CC3" HorizontalAlignment="Right" Margin="0,2,0,0"/>
-                                    </StackPanel>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition/>
+                                        <RowDefinition Height="auto"/>
+                                        <RowDefinition/>
+                                        <RowDefinition Height="auto"/>
+                                        <RowDefinition/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <TextBlock Grid.Column="1" Text="Acres" FontWeight="SemiBold" FontSize="12"/>
+                                    <TextBlock Grid.Column="2" Text="Price" FontWeight="SemiBold" FontSize="12"/>
+                                    <TextBlock Grid.Column="3" Text="$/Acre" FontWeight="SemiBold" FontSize="12"/>
+                                    <TextBlock Grid.Row="2" Text="Avg" FontWeight="Bold" FontSize="12" Margin="0,4,0,0"/>
+                                    <Border Grid.Row="1" Grid.ColumnSpan="34" Background="#C0C0C0" Height="1" Margin="0 4 0 3" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AvgAcres, StringFormat={}{0:0.00}}" FontSize="12" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding AvgPrice, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding AvgPpa, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
+
+                                    <Border Grid.Row="3" Grid.ColumnSpan="34" Background="#C0C0C0" Height="1" Margin="0 4 0 3" />
+                                    <TextBlock Grid.Row="4" Text="Median" FontWeight="Bold" FontSize="12" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding MedianAcres, StringFormat={}{0:0.00}}" FontSize="12" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding MedianPrice, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="3" Text="{Binding MedianPpa, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
                                 </Grid>
                             </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+
+                            <!-- View on Map | Sort By-->
+                            <Grid Margin="0 0 0 12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <!-- View on Map -->
+                                <Button Content="View on Map" 
+                                        Style="{StaticResource IconLink}" 
+                                        Tag="{StaticResource Icon.MapPin}"
+                                        Command="{Binding ReviewOnMapCommand}"                            
+                                        Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                <!-- Sort By -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" >
+                                    <TextBlock Text="Sort:" Style="{StaticResource Label}" Margin="0,0,6,0"/>
+                                    <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding Sort}" MinWidth="150" FontSize="12"/>
+                                </StackPanel>
+                            </Grid>
+
+                        </StackPanel>
+
+                        <!-- Property List -->
+                        <ItemsControl Grid.Row="1" ItemsSource="{Binding Visible}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="White" 
+                                            BorderBrush="#E2DFEE" 
+                                            BorderThickness="1" 
+                                            CornerRadius="10" 
+                                            Padding="14,10" Margin="0,0,0,10">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.12" Color="#30294B"/>
+                                        </Border.Effect>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <!-- Lot Size -->
+                                                    <TextBlock Text="{Binding LotText}" FontSize="15" FontWeight="Bold" Foreground="#333333" VerticalAlignment="Center"/>
+
+                                                    <!-- SOLD -->
+                                                    <Border Background="#E3F0FB" CornerRadius="6" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Badge}" FontSize="10" FontWeight="SemiBold" Foreground="#2F6DA3"/>
+                                                    </Border>
+                                                </StackPanel>
+
+                                                <TextBlock Text="{Binding LotDetail}" 
+                                                   FontSize="11" 
+                                                   Foreground="#555555" 
+                                                   Margin="0,2,0,0"/>
+                                                <TextBlock Text="{Binding PriceMiles}" 
+                                                   FontSize="11" 
+                                                   Foreground="#555555" 
+                                                   Margin="0,2,0,0"/>
+                                                <TextBlock Text="{Binding HomeText}" 
+                                                   FontSize="11" 
+                                                   Foreground="#555555" 
+                                                   Margin="0,2,0,0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HomeText}" Value="{x:Null}">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <!-- the address opens the listing in the default browser; a button looks like a link and, unlike a Hyperlink, its command binding works here -->
+                                                <Button Margin="0,4,0,0" HorizontalAlignment="Left" Cursor="Hand" ToolTip="Open in your browser" Click="OnListingClick">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="Transparent">
+                                                                <!-- a background so the whole text area catches the mouse -->
+                                                                <TextBlock x:Name="Link" Text="{Binding Address}" FontSize="12" Foreground="#4F4486" TextTrimming="CharacterEllipsis"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="Link" Property="TextDecorations" Value="Underline"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                                <Button Content="✕" HorizontalAlignment="Right" Style="{StaticResource Theme.Button.IconOnly}" FontSize="11" Padding="4,0"
+                                                Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"/>
+                                                <TextBlock Text="{Binding Price, StringFormat='{}{0:C0}'}" FontSize="17" FontWeight="Bold" Foreground="#8E7CC3" HorizontalAlignment="Right" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </Border>
             </ScrollViewer>
 
-            <!-- market value + actions -->
-            <StackPanel Grid.Row="2" Margin="0,8,0,0">
+            <!-- Market value -->
+            <StackPanel Grid.Row="2" Margin="-8,0,0,0">
                 <Border Background="#DBD8E9" CornerRadius="8" Padding="12,8" Margin="0,0,0,8">
                     <StackPanel>
                         <TextBlock Text="Market value" Style="{StaticResource Label}"/>
@@ -324,15 +540,22 @@
                             <TextBox Text="{Binding PpaText, UpdateSourceTrigger=PropertyChanged}" Width="90" Style="{StaticResource Field}"/>
                             <CheckBox Content="Median" IsChecked="{Binding UseMedian}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                         </StackPanel>
-                        <TextBlock Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,4,0,0"
+                        <TextBlock TextWrapping="Wrap" 
+                                   Margin="0,4,0,0"
+                                   Style="{StaticResource Label}" 
                                    Text="Land: acres × $/acre. Home: the median price of the comps."/>
                     </StackPanel>
                 </Border>
-                <Button Content="Export HTML map" Command="{Binding ExportHtmlCommand}" Style="{StaticResource Theme.Button.Outline}" HorizontalAlignment="Right" Margin="0,0,0,8"/>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                
+                <StackPanel Orientation="Horizontal"
                             Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <Button Content="Back" Command="{Binding BackWithoutSavingCommand}" Style="{StaticResource Theme.Button.Outline}" Margin="0,0,12,0"/>
-                    <Button Content="Send value back" Command="{Binding UseCompsCommand}" Style="{StaticResource Theme.Button.Primary}"/>
+                    <Button Content="Show removed" 
+                            Command="{Binding ShowRemovedCommand}" 
+                            Style="{StaticResource Theme.Button.Outline}" 
+                            Margin="0,0,8,8"
+                            Visibility="{Binding HasRemoved, Converter={StaticResource BooleanToVisibilityConverter}}"/>  
+                    <Button Content="Back" Command="{Binding BackWithoutSavingCommand}" Style="{StaticResource Theme.Button.Outline}" Margin="0,0,12,8"/>
+                    <Button Content="Send value back" Command="{Binding UseCompsCommand}" Style="{StaticResource Theme.Button.Primary}" Margin="0 0 0 8"/>
                 </StackPanel>
             </StackPanel>
         </Grid>

@@ -30,6 +30,15 @@
         #modes button.on { background: #534B80; color: #fff; }
         #modes i { width: 1px; background: #534B80; opacity: .3; margin: 4px 2px; }
 
+        /* Include / Exclude switch in a comp's popup (Comps review dialog) */
+        .pk { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; font-weight: 600; color: #30294B; cursor: pointer; }
+        .pk input { display: none; }
+        .pk i { position: relative; width: 42px; height: 24px; border-radius: 12px; background: #D64545; transition: background .2s; }
+        .pk i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+        .pk input:checked + i { background: #2E9E5B; }
+        .pk input:checked + i::after { left: 21px; }
+        .pin-dot { position: absolute; top: -3px; right: -3px; width: 13px; height: 13px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box; pointer-events: none; }
+
         /*POPUP_CSS*/
     </style>
     <script>/*POPUP_JS*/</script>
@@ -49,13 +58,32 @@
         // Filled in by the app when exporting.
         var PINS = {{PINS_JSON}};
         var IMAGERY = {{IMAGERY}};
+        var PICKER = {{PICKER}};
+        var EXCLUDED = {}; // comp key -> true, set from the popup's Keep/Exclude button (picker mode only)
+        if (PICKER) { // the app's dialog reads EXCLUDED when Done is pressed; the list is redundant there
+            document.getElementById('panel').style.display = 'none';
+            document.getElementById('logo').style.display = 'none';
+            document.getElementById('btn-csv').style.display = 'none';
+        }
+        // Include toggle inside a comp's popup: the dot on the pin is green when included, red when not
+        function togglePick(cb) {
+            var key = cb.getAttribute('data-key');
+            EXCLUDED[key] = !cb.checked;
+            cb.parentNode.querySelector('.pk-t').textContent = cb.checked ? 'Included' : 'Excluded';
+            pins.forEach(function (p) {
+                if (p.key !== key) return;
+                p.dot.style.background = cb.checked ? '#2E9E5B' : '#D64545';
+                p.marker.getElement().style.opacity = cb.checked ? '1' : '.6';
+            });
+        }
 
         // Plain data download: one row per pin, no styling. CSV (not .xlsx) so no library is needed; Excel opens it directly.
         document.getElementById('btn-csv').onclick = function () {
             // [header, pin field, or ExtraDetails key]; Assessed / Minimum Bid use the parsed numbers
             var cols = [['AuctionDate'], ['Zoning', 'x'], ['Type', 'x'], ['Property Type', 'x'], ['County'], ['City', 'x'], ['ParcelID'], ['Owner', 'x'], ['Address'], ['Acres'],
                 ['Assessed', 'AssessedAmount'], ['Minimum Bid', 'BidAmount'], ['Flood Zone', 'x'], ['Elevation Low', 'x'], ['Elevation High', 'x'],
-                ['Latitude'], ['Longitude'], ['AuctionUrl'], ['RegridUrl'], ['GoogleMapsUrl'], ['FemaUrl'], ['AppraiserUrl'], ['Legal Description', 'x'], ['Undivided Interest', 'UndividedInterest']];
+                ['Latitude'], ['Longitude'], ['AuctionUrl'], ['RegridUrl'], ['GoogleMapsUrl'], ['FemaUrl'], ['AppraiserUrl'], ['Legal Description', 'x'], ['Undivided Interest', 'UndividedInterest'],
+                ['Avg Price / Acre', 'AvgPricePerAcre'], ['Comps Value', 'CompsValue'], ['Comps Date', 'CompsDate']]; // empty = no comps sent back yet
             var val = function (p, c) { var v = c[1] === 'x' ? (p.ExtraDetails || {})[c[0]] : p[c[1] || c[0]]; return c[1] === 'UndividedInterest' ? (v ? 'Yes' : '') : v; };
             var cell = function (v) { v = v == null ? '' : String(v); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
             var rows = [cols.map(function (c) { return c[0]; })];
@@ -127,6 +155,13 @@
             var el = document.createElement('div');
             el.className = 'item';
             el.textContent = (loc.IsSubject ? '\u{1F3E0} ' : '') + (loc.ParcelID || loc.Address);
+            var pickDot = null;
+            if (PICKER && loc.CompKey) { // green = included, red = excluded
+                pickDot = document.createElement('span');
+                pickDot.className = 'pin-dot';
+                pickDot.style.background = '#2E9E5B';
+                marker.getElement().appendChild(pickDot);
+            }
             if (loc.IsSubject) { // house icon above the green pin
                 var house = document.createElement('span');
                 house.textContent = '\u{1F3E0}';
@@ -147,7 +182,7 @@
             var idx = pins.length;
             el.onclick = function () { focusPin(idx); };
             listEl.appendChild(el);
-            pins.push({ marker: marker, el: el, lat: loc.Latitude, lon: loc.Longitude });
+            pins.push({ marker: marker, el: el, lat: loc.Latitude, lon: loc.Longitude, key: loc.CompKey, dot: pickDot });
         });
         document.getElementById('count').textContent = 'Total Properties: ' + pins.length;
         if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: PAD, maxZoom: 17, duration: 0 });

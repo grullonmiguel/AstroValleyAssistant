@@ -19,7 +19,8 @@ public record MarkerLocation : INotifyPropertyChanged
     public string? AuctionUrl { get; init; } // the RealAuction page the pin came from
     public DateTime? AuctionDate { get; init; } // drives pin colour and the "This week" filter
     public string? PinColor { get; init; }      // overrides the auction colour (pins with no auction, e.g. comps)
-    public bool IsSubject { get; init; }        // the property the comps were searched for (Comps export)
+    public string? CompKey { get; init; }       // identifies a comp pin when the map is used to exclude comps
+    public bool IsSubject { get; init; }       // the property the comps were searched for (Comps export)
     public Dictionary<string, string>? CompFacts { get; init; } // label -> value rows shown in the popup (Comps export)
 
     // Links shown in the Home map popup (null = not available, so the text is not a link).
@@ -66,6 +67,11 @@ public record MarkerLocation : INotifyPropertyChanged
     // Numbers parsed from ExtraDetails, written to the JSON as plain values (handy for a later Excel export). Missing or 0 = null.
     public decimal? BidAmount => Money("Minimum Bid");
     public decimal? AssessedAmount => Money("Assessed");
+
+    // Written to the JSON as plain values so a pin that already has comps is easy to tell: null = no comps sent back yet.
+    public decimal? AvgPricePerAcre => Comps is { Kind: "Land", PricePerAcre: > 0 } c ? c.PricePerAcre : null;
+    public decimal? CompsValue => Comps?.EstimatedValue is > 0 ? Comps.EstimatedValue : null;
+    public DateTime? CompsDate => Comps?.Date;
 
     /// <summary>"Vacant land" / "Structures", or null when unknown (see StructureKind); drives the map filter and the Excel Type column.</summary>
     public string? PropertyType => ExtraDetails?.GetValueOrDefault("Property Type");

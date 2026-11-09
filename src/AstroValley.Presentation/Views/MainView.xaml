@@ -35,6 +35,9 @@
         <DataTemplate DataType="{x:Type dialogs:ResolveMatchesViewModel}">
             <viewDialogs:ResolveMatchesView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:CompsReviewViewModel}">
+            <viewDialogs:CompsReviewView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type viewmodels:DialogWrapper}">
             <views:DialogWrapperView/>
         </DataTemplate>

@@ -231,6 +231,7 @@
             pinMarkers.forEach(function (p) {
                 if (pinKey(p.lat, p.lon) !== key) return;
                 p.loc.Comps = comps;
+                decoratePin(p.marker, p.loc); // green dot
                 var popup = p.marker.getPopup();
                 popup.setHTML(popupHtml(p.loc));
                 wireEditor(popup, p.loc, p.marker);

@@ -86,6 +86,9 @@ function popupHtml(loc, message) {
             return '<div style="display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px solid #eee"><span style="color:#777">' + esc(k) + '</span><b>' + esc(loc.CompFacts[k]) + '</b></div>';
         }).join('') + '</div>';
     }
+    if (loc.CompKey && typeof PICKER !== 'undefined' && PICKER) { // Comps review map: keep this comp or leave it out
+        compRows += '<label class="pk"><span class="pk-t">Included</span><input type="checkbox" checked data-key="' + esc(loc.CompKey).replace(/"/g, '&quot;') + '" onchange="togglePick(this)"><i></i></label>';
+    }
     if (loc.IsSubject) compRows = '<div style="margin:8px 0;font-weight:700;color:#2E9E5B">&#127968; Subject property</div>' + compRows;
 
     return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<span class="pp-links">' + findComps +
@@ -150,6 +153,10 @@ function decoratePin(marker, loc) {
     el.title = loc.UndividedInterest ? 'Possible undivided interest (see legal description)' : '';
     if (st && st !== 'Skip' && STATUS_COLORS[st]) { el.setAttribute('data-status', st); el.style.setProperty('--st', STATUS_COLORS[st]); }
     else el.removeAttribute('data-status');
+    // green dot, right side: comps were sent back for this pin
+    var dot = el.querySelector('.pin-comps-dot'), has = !!(loc.Comps && loc.Comps.EstimatedValue > 0);
+    if (has && !dot) { dot = document.createElement('span'); dot.className = 'pin-comps-dot'; dot.title = 'Has comps'; el.appendChild(dot); }
+    else if (!has && dot) dot.remove();
 }
 
 function statusSection(loc) {

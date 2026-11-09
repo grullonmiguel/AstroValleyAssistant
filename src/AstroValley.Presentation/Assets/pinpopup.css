@@ -97,4 +97,7 @@ a.pp-check { border: 0; background: none; padding: 0; text-decoration: underline
 /* purple dot, top left: legal description suggests undivided interest / co-owners */
 .pin-undiv::before { content: ''; position: absolute; top: -2px; left: -2px; width: 12px; height: 12px; border-radius: 50%;
     background: #8E44AD; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.4); z-index: 1; }
+/* green dot, right of the pin head: comps (estimated value) were sent back for this pin */
+.pin-comps-dot { position: absolute; top: 14px; right: -6px; width: 12px; height: 12px; border-radius: 50%; pointer-events: none;
+    background: #2E9E5B; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.4); z-index: 1; }
 .pin-skip { filter: grayscale(1) opacity(.45); }

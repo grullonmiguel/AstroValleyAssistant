@@ -83,7 +83,9 @@ public partial class CompsViewModel : ObservableObject
     [ObservableProperty] private string _message = "Search and filter on the site, then press Analyze.";
     [ObservableProperty] private bool _canGoBack;
 
-    [ObservableProperty] private int _count;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasComps))] private int _count;
+    [ObservableProperty] private int _totalCount; // everything read from the site, before the filter box and map exclusions
+    public bool HasComps => Count > 0; // the sort box and View on Map only make sense with comps listed
     [ObservableProperty] private decimal _avgPpa, _medianPpa, _avgPrice, _medianPrice, _estimate;
     [ObservableProperty] private double _avgAcres, _medianAcres;
     [ObservableProperty] private string _ppaText = ""; // the $ / acre used; editable
@@ -309,6 +311,7 @@ public partial class CompsViewModel : ObservableObject
     {
         var shown = _all.Where(c => !_removed.Contains(Key(c)) && (IsHome || c.Acres > 0)
             && In((double)c.Price, MinPrice, MaxPrice) && (c.Acres <= 0 ? MinAcres + MaxAcres + MinPpa + MaxPpa == "" : In(c.Acres, MinAcres, MaxAcres) && In((double)c.PricePerAcre, MinPpa, MaxPpa))).ToList();
+        RemovedCount = _all.Count(c => _removed.Contains(Key(c)));
         Visible.Clear();
         IEnumerable<Comp> ordered = Sort switch
         {
@@ -324,6 +327,7 @@ public partial class CompsViewModel : ObservableObject
         foreach (var c in ordered) Visible.Add(c);
 
         Count = shown.Count;
+        TotalCount = _all.Count;
         var withLot = shown.Where(c => c.Acres > 0).ToList(); // $/acre and acres stats only make sense for rows that have a lot
         var ppas = withLot.Select(c => c.PricePerAcre).ToList();
         AvgPpa = ppas.Count > 0 ? Math.Round(ppas.Average()) : 0;
@@ -372,15 +376,9 @@ public partial class CompsViewModel : ObservableObject
         LeaveToTarget();
     }
 
-    /// <summary>Writes the comps now listed (and the property itself) as pins on a standalone HTML map. Comps that could not be placed are left out.</summary>
-    [RelayCommand]
-    private async Task ExportHtml()
+    /// <summary>The subject plus the listed comps as map pins; comps that could not be placed are counted in <c>skipped</c> and left out.</summary>
+    private async Task<(List<MarkerLocation> Pins, int Skipped)> BuildPinsAsync()
     {
-        // "113 LAKE EDGE TRL, City, ST 12345" -> "113-lake-edge-trl.html" (street only)
-        var street = System.Text.RegularExpressions.Regex.Replace(Address.Split(',')[0].Trim().ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
-        var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "HTML File (*.html)|*.html", FileName = (street.Length > 0 ? street : "comps") + ".html" };
-        if (dialog.ShowDialog() != true) return;
-
         var us = CultureInfo.GetCultureInfo("en-US");
         var pins = new List<MarkerLocation>();
         // the subject is placed by Analyze's distance step; if that has not run, place it now
@@ -407,9 +405,23 @@ public partial class CompsViewModel : ObservableObject
                 Longitude = lon,
                 Acres = c.Acres > 0 ? c.Acres.ToString("0.####", CultureInfo.InvariantCulture) : null,
                 PinColor = "#CD7B2E",
+                CompKey = Key(c),
                 GoogleMapsUrl = c.Url // the address links to the listing
             });
         }
+        return (pins, skipped);
+    }
+
+    /// <summary>Writes the comps now listed (and the property itself) as pins on a standalone HTML map.</summary>
+    [RelayCommand]
+    private async Task ExportHtml()
+    {
+        // "113 LAKE EDGE TRL, City, ST 12345" -> "113-lake-edge-trl.html" (street only)
+        var street = System.Text.RegularExpressions.Regex.Replace(Address.Split(',')[0].Trim().ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+        var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "HTML File (*.html)|*.html", FileName = (street.Length > 0 ? street : "comps") + ".html" };
+        if (dialog.ShowDialog() != true) return;
+
+        var (pins, skipped) = await BuildPinsAsync();
         if (pins.Count == 0) { Message = "No comps with a location to export yet. Wait for the distances, or Analyze first."; return; }
 
         try
@@ -419,6 +431,37 @@ public partial class CompsViewModel : ObservableObject
             Message = $"Exported {pins.Count} pins" + (skipped > 0 ? $" ({skipped} comps had no location)." : ".");
         }
         catch (Exception ex) { Message = $"Could not export: {ex.Message}"; }
+    }
+
+    [ObservableProperty] private bool _isDialogOpen; // hides the browser while the review dialog is up
+
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasRemoved))] private int _removedCount;
+    public bool HasRemoved => RemovedCount > 0;
+
+    /// <summary>Opens the comps on a map where each one can be kept or excluded; exclusions are applied here when the user presses Done.</summary>
+    [RelayCommand]
+    private async Task ReviewOnMapAsync()
+    {
+        var (pins, _) = await BuildPinsAsync();
+        if (pins.Count == 0) { Message = "No comps with a location to show yet. Wait for the distances, or Analyze first."; return; }
+        var dialog = new Dialogs.CompsReviewViewModel(await Services.PinsHtml.BuildAsync(pins, true, picker: true), () => ExportHtmlCommand.ExecuteAsync(null));
+        _serviceProvider.GetRequiredService<Services.IDialogService>().ShowDialog(dialog);
+        IsDialogOpen = true;
+        string[]? excluded;
+        try { excluded = await dialog.Result; }
+        finally { IsDialogOpen = false; }
+        if (excluded is null || excluded.Length == 0) return;
+        foreach (var k in excluded) _removed.Add(k);
+        Refresh();
+        Message = $"{excluded.Length} comps excluded. Use \"Show removed\" to bring them back.";
+    }
+
+    /// <summary>Brings back every comp removed by hand or from the map.</summary>
+    [RelayCommand]
+    private void ShowRemoved()
+    {
+        _removed.Clear();
+        Refresh();
     }
 
     /// <summary>Returns without sending anything.</summary>
