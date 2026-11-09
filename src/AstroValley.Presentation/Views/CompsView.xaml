@@ -639,13 +639,13 @@
                                                     <StackPanel.Style>
                                                         <Style TargetType="StackPanel">
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Outlier}" Value="{x:Null}">
+                                                                <DataTrigger Binding="{Binding LeftOutWhy}" Value="{x:Null}">
                                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </StackPanel.Style>
-                                                    <TextBlock Text="{Binding Outlier}" ToolTip="{Binding OutlierTip}" FontSize="11" Foreground="#B23A3A" TextWrapping="Wrap" MaxWidth="230" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding LeftOutWhy}" ToolTip="{Binding OutlierTip}" FontSize="11" Foreground="#B23A3A" TextWrapping="Wrap" MaxWidth="230" VerticalAlignment="Center"/>
                                                     <!-- only while it is left out; the X removes it again -->
                                                     <Button Content="Include anyway" Margin="8,0,0,0" FontSize="11" Padding="6,1" VerticalAlignment="Center"
                                                             Command="{Binding DataContext.IncludeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"
@@ -712,6 +712,8 @@
                             <TextBlock Text="{Binding RateLabel}" Style="{StaticResource Label}" Margin="0,0,6,0"/>
                             <TextBox Text="{Binding PpaText, UpdateSourceTrigger=PropertyChanged}" Width="90" Style="{StaticResource Field}"/>
                             <CheckBox Content="Median" IsChecked="{Binding UseMedian}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            <CheckBox Content="Top 5" IsChecked="{Binding UseTopFive}" VerticalAlignment="Center" Margin="8,0,0,0"
+                                      ToolTip="Value from the 5 best matches only (highest weight). The rest stay listed and on the map, faded; remove one and the next best moves up, or Include anyway to add one."/>
                         </StackPanel>
                         <TextBlock TextWrapping="Wrap" 
                                    Margin="0,4,0,0"
@@ -728,7 +730,7 @@
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0"
                             Margin="0,0,8,8"
-                            Content="Clear Removed" 
+                            Content="Restore" ToolTip="Bring back every comp removed by hand, on the map, or left out as an outlier" 
                             Command="{Binding ShowRemovedCommand}" 
                             Style="{StaticResource Theme.Button.Outline}" 
                             Visibility="{Binding HasRemoved, Converter={StaticResource BooleanToVisibilityConverter}}"/>  

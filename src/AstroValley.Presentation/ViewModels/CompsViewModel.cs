@@ -98,6 +98,10 @@ public partial class CompsViewModel : ObservableObject
     [ObservableProperty] private string _targetLabel = "";
 
     [ObservableProperty] private bool _useMedian = true;
+    // Value from the best few comps only (appraisal practice: 3-5 strong comps beat many weak ones); the rest stay listed, faded.
+    // Comps chosen with "Include anyway" always count and take a slot.
+    private const int TopCount = 5;
+    [ObservableProperty] private bool _useTopFive = true;
     [ObservableProperty] private string _minPrice = "", _maxPrice = "", _minAcres = "", _maxAcres = "", _minPpa = "", _maxPpa = "";
     [ObservableProperty] private string _site = "Homes.com";
     [ObservableProperty] private string _message = "Search and filter on the site, then press Analyze.";
@@ -276,6 +280,11 @@ public partial class CompsViewModel : ObservableObject
                 _all.Add(comp);
                 added++;
             }
+            // also comps read before this rule, or by an earlier Analyze: keep the first of each pair
+            var earlier = _all.Where((c, i) => _all.Take(i).Any(x => SameSale(x, c))).ToList();
+            foreach (var c in earlier) _all.Remove(c);
+            merged += earlier.Count;
+            _mergeNote = merged > 0 ? $"{merged} listed twice (same sale under two addresses) counted once." : "";
             Message = rows.Count == 0 ? "No listings found on this page. Open a results page and try again."
                 : $"Read {rows.Count} listings: {added} added, {rows.Count(r => r.price <= 0)} skipped for no price; {rows.Count(r => r.price > 0 && r.acres <= 0)} have no lot size (used for houses only)."
                     + (merged > 0 ? $" {merged} listed twice (same sale under two addresses) counted once." : "") + $" Total {_all.Count}.";
@@ -294,7 +303,7 @@ public partial class CompsViewModel : ObservableObject
         } catch (e) { return null; } })()
         """;
     private record ZillowHome(string? street, string? zip, int? beds, double? baths, int? sqft, string? homeType, int? yearBuilt);
-    private string _subjectNote = ""; // what the Zillow lookup filled in; kept in the status line after the distances finish
+    private string _subjectNote = "", _mergeNote = ""; // kept in the status line after the distances finish // what the Zillow lookup filled in; kept in the status line after the distances finish
 
     /// <summary>
     /// A house with an address but no sqft yet, read on Zillow: open the property's own Zillow page, fill only the empty Sqft / Beds /
@@ -336,8 +345,11 @@ public partial class CompsViewModel : ObservableObject
 
     private record RawComp(string? address, double price, double acres, bool sold, string? url, string? soldText, int? homeSqft, double? lat, double? lon, string? verify, int? beds, double? baths, string? homeType);
     // The same sale under two addresses (a duplex as "1613 NW 45th St" and "1613-1615 NW 45th St"): same price, same sale date, same street number.
+    // Sale dates only need to be close: the two records of one duplex sale can carry different dates. A card without a date still matches.
+    // shortcut: 60 days is a guess; two units at one street number selling for the exact same price within 60 days would also merge.
     private static bool SameSale(Comp a, Comp b) =>
-        a.Sold && b.Sold && a.Price == b.Price && a.SoldText is { Length: > 0 } && a.SoldText == b.SoldText
+        a.Sold && b.Sold && a.Price == b.Price
+        && (a.SoldDate is not { } da || b.SoldDate is not { } db || Math.Abs((da - db).TotalDays) <= 60)
         && StreetNumber(a.Address) is { Length: > 0 } n && n == StreetNumber(b.Address);
     private static string StreetNumber(string? address) => System.Text.RegularExpressions.Regex.Match(address ?? "", @"^\s*(\d+)").Groups[1].Value;
 
@@ -351,7 +363,7 @@ public partial class CompsViewModel : ObservableObject
         _all.Clear();
         _removed.Clear();
         _kept.Clear();
-        _subjectNote = "";
+        _subjectNote = _mergeNote = "";
         Message = "Cleared.";
         Refresh();
     }
@@ -441,14 +453,14 @@ public partial class CompsViewModel : ObservableObject
                 if (++done % 5 == 0) Refresh();
             }
             Refresh();
-            Message = $"Distance found for {_all.Count(c => c.Miles is not null)} of {_all.Count} comps." + (_subjectNote.Length > 0 ? " " + _subjectNote : "");
+            Message = $"Distance found for {_all.Count(c => c.Miles is not null)} of {_all.Count} comps." + (_mergeNote.Length > 0 ? " " + _mergeNote : "") + (_subjectNote.Length > 0 ? " " + _subjectNote : "");
         }
         catch (OperationCanceledException) { } // a newer Analyze, Clear or property took over
     }
 
     private static readonly HashSet<string> Triggers = [nameof(IsHome), nameof(Sort), nameof(UseMedian),
         nameof(MinPrice), nameof(MaxPrice), nameof(MinAcres), nameof(MaxAcres), nameof(MinPpa), nameof(MaxPpa), nameof(AcresText),
-        nameof(HomeSqftText), nameof(BedsText), nameof(BathsText), nameof(IsMobile), nameof(IsMultiFamily)]; // acres: size match is rescored
+        nameof(HomeSqftText), nameof(BedsText), nameof(BathsText), nameof(IsMobile), nameof(IsMultiFamily), nameof(UseTopFive)]; // acres: size match is rescored
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
@@ -478,7 +490,7 @@ public partial class CompsViewModel : ObservableObject
         }
         _ = RunMapScript($"showOnly({JsonSerializer.Serialize(_all.Where(Passes).Select(Key))});"
             + $"orderList({JsonSerializer.Serialize(Visible.Select(Key))});" // the map's list follows the sort box
-            + string.Concat(_all.Select(c => $"setPick({JsonSerializer.Serialize(Key(c))},{(Excluded(c) ? "true" : "false")});")));
+            + string.Concat(_all.Select(c => $"setPick({JsonSerializer.Serialize(Key(c))},{(Excluded(c) || c.OutsideTop ? "true" : "false")});")));
     }
 
     private void Refresh()
@@ -486,7 +498,14 @@ public partial class CompsViewModel : ObservableObject
         // listed: passes the filters and not removed by hand; outliers stay listed (dimmed) so the reason shows, but do not count
         var listed = _all.Where(c => !_removed.Contains(Key(c)) && Passes(c)).ToList();
         CompScoring.Score(listed, PinAcres, IsHome, DateTime.Today, SubjectSqft, SubjectBeds, SubjectBaths, IsMobile, IsMultiFamily);
-        foreach (var c in listed) c.IsExcluded = Excluded(c);
+        foreach (var c in _all) c.OutsideTop = false;
+        if (UseTopFive)
+        {
+            var counted = listed.Where(c => !Excluded(c)).ToList();
+            var slots = Math.Max(0, TopCount - counted.Count(c => _kept.Contains(Key(c))));
+            foreach (var c in counted.Where(c => !_kept.Contains(Key(c))).OrderByDescending(c => c.Weight).Skip(slots)) c.OutsideTop = true;
+        }
+        foreach (var c in listed) c.IsExcluded = Excluded(c) || c.OutsideTop;
         var shown = listed.Where(c => !c.IsExcluded).ToList();
         RemovedCount = _all.Count(Excluded);
         Visible.Clear();
@@ -585,6 +604,7 @@ public partial class CompsViewModel : ObservableObject
             Estimate = MedianPrice;
             ValueHow = "Home: the weighted median price. Enter the house's sqft (and beds / baths) from the appraiser for a size-based value.";
         }
+        if (UseTopFive && Estimate > 0) ValueHow += $" Only the {TopCount} best matches count (Top 5).";
         EstimateText = Estimate > 0 ? Estimate.ToString("C0", us) : "--";
         var (lo, hi) = RangeValue;
         RangeText = Estimate > 0 && Count >= 2 && lo > 0 && hi > lo ? $"Range {lo.ToString("C0", us)} – {hi.ToString("C0", us)}" : "";

@@ -27,6 +27,10 @@ public record Comp(string? Address, decimal Price, double Acres, bool Sold, stri
     public string? OutlierTip { get; set; } // a sentence on what that kind of outlier usually means
     /// <summary>Left out of the value: an outlier the user has not chosen to keep (set by the Comps tab).</summary>
     public bool IsExcluded { get; set; }
+    /// <summary>Left out only because it is not among the best matches the value uses (the Comps tab's "Top 5").</summary>
+    public bool OutsideTop { get; set; }
+    /// <summary>Why the card is faded: the outlier reason, or outside the top matches; null when it counts.</summary>
+    public string? LeftOutWhy => Outlier ?? (OutsideTop ? "Outside the 5 best matches: not counted" : null);
 
     /// <summary>Weight as 1-4 filled dots, for the card and the map list.</summary>
     public string WeightDots { get { var n = Math.Clamp((int)Math.Ceiling(Weight * 4), 1, 4); return new string('●', n) + new string('○', 4 - n); } }
