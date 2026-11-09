@@ -87,7 +87,8 @@ function popupHtml(loc, message) {
         }).join('') + '</div>';
     }
     if (loc.CompKey && typeof PICKER !== 'undefined' && PICKER) { // Comps review map: keep this comp or leave it out
-        compRows += '<label class="pk"><span class="pk-t">Included</span><input type="checkbox" checked data-key="' + esc(loc.CompKey).replace(/"/g, '&quot;') + '" onchange="togglePick(this)"><i></i></label>';
+        var out = EXCLUDED[loc.CompKey]; // excluded from the sidebar or an earlier click
+        compRows += '<label class="pk"><span class="pk-t">' + (out ? 'Excluded' : 'Included') + '</span><input type="checkbox" ' + (out ? '' : 'checked ') + 'data-key="' + esc(loc.CompKey).replace(/"/g, '&quot;') + '" onchange="togglePick(this)"><i></i></label>';
     }
     if (loc.IsSubject) compRows = '<div style="margin:8px 0;font-weight:700;color:#2E9E5B">&#127968; Subject property</div>' + compRows;
 

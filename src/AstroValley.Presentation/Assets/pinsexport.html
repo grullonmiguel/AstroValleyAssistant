@@ -66,15 +66,21 @@
             document.getElementById('btn-csv').style.display = 'none';
         }
         // Include toggle inside a comp's popup: the dot on the pin is green when included, red when not
-        function togglePick(cb) {
-            var key = cb.getAttribute('data-key');
-            EXCLUDED[key] = !cb.checked;
-            cb.parentNode.querySelector('.pk-t').textContent = cb.checked ? 'Included' : 'Excluded';
+        function setPick(key, ex) { // also called by the app when a comp is removed from its list
+            EXCLUDED[key] = ex;
             pins.forEach(function (p) {
                 if (p.key !== key) return;
-                p.dot.style.background = cb.checked ? '#2E9E5B' : '#D64545';
-                p.marker.getElement().style.opacity = cb.checked ? '1' : '.6';
+                p.dot.style.background = ex ? '#D64545' : '#2E9E5B';
+                p.marker.getElement().style.opacity = ex ? '.6' : '1';
             });
+        }
+        function clearPicks() { Object.keys(EXCLUDED).forEach(function (k) { if (EXCLUDED[k]) setPick(k, false); }); }
+        function togglePick(cb) {
+            var key = cb.getAttribute('data-key');
+            cb.parentNode.querySelector('.pk-t').textContent = cb.checked ? 'Included' : 'Excluded';
+            setPick(key, !cb.checked);
+            // live: the app updates its list now
+            if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'pick', key: key, excluded: !cb.checked });
         }
 
         // Plain data download: one row per pin, no styling. CSV (not .xlsx) so no library is needed; Excel opens it directly.
@@ -148,7 +154,7 @@
 
         // pins + list
         var pins = [], bounds = new maplibregl.LngLatBounds(), listEl = document.getElementById('list');
-        PINS.forEach(function (loc) {
+        function addPin(loc) {
             var marker = makePin(loc, map); // colour by auction urgency
             bounds.extend([loc.Longitude, loc.Latitude]);
 
@@ -183,9 +189,26 @@
             el.onclick = function () { focusPin(idx); };
             listEl.appendChild(el);
             pins.push({ marker: marker, el: el, lat: loc.Latitude, lon: loc.Longitude, key: loc.CompKey, dot: pickDot });
-        });
-        document.getElementById('count').textContent = 'Total Properties: ' + pins.length;
-        if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: PAD, maxZoom: 17, duration: 0 });
+        }
+        // also called by the app to add pins a batch at a time, so they appear as they are ready
+        function addPins(arr) {
+            arr.forEach(addPin);
+            document.getElementById('count').textContent = 'Total Properties: ' + pins.length;
+            if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: PAD, maxZoom: 17, duration: 0 });
+        }
+        // the app's filters: only the comps whose key is listed stay on the map (the subject has no key, so it stays)
+        function showOnly(keys) {
+            var on = {}, n = 0;
+            keys.forEach(function (k) { on[k] = true; });
+            pins.forEach(function (p) {
+                var show = !p.key || on[p.key];
+                p.marker.getElement().style.display = show ? '' : 'none';
+                p.el.style.display = show ? '' : 'none';
+                if (show) n++;
+            });
+            document.getElementById('count').textContent = 'Total Properties: ' + n;
+        }
+        addPins(PINS);
 
         // 3D terrain + camera tour (shared code in pinpopup.js)
         var t3d = false, btn3d = document.getElementById('btn-3d'), btnTour = document.getElementById('btn-tour');

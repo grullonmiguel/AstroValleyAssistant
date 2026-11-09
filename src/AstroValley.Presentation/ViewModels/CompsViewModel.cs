@@ -101,6 +101,7 @@ public partial class CompsViewModel : ObservableObject
         var main = _serviceProvider.GetRequiredService<MainViewModel>();
         _returnTo = main.CurrentViewModel is CompsViewModel ? _returnTo : main.CurrentViewModel;
         _distanceCts?.Cancel();
+        IsMapVisible = false;
         _onReturn = onReturn;
         TargetLabel = label;
         HasTarget = true;
@@ -181,6 +182,7 @@ public partial class CompsViewModel : ObservableObject
     private async Task Analyze()
     {
         if (ReadPage is null) return;
+        IsMapVisible = false; // Analyze reads the browser
         try
         {
             var json = await ReadPage();
@@ -209,6 +211,7 @@ public partial class CompsViewModel : ObservableObject
     [RelayCommand]
     private void Clear()
     {
+        IsMapVisible = false; // also covers New property and leaving to the pin / row
         _distanceCts?.Cancel();
         _all.Clear();
         _removed.Clear();
@@ -307,10 +310,28 @@ public partial class CompsViewModel : ObservableObject
         (!double.TryParse(min.Replace("$", "").Replace(",", ""), NumberStyles.Float, CultureInfo.InvariantCulture, out var lo) || v >= lo) &&
         (!double.TryParse(max.Replace("$", "").Replace(",", ""), NumberStyles.Float, CultureInfo.InvariantCulture, out var hi) || v <= hi);
 
+    // passes the filter boxes (a hand- or map-excluded comp still does; it is dropped separately)
+    private bool Passes(Comp c) => (IsHome || c.Acres > 0)
+        && In((double)c.Price, MinPrice, MaxPrice) && (c.Acres <= 0 ? MinAcres + MaxAcres + MinPpa + MaxPpa == "" : In(c.Acres, MinAcres, MaxAcres) && In((double)c.PricePerAcre, MinPpa, MaxPpa));
+
+    private bool _mapReady; // the map page has loaded and understands showOnly / setPick
+
+    /// <summary>Makes the open map match the filters (hides filtered-out pins) and the exclusions (red pins).</summary>
+    private void SyncMap()
+    {
+        if (!IsMapVisible || !_mapReady || RunMapScript is null) return;
+        if (!IsMapLoading) // "13 of 24 pins": pins that pass the filters and are switched on, of all pins on the map
+        {
+            static bool Placed(Comp c) => (c.Lat ?? c.FoundLat) is not null && (c.Lon ?? c.FoundLon) is not null;
+            MapStatus = $"{_all.Count(c => Placed(c) && Passes(c) && !_removed.Contains(Key(c)))} of {_all.Count(Placed)} pins";
+        }
+        _ = RunMapScript($"showOnly({JsonSerializer.Serialize(_all.Where(Passes).Select(Key))});"
+            + string.Concat(_removed.Select(k => $"setPick({JsonSerializer.Serialize(k)},true);")));
+    }
+
     private void Refresh()
     {
-        var shown = _all.Where(c => !_removed.Contains(Key(c)) && (IsHome || c.Acres > 0)
-            && In((double)c.Price, MinPrice, MaxPrice) && (c.Acres <= 0 ? MinAcres + MaxAcres + MinPpa + MaxPpa == "" : In(c.Acres, MinAcres, MaxAcres) && In((double)c.PricePerAcre, MinPpa, MaxPpa))).ToList();
+        var shown = _all.Where(c => !_removed.Contains(Key(c)) && Passes(c)).ToList();
         RemovedCount = _all.Count(c => _removed.Contains(Key(c)));
         Visible.Clear();
         IEnumerable<Comp> ordered = Sort switch
@@ -325,6 +346,7 @@ public partial class CompsViewModel : ObservableObject
             _ => shown // Featured = the order the site listed them
         };
         foreach (var c in ordered) Visible.Add(c);
+        SyncMap();
 
         Count = shown.Count;
         TotalCount = _all.Count;
@@ -377,7 +399,7 @@ public partial class CompsViewModel : ObservableObject
     }
 
     /// <summary>The subject plus the listed comps as map pins; comps that could not be placed are counted in <c>skipped</c> and left out.</summary>
-    private async Task<(List<MarkerLocation> Pins, int Skipped)> BuildPinsAsync()
+    private async Task<(List<MarkerLocation> Pins, int Skipped)> BuildPinsAsync(IEnumerable<Comp>? source = null)
     {
         var us = CultureInfo.GetCultureInfo("en-US");
         var pins = new List<MarkerLocation>();
@@ -386,7 +408,7 @@ public partial class CompsViewModel : ObservableObject
         if (_subject is { } s)
             pins.Add(new MarkerLocation { Address = Address.Length > 0 ? Address : "Subject property", Latitude = s.Lat, Longitude = s.Lon, Acres = AcresText, PinColor = "#2E9E5B", IsSubject = true });
         var skipped = 0;
-        foreach (var c in Visible)
+        foreach (var c in source ?? Visible)
         {
             if ((c.Lat ?? c.FoundLat) is not { } lat || (c.Lon ?? c.FoundLon) is not { } lon) { skipped++; continue; }
             pins.Add(new MarkerLocation
@@ -433,27 +455,60 @@ public partial class CompsViewModel : ObservableObject
         catch (Exception ex) { Message = $"Could not export: {ex.Message}"; }
     }
 
-    [ObservableProperty] private bool _isDialogOpen; // hides the browser while the review dialog is up
+    // The map replaces the browser in this view (shown/hidden by the view); picks on it update the list live.
+    [ObservableProperty] private bool _isMapVisible;
+    public Func<string, Task>? LoadMap { get; set; }        // set by CompsView: puts the pins page in the map WebView
+    public Func<string, Task>? RunMapScript { get; set; }   // set by CompsView: calls into the map page
 
     [ObservableProperty, NotifyPropertyChangedFor(nameof(HasRemoved))] private int _removedCount;
     public bool HasRemoved => RemovedCount > 0;
 
-    /// <summary>Opens the comps on a map where each one can be kept or excluded; exclusions are applied here when the user presses Done.</summary>
+    /// <summary>Swaps the browser for a map of the comps where each one can be kept or excluded.</summary>
+    [ObservableProperty] private bool _isMapLoading;
+    [ObservableProperty] private string _mapStatus = "";
+    private int _mapRun; // a newer open or leaving the map stops an older load
+
     [RelayCommand]
     private async Task ReviewOnMapAsync()
     {
-        var (pins, _) = await BuildPinsAsync();
-        if (pins.Count == 0) { Message = "No comps with a location to show yet. Wait for the distances, or Analyze first."; return; }
-        var dialog = new Dialogs.CompsReviewViewModel(await Services.PinsHtml.BuildAsync(pins, true, picker: true), () => ExportHtmlCommand.ExecuteAsync(null));
-        _serviceProvider.GetRequiredService<Services.IDialogService>().ShowDialog(dialog);
-        IsDialogOpen = true;
-        string[]? excluded;
-        try { excluded = await dialog.Result; }
-        finally { IsDialogOpen = false; }
-        if (excluded is null || excluded.Length == 0) return;
-        foreach (var k in excluded) _removed.Add(k);
+        if (LoadMap is null || RunMapScript is null || IsMapVisible) return;
+        var run = ++_mapRun;
+        _mapReady = false;
+        bool Stale() => run != _mapRun || !IsMapVisible;
+        // swap at once; the rest happens with the map on screen
+        MapStatus = "Loading map…";
+        IsMapLoading = true;
+        IsMapVisible = true;
+        try
+        {
+            _ = RunMapScript("document.body.style.visibility='hidden'"); // hide the previous map until the new page loads
+            var (pins, _) = await BuildPinsAsync(_all); // every comp, so loosening a filter can bring pins back
+            if (Stale()) return;
+            if (pins.Count == 0) { IsMapVisible = false; Message = "No comps with a location to show yet. Wait for the distances, or Analyze first."; return; }
+            await LoadMap(await Services.PinsHtml.BuildAsync([], true, picker: true));
+            _mapReady = true;
+            // pins go in a few at a time so they pop onto the map
+            for (var i = 0; i < pins.Count && !Stale(); i += 8)
+            {
+                var batch = pins.Skip(i).Take(8).ToList();
+                MapStatus = $"Adding pins {Math.Min(i + 8, pins.Count)} / {pins.Count}";
+                await RunMapScript($"addPins({Services.PinsHtml.ToJson(batch)})");
+                SyncMap(); // keeps the batch inside the current filters
+                await Task.Delay(40);
+            }
+        }
+        catch (Exception ex) { IsMapVisible = false; Message = "Could not show the map: " + ex.Message; }
+        finally { if (run == _mapRun) { IsMapLoading = false; SyncMap(); } }
+    }
+
+    [RelayCommand]
+    private void BackToBrowser() => IsMapVisible = false;
+
+    /// <summary>A pin's Included switch on the map was flipped.</summary>
+    public void OnMapPick(string key, bool excluded)
+    {
+        if (excluded) _removed.Add(key); else _removed.Remove(key);
         Refresh();
-        Message = $"{excluded.Length} comps excluded. Use \"Show removed\" to bring them back.";
     }
 
     /// <summary>Brings back every comp removed by hand or from the map.</summary>
@@ -462,6 +517,7 @@ public partial class CompsViewModel : ObservableObject
     {
         _removed.Clear();
         Refresh();
+        if (IsMapVisible) _ = RunMapScript?.Invoke("clearPicks()");
     }
 
     /// <summary>Returns without sending anything.</summary>

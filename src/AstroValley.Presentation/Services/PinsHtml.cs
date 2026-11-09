@@ -7,11 +7,13 @@ namespace AstroValley.Presentation.Services;
 /// <summary>Builds the standalone pins map (Assets/pinsexport.html) from a list of pins; shared by the Home and Comps exports.</summary>
 public static class PinsHtml
 {
+    public static string ToJson(IEnumerable<MarkerLocation> pins) => JsonSerializer.Serialize(pins, new JsonSerializerOptions { PropertyNamingPolicy = null });
+
     public static async Task<string> BuildAsync(IEnumerable<MarkerLocation> pins, bool imagery, bool picker = false)
     {
         var assets = Path.Combine(AppContext.BaseDirectory, "Assets");
         // Default JSON encoding escapes '<' etc., so the data can't break out of the <script> tag.
-        var pinsJson = JsonSerializer.Serialize(pins, new JsonSerializerOptions { PropertyNamingPolicy = null });
+        var pinsJson = ToJson(pins);
 
         return (await File.ReadAllTextAsync(Path.Combine(assets, "pinsexport.html")))
             .Replace("/*POPUP_CSS*/", await File.ReadAllTextAsync(Path.Combine(assets, "pinpopup.css")))

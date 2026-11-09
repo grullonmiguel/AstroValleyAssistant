@@ -121,7 +121,40 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
+            <!-- map mode: the same row holds the map's buttons instead -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsMapVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <!-- same pill group as Clear / New property / Analyze -->
+                <Border Background="#DBD8E9" CornerRadius="18" Padding="4" Margin="0,0,14,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="← Back to browser" Padding="18,6" Margin="2,0,2,0" Style="{StaticResource PillOn}" Command="{Binding BackToBrowserCommand}"/>
+                        <Button Content="Export HTML" Padding="18,6" Margin="2,0,2,0" Style="{StaticResource Pill}" Command="{Binding ExportHtmlCommand}"/>
+                    </StackPanel>
+                </Border>
+                <!-- WPF can't draw over a WebView2, so loading progress sits in this bar -->
+                <ProgressBar IsIndeterminate="True" Width="90" Height="6" VerticalAlignment="Center" Margin="0,0,8,0"
+                             Visibility="{Binding IsMapLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <TextBlock Text="{Binding MapStatus}" VerticalAlignment="Center" Style="{StaticResource Label}"/>
+            </StackPanel>
             <DockPanel Margin="0,0,0,8">
+                <DockPanel.Style>
+                    <Style TargetType="DockPanel">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsMapVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DockPanel.Style>
                 <Button DockPanel.Dock="Left" Content="← Back" Command="{Binding GoBackCommand}" Style="{StaticResource Site}" Margin="0,0,10,0"/>
                 <!-- site switcher: light pill, the current site in dark purple -->
                 <Border HorizontalAlignment="Left" Background="#DBD8E9" CornerRadius="18" Padding="4">
@@ -150,18 +183,32 @@
                 </Border>
             </DockPanel>
             <Border Grid.Row="1" BorderBrush="{DynamicResource Brush.Accent.Secondary}" BorderThickness="1" CornerRadius="4">
-                <wv2:WebView2 x:Name="WebView">
-                    <wv2:WebView2.Style>
-                        <!-- a WebView2 is a native window and paints over WPF dialogs, so hide it while one is open -->
-                        <Style TargetType="wv2:WebView2">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsDialogOpen}" Value="True">
-                                    <Setter Property="Visibility" Value="Hidden"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </wv2:WebView2.Style>
-                </wv2:WebView2>
+                <Grid>
+                    <!-- Hidden (not Collapsed) keeps the page, login and history alive behind the map -->
+                    <wv2:WebView2 x:Name="WebView">
+                        <wv2:WebView2.Style>
+                            <Style TargetType="wv2:WebView2">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsMapVisible}" Value="True">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </wv2:WebView2.Style>
+                    </wv2:WebView2>
+                    <wv2:WebView2 x:Name="MapWebView">
+                        <wv2:WebView2.Style>
+                            <Style TargetType="wv2:WebView2">
+                                <Setter Property="Visibility" Value="Hidden"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsMapVisible}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </wv2:WebView2.Style>
+                    </wv2:WebView2>
+                </Grid>
             </Border>
         </Grid>
 
@@ -547,16 +594,29 @@
                     </StackPanel>
                 </Border>
                 
-                <StackPanel Orientation="Horizontal"
-                            Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <Button Content="Show removed" 
+                <Grid Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0"
+                            Margin="0,0,8,8"
+                            Content="Clear Removed" 
                             Command="{Binding ShowRemovedCommand}" 
                             Style="{StaticResource Theme.Button.Outline}" 
-                            Margin="0,0,8,8"
                             Visibility="{Binding HasRemoved, Converter={StaticResource BooleanToVisibilityConverter}}"/>  
-                    <Button Content="Back" Command="{Binding BackWithoutSavingCommand}" Style="{StaticResource Theme.Button.Outline}" Margin="0,0,12,8"/>
-                    <Button Content="Send value back" Command="{Binding UseCompsCommand}" Style="{StaticResource Theme.Button.Primary}" Margin="0 0 0 8"/>
-                </StackPanel>
+                    <Button Grid.Column="1" 
+                            Content="Return" 
+                            Command="{Binding BackWithoutSavingCommand}" 
+                            Style="{StaticResource Theme.Button.Outline}" 
+                            Margin="0,0,12,8"/>
+                    <Button Grid.Column="2" 
+                            Content="Apply Value" 
+                            Command="{Binding UseCompsCommand}" 
+                            Style="{StaticResource Theme.Button.Primary}" 
+                            Margin="0 0 0 8"/>
+                </Grid>
             </StackPanel>
         </Grid>
     </Grid>

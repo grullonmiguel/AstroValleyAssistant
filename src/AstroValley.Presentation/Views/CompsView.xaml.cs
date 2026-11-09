@@ -43,6 +43,33 @@ public partial class CompsView : UserControl
             WebView.CoreWebView2.NewWindowRequested += (_, e) => { e.Handled = true; WebView.CoreWebView2.Navigate(e.Uri); }; // stay in this view
             WebView.CoreWebView2.HistoryChanged += (_, _) => vm.CanGoBack = WebView.CoreWebView2.CanGoBack;
             WebView.CoreWebView2.Navigate(vm.StartUrl);
+
+            // The map: same profile, started once; the VM loads pins into it and gets each pick back live.
+            MapWebView.CreationProperties = WebView.CreationProperties;
+            try { await MapWebView.EnsureCoreWebView2Async(); }
+            catch (Exception ex) { System.Windows.MessageBox.Show($"The map could not start:\n{ex.Message}", "Comps"); return; }
+            MapWebView.CoreWebView2.NewWindowRequested += (_, e) => // listing links open in the default browser
+            {
+                e.Handled = true;
+                vm.OpenListing(e.Uri);
+            };
+            MapWebView.CoreWebView2.WebMessageReceived += (_, e) =>
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(e.WebMessageAsJson);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("type", out var t) && t.GetString() == "pick")
+                    vm.OnMapPick(root.GetProperty("key").GetString() ?? "", root.GetProperty("excluded").GetBoolean());
+            };
+            var mapLoaded = new TaskCompletionSource();
+            vm.LoadMap = async html =>
+            {
+                mapLoaded = new TaskCompletionSource();
+                MapWebView.CoreWebView2.NavigationCompleted += Done;
+                void Done(object? s, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs a) { MapWebView.CoreWebView2.NavigationCompleted -= Done; mapLoaded.TrySetResult(); }
+                MapWebView.NavigateToString(html);
+                await mapLoaded.Task; // shown only once loaded, so the old map never flashes
+            };
+            vm.RunMapScript = js => MapWebView.CoreWebView2.ExecuteScriptAsync(js);
         };
     }
 }
