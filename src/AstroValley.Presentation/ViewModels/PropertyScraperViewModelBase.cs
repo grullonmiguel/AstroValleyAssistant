@@ -313,7 +313,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         if (row is null) return;
         var r = row.Record;
         double? Coord(string s) => double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
-        var subject = new CompsSubject(string.IsNullOrWhiteSpace(r.Address) ? r.ParcelId : r.Address, r.Acres, r.PropertyType, Coord(r.Latitude), Coord(r.Longitude));
+        var subject = new CompsSubject(string.IsNullOrWhiteSpace(r.Address) ? r.ParcelId : r.Address, r.Acres, r.PropertyType, Coord(r.Latitude), Coord(r.Longitude), r.Zip);
         _serviceProvider!.GetRequiredService<CompsViewModel>().Open(subject, subject.Address ?? "", result => row.Record = row.Record with { Comps = result });
     }
 
@@ -328,7 +328,8 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
             if (!string.IsNullOrEmpty(record.Owner)) details.Add("Owner", record.Owner);
             if (!string.IsNullOrWhiteSpace(record.Record.LegalDescription)) details.Add("Legal Description", record.Record.LegalDescription);
             if (!string.IsNullOrWhiteSpace(record.PropertyType)) details.Add("Property Type", record.PropertyType); // "Vacant land" / "Structures"; absent when unknown
-            if (!string.IsNullOrEmpty(record.City)) details.Add("City", record.City);          // City, Zoning and Type feed the Excel sheet
+            if (!string.IsNullOrEmpty(record.City)) details.Add("City", record.City);
+            if (!string.IsNullOrEmpty(record.Zip)) details.Add("Zip", record.Zip);          // City, Zoning and Type feed the Excel sheet
             if (!string.IsNullOrEmpty(record.ZoningCode)) details.Add("Zoning", record.ZoningCode);
             if (!string.IsNullOrEmpty(record.ZoningType)) details.Add("Type", record.ZoningType);
             if (!string.IsNullOrWhiteSpace(record.ElevationLow)) details.Add("Elevation Low", record.ElevationLow);   // raw values: the pin computes its slope from these

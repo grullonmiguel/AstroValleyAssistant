@@ -126,8 +126,10 @@
                     <TextBox Grid.Column="1" Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Field}"/>
                     <TextBlock Grid.Row="1" Text="Acres" Style="{StaticResource Label}"/>
                     <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
-                        <TextBox Text="{Binding AcresText, UpdateSourceTrigger=PropertyChanged}" Width="90" Style="{StaticResource Field}"/>
-                        <CheckBox Content="House: value by median price" IsChecked="{Binding IsHome}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        <TextBox Text="{Binding AcresText, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource Field}"/>
+                        <TextBlock Text="Zip" Style="{StaticResource Label}" Margin="10,0,4,0"/>
+                        <TextBox Text="{Binding ZipText, UpdateSourceTrigger=PropertyChanged}" Width="70" MaxLength="5" Style="{StaticResource Field}"/>
+                        <CheckBox Content="House" ToolTip="Value by the median price of the comps instead of acres x $/acre" IsChecked="{Binding IsHome}" VerticalAlignment="Center" Margin="10,0,0,0"/>
                     </StackPanel>
                 </Grid>
 
@@ -223,6 +225,11 @@
                     </StackPanel>
                 </Border>
 
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,8">
+                    <TextBlock Text="Sort by:" Style="{StaticResource Label}" Margin="0,0,6,0"/>
+                    <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding Sort}" MinWidth="170" FontSize="12"/>
+                </StackPanel>
+
                 <!-- stats -->
                 <Border Background="#F4F2FB" CornerRadius="10" Padding="12,8" Margin="0,0,0,8">
                     <Grid>
@@ -259,17 +266,40 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal">
+                                            <!-- Lot Size -->
                                             <TextBlock Text="{Binding LotText}" FontSize="15" FontWeight="Bold" Foreground="#333333" VerticalAlignment="Center"/>
+                                            
+                                            <!-- SOLD -->
                                             <Border Background="#E3F0FB" CornerRadius="6" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding Badge}" FontSize="10" FontWeight="SemiBold" Foreground="#2F6DA3"/>
                                             </Border>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding PricePerAcre, StringFormat='{}{0:C0} per Acre'}" FontSize="11" Foreground="#555555" Margin="0,2,0,4"/>
-                                        <TextBlock FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="Open in your browser">
-                                            <Hyperlink Foreground="#333333" Command="{Binding DataContext.OpenListingCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding Url}">
-                                                <Run Text="{Binding Address, Mode=OneWay}"/>
-                                            </Hyperlink>
+                                        
+                                        <TextBlock Text="{Binding LotDetail}" FontSize="11" Foreground="#555555" Margin="0,2,0,0"/>
+                                        <TextBlock Text="{Binding PriceMiles}" FontSize="11" Foreground="#555555" Margin="0,2,0,0"/>
+                                        
+                                        <TextBlock Text="{Binding HomeText}" FontSize="11" Foreground="#555555" Margin="0,2,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HomeText}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
                                         </TextBlock>
+                                        <!-- the address opens the listing in the default browser; a button looks like a link and, unlike a Hyperlink, its command binding works here -->
+                                        <Button Margin="0,4,0,0" HorizontalAlignment="Left" Cursor="Hand" ToolTip="Open in your browser" Click="OnListingClick">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="Transparent"><!-- a background so the whole text area catches the mouse -->
+                                                        <TextBlock x:Name="Link" Text="{Binding Address}" FontSize="12" Foreground="#4F4486" TextTrimming="CharacterEllipsis"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Link" Property="TextDecorations" Value="Underline"/></Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" HorizontalAlignment="Right">
                                         <Button Content="✕" HorizontalAlignment="Right" Style="{StaticResource Theme.Button.IconOnly}" FontSize="11" Padding="4,0"

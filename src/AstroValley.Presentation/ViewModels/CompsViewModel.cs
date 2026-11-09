@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Text.Json;
+using AstroValley.Application.Interfaces.Data;
 using AstroValley.Domain.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,7 +17,7 @@ public partial class SiteOption(string name) : ObservableObject
 }
 
 /// <summary>The property a comps search is for. Coordinates are optional (a manual entry has none).</summary>
-public record CompsSubject(string? Address, double? Acres, string? PropertyType, double? Latitude, double? Longitude);
+public record CompsSubject(string? Address, double? Acres, string? PropertyType, double? Latitude, double? Longitude, string? Zip = null);
 
 /// <summary>
 /// The Comps tab: a browser (homes.com, Zillow, ...) plus a sidebar that reads the listings on screen, filters them and
@@ -37,7 +38,8 @@ public partial class CompsViewModel : ObservableObject
         ("Homes.com", "https://www.homes.com/"),
         ("Zillow", "https://www.zillow.com/homes/recently_sold/"),
         ("Realtor", "https://www.realtor.com/"),
-        ("Redfin", "https://www.redfin.com/")
+        ("Redfin", "https://www.redfin.com/"),
+        ("Trulia", "https://www.trulia.com/")
     ];
 
     // View hooks (set by CompsView once its browser is ready)
@@ -54,17 +56,21 @@ public partial class CompsViewModel : ObservableObject
     partial void OnSiteChanged(string value) { foreach (var o in SiteOptions) o.IsSelected = o.Name == value; }
 
     /// <summary>A comp's address opens the listing in the default browser, not in the embedded one.</summary>
-    [RelayCommand]
-    private void OpenListing(string? url)
+    public void OpenListing(string? url)
     {
-        if (Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme is "http" or "https")
+        if (Uri.TryCreate(url, UriKind.Absolute, out var u) && (u.Scheme == Uri.UriSchemeHttp || u.Scheme == Uri.UriSchemeHttps))
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = u.AbsoluteUri, UseShellExecute = true });
+        else Message = "This listing has no link to open."; // shows when the site gave no URL for the card
     }
 
     // the property being valued; editable so any random property can be typed in
     [ObservableProperty] private string _address = "";
     [ObservableProperty] private string _acresText = "";
+    [ObservableProperty] private string _zipText = "";
     [ObservableProperty] private bool _isHome;
+
+    public string[] SortOptions { get; } = ["Featured", "Distance: Nearest first", "Price: Low to High", "Price: High to Low", "Acres: Small to Large", "Acres: Large to Small", "Newest Sold (Date)", "Address: A-Z"];
+    [ObservableProperty] private string _sort = "Featured";
 
     // set when opened from a pin or grid row: the value can be sent back to it
     [ObservableProperty] private bool _hasTarget;
@@ -91,11 +97,15 @@ public partial class CompsViewModel : ObservableObject
     {
         var main = _serviceProvider.GetRequiredService<MainViewModel>();
         _returnTo = main.CurrentViewModel is CompsViewModel ? _returnTo : main.CurrentViewModel;
+        _distanceCts?.Cancel();
         _onReturn = onReturn;
         TargetLabel = label;
         HasTarget = true;
         (_lat, _lon, _type) = (subject.Latitude, subject.Longitude, subject.PropertyType);
         Address = subject.Address ?? "";
+        ZipText = subject.Zip ?? "";
+        if (ZipText.Length == 0) ZipText = Place().Zip ?? "";                // the address may end in one
+        if (ZipText.Length == 0 && _lat is not null) _ = FillZipAsync();     // else look it up from the coordinates
         AcresText = subject.Acres is > 0 ? subject.Acres.Value.ToString("0.####", CultureInfo.InvariantCulture) : "";
         IsHome = subject.PropertyType == "Structures";
         _all.Clear();
@@ -106,30 +116,57 @@ public partial class CompsViewModel : ObservableObject
         if (_lat is not null) GoSite("Zillow"); // Zillow can be centred on the property; other sites start where the browser was
     }
 
-    // Zillow recently-sold search: around the coordinates when known, else by the address; same property type, 90 days, lot 50-150%.
+    // Zillow recently-sold search: around the coordinates when known, else by the address; same property type, 90 days. No lot-size range: the user sets that on the page.
     // shortcut: Zillow's filter keys are undocumented (written from memory), so a filter may be ignored; adjust it on the page.
     private string ZillowUrl()
     {
         object Yes = new { value = true }, No = new { value = false };
         var f = new Dictionary<string, object> { ["rs"] = Yes, ["fsba"] = No, ["fsbo"] = No, ["nc"] = No, ["cmsn"] = No, ["auc"] = No, ["fore"] = No, ["pmf"] = No, ["pf"] = No, ["doz"] = new { value = "90" } };
         if (IsHome) { f["land"] = No; f["sf"] = Yes; f["tow"] = Yes; f["manu"] = Yes; f["mf"] = No; f["con"] = No; f["apa"] = No; f["apco"] = No; }
-        else if (_type == "Vacant land") { f["land"] = Yes; foreach (var k in new[] { "sf", "tow", "mf", "con", "apa", "manu", "apco" }) f[k] = No; }
-        if (!IsHome && PinAcres > 0) f["lot"] = new { min = (int)Math.Round(PinAcres * 0.5 * 43560), max = (int)Math.Round(PinAcres * 1.5 * 43560) };
+        else { f["land"] = Yes; foreach (var k in new[] { "sf", "tow", "mf", "con", "apa", "manu", "apco" }) f[k] = No; }
         object state;
         if (_lat is { } lat && _lon is { } lon)
         {
             double d = 0.03, dx = d / Math.Cos(lat * Math.PI / 180);
             state = new { pagination = new { }, isMapVisible = true, usersSearchTerm = "", mapBounds = new { west = lon - dx, east = lon + dx, south = lat - d, north = lat + d }, filterState = f, isListVisible = true };
         }
-        else state = new { pagination = new { }, isMapVisible = true, usersSearchTerm = Address, filterState = f, isListVisible = true };
+        else state = new { pagination = new { }, isMapVisible = true, usersSearchTerm = Address.Length > 0 ? Address : Place().Zip ?? "", filterState = f, isListVisible = true };
         return "https://www.zillow.com/homes/recently_sold/?searchQueryState=" + Uri.EscapeDataString(JsonSerializer.Serialize(state));
+    }
+
+    // City, state and ZIP from "street, City, ST 12345" (or the ZIP box); the sold-listing URLs below are built from them, like the extension does.
+    private (string? City, string? State, string? Zip) Place()
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(Address ?? "", @",\s*([^,]+?),\s*([A-Za-z]{2})\s+(\d{5})");
+        var zip = ZipText.Trim().Length == 5 ? ZipText.Trim() : m.Success ? m.Groups[3].Value
+            : System.Text.RegularExpressions.Regex.Match(Address ?? "", @"\b(\d{5})(?:-\d{4})?\s*$") is { Success: true } z ? z.Groups[1].Value : null;
+        return m.Success ? (m.Groups[1].Value.Trim(), m.Groups[2].Value.ToUpperInvariant(), zip) : (null, null, zip);
+    }
+
+    // Recently sold, last 6 months, land only when valuing land. Without a ZIP (or city for Homes.com) a site opens on its home page.
+    // shortcut: Realtor's URL with a ZIP is untested here (that site cannot be opened from my tooling); Homes.com needs "City, ST" in the address.
+    private string SiteUrl(string name)
+    {
+        var (city, state, zip) = Place();
+        var land = !IsHome;
+        var home = Sites.First(s => s.Name == name).Url;
+        switch (name)
+        {
+            case "Zillow": return _lat is not null || Address.Length > 0 || zip is not null ? ZillowUrl() : home;
+            case "Homes.com" when city is not null && state is not null:
+                return $"https://www.homes.com/{city.ToLowerInvariant().Replace(' ', '-')}-{state.ToLowerInvariant()}/sold/?{(land ? "property_type=32&" : "")}sd=4";
+            case "Realtor" when zip is not null: return $"https://www.realtor.com/realestateandhomes-search/{zip}{(land ? "/type-land" : "")}/soldwithin-6";
+            case "Redfin" when zip is not null: return $"https://www.redfin.com/zipcode/{zip}/filter/{(land ? "property-type=land," : "")}include=sold-6mo";
+            case "Trulia" when zip is not null: return $"https://www.trulia.com/sold/{zip}_zip/{(land ? "LOT%7CLAND_type/" : "")}6_srl/";
+            default: return home;
+        }
     }
 
     [RelayCommand]
     private void GoSite(string name)
     {
         Site = name;
-        PendingUrl = name == "Zillow" && (_lat is not null || Address.Length > 0) ? ZillowUrl() : Sites.First(s => s.Name == name).Url;
+        PendingUrl = SiteUrl(name);
         NavigateTo?.Invoke(PendingUrl); // before the browser is ready, the view loads PendingUrl when it starts
     }
 
@@ -148,25 +185,27 @@ public partial class CompsViewModel : ObservableObject
             var added = 0;
             foreach (var r in rows)
             {
-                if (r.price <= 0 || r.acres <= 0) continue; // needs both to be a usable comp
-                var comp = new Comp(r.address, (decimal)r.price, r.acres, r.sold, r.url, r.soldText);
+                if (r.price <= 0) continue; // no lot size is fine: houses are valued by price, land rows without one are left out of the stats
+                var comp = new Comp(r.address, (decimal)r.price, r.acres, r.sold, r.url, r.soldText, r.homeSqft, r.lat, r.lon);
                 if (_all.Any(c => Key(c) == Key(comp))) continue;
                 _all.Add(comp);
                 added++;
             }
             Message = rows.Count == 0 ? "No listings found on this page. Open a results page and try again."
-                : $"Read {rows.Count} listings, {added} new with price and lot size. Total {_all.Count}.";
+                : $"Read {rows.Count} listings: {added} added, {rows.Count(r => r.price <= 0)} skipped for no price; {rows.Count(r => r.price > 0 && r.acres <= 0)} have no lot size (used for houses only). Total {_all.Count}.";
         }
         catch (Exception ex) { Message = "Could not read the page: " + ex.Message; }
         Refresh();
+        _ = MeasureDistancesAsync();
     }
 
-    private record RawComp(string? address, double price, double acres, bool sold, string? url, string? soldText);
+    private record RawComp(string? address, double price, double acres, bool sold, string? url, string? soldText, int? homeSqft, double? lat, double? lon);
     private static string Key(Comp c) => (c.Address ?? c.Url ?? "") + "|" + (c.Sold ? "S" : "A");
 
     [RelayCommand]
     private void Clear()
     {
+        _distanceCts?.Cancel();
         _all.Clear();
         _removed.Clear();
         Message = "Cleared.";
@@ -189,12 +228,63 @@ public partial class CompsViewModel : ObservableObject
         (_lat, _lon, _type) = (null, null, null);
         HasTarget = false;
         TargetLabel = "";
-        Address = AcresText = "";
+        Address = AcresText = ZipText = "";
         IsHome = false;
         Clear();
     }
 
-    private static readonly HashSet<string> Triggers = [nameof(IsHome), nameof(UseMedian),
+    private async Task FillZipAsync()
+    {
+        try
+        {
+            var zip = await _serviceProvider.GetRequiredService<IGeocoder>().ZipAsync(_lat!.Value, _lon!.Value);
+            if (zip is not null && ZipText.Length == 0) ZipText = zip;
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private CancellationTokenSource? _distanceCts;
+
+    private static double Miles(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double R = 3958.8; // earth radius in miles
+        static double Rad(double d) => d * Math.PI / 180;
+        var a = Math.Pow(Math.Sin(Rad(lat2 - lat1) / 2), 2) + Math.Cos(Rad(lat1)) * Math.Cos(Rad(lat2)) * Math.Pow(Math.Sin(Rad(lon2 - lon1) / 2), 2);
+        return 2 * R * Math.Asin(Math.Sqrt(a));
+    }
+
+    /// <summary>
+    /// Distance from the property to each comp: Zillow gives coordinates, the other sites are placed by address (Census, then OpenStreetMap).
+    /// Runs in the background and refreshes the list as it goes; the property's own coordinates come from the pin or its address.
+    /// </summary>
+    private async Task MeasureDistancesAsync()
+    {
+        _distanceCts?.Cancel();
+        var cts = _distanceCts = new CancellationTokenSource();
+        var geo = _serviceProvider.GetRequiredService<IGeocoder>();
+        try
+        {
+            (double Lat, double Lon)? home = _lat is { } la && _lon is { } lo ? (la, lo)
+                : Address.Length > 0 ? await geo.GeocodeAsync(Address, cts.Token) : null;
+            if (home is not { } h) { Message += " Distance needs the property's coordinates or a full address."; return; }
+
+            var todo = _all.Where(c => c.Miles is null).ToList();
+            Message = $"Measuring distance for {todo.Count} comps...";
+            var done = 0;
+            foreach (var c in todo)
+            {
+                (double Lat, double Lon)? p = c.Lat is { } y && c.Lon is { } x ? (y, x)
+                    : c.Address is { Length: > 0 } a ? await geo.GeocodeAsync(a, cts.Token) : null;
+                if (p is { } q) c.Miles = Math.Round(Miles(h.Lat, h.Lon, q.Lat, q.Lon), 1);
+                if (++done % 5 == 0) Refresh();
+            }
+            Refresh();
+            Message = $"Distance found for {_all.Count(c => c.Miles is not null)} of {_all.Count} comps.";
+        }
+        catch (OperationCanceledException) { } // a newer Analyze, Clear or property took over
+    }
+
+    private static readonly HashSet<string> Triggers = [nameof(IsHome), nameof(Sort), nameof(UseMedian),
         nameof(MinPrice), nameof(MaxPrice), nameof(MinAcres), nameof(MaxAcres), nameof(MinPpa), nameof(MaxPpa)];
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -210,17 +300,29 @@ public partial class CompsViewModel : ObservableObject
 
     private void Refresh()
     {
-        var shown = _all.Where(c => !_removed.Contains(Key(c))
-            && In((double)c.Price, MinPrice, MaxPrice) && In(c.Acres, MinAcres, MaxAcres) && In((double)c.PricePerAcre, MinPpa, MaxPpa)).ToList();
+        var shown = _all.Where(c => !_removed.Contains(Key(c)) && (IsHome || c.Acres > 0)
+            && In((double)c.Price, MinPrice, MaxPrice) && (c.Acres <= 0 ? MinAcres + MaxAcres + MinPpa + MaxPpa == "" : In(c.Acres, MinAcres, MaxAcres) && In((double)c.PricePerAcre, MinPpa, MaxPpa))).ToList();
         Visible.Clear();
-        foreach (var c in shown) Visible.Add(c); // page order, like the extension's Featured sort
+        IEnumerable<Comp> ordered = Sort switch
+        {
+            "Distance: Nearest first" => shown.OrderBy(c => c.Miles ?? double.MaxValue), // comps that could not be placed go last
+            "Price: Low to High" => shown.OrderBy(c => c.Price),
+            "Price: High to Low" => shown.OrderByDescending(c => c.Price),
+            "Acres: Small to Large" => shown.OrderBy(c => c.Acres),
+            "Acres: Large to Small" => shown.OrderByDescending(c => c.Acres),
+            "Newest Sold (Date)" => shown.OrderByDescending(c => c.SoldDate),
+            "Address: A-Z" => shown.OrderBy(c => c.Address),
+            _ => shown // Featured = the order the site listed them
+        };
+        foreach (var c in ordered) Visible.Add(c);
 
         Count = shown.Count;
-        var ppas = shown.Select(c => c.PricePerAcre).ToList();
+        var withLot = shown.Where(c => c.Acres > 0).ToList(); // $/acre and acres stats only make sense for rows that have a lot
+        var ppas = withLot.Select(c => c.PricePerAcre).ToList();
         AvgPpa = ppas.Count > 0 ? Math.Round(ppas.Average()) : 0;
         MedianPpa = CompsResult.Median(ppas);
-        AvgAcres = shown.Count > 0 ? shown.Average(c => c.Acres) : 0;
-        MedianAcres = shown.Count > 0 ? (double)CompsResult.Median(shown.Select(c => (decimal)c.Acres)) : 0;
+        AvgAcres = withLot.Count > 0 ? withLot.Average(c => c.Acres) : 0;
+        MedianAcres = withLot.Count > 0 ? (double)CompsResult.Median(withLot.Select(c => (decimal)c.Acres)) : 0;
         AvgPrice = shown.Count > 0 ? Math.Round(shown.Average(c => c.Price)) : 0;
         MedianPrice = CompsResult.Median(shown.Select(c => c.Price));
         PpaText = (UseMedian ? MedianPpa : AvgPpa).ToString("0", CultureInfo.InvariantCulture); // also refreshes the estimate

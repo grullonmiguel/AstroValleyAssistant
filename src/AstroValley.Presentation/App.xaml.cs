@@ -95,6 +95,7 @@ namespace AstroValley.Presentation
 
             // ── Infrastructure: Data Services ────────────────────────────────
             services.AddSingleton<IGeographyDataService, GeographyDataService>();
+            services.AddSingleton<IGeocoder, Geocoder>();
 
             // ── Infrastructure: Exporters ────────────────────────────────────
             services.AddTransient<IClipboardExporter, ClipboardExporter>();

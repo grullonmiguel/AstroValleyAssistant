@@ -8,6 +8,13 @@ public partial class CompsView : UserControl
 {
     private bool _initialized;
 
+    // A comp's address: open its listing in the default browser (not the embedded one).
+    private void OnListingClick(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (DataContext is CompsViewModel vm && sender is System.Windows.FrameworkElement { DataContext: AstroValley.Domain.Models.Comp comp })
+            vm.OpenListing(comp.Url);
+    }
+
     public CompsView()
     {
         InitializeComponent();
