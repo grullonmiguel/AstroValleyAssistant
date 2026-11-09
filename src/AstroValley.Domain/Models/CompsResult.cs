@@ -6,6 +6,10 @@ public record Comp(string? Address, decimal Price, double Acres, bool Sold, stri
     /// <summary>Miles from the property being valued; set after the comp is placed on the map (null = could not be placed).</summary>
     public double? Miles { get; set; }
 
+    /// <summary>Coordinates found by geocoding the address (sites other than Zillow give none); used to pin the comp on a map.</summary>
+    public double? FoundLat { get; set; }
+    public double? FoundLon { get; set; }
+
     public decimal PricePerAcre => Acres > 0 ? Math.Round(Price / (decimal)Acres) : 0;
 
     /// <summary>Lot size as the sites show it: square feet under an acre, else acres; a house card may not show one at all.</summary>

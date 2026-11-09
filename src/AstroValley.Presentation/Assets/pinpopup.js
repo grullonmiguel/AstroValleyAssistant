@@ -77,16 +77,26 @@ function popupHtml(loc, message) {
             (c.Kind === 'Land' ? ' (' + money(c.PricePerAcre) + '/ac)' : '') + '</span></div></div>';
     }
     // Find comps only where WPF can open the dialog (Home map), not in the exported map
-    var findComps = typeof onFindComps === 'function' ? '<a href="#" class="pp-zoom pp-comps">' + (loc.Comps ? 'Edit comps' : 'Find comps') + '</a>' : '';
+    var findComps = typeof onFindComps === 'function' ? '<a href="#" class="pp-zoom pp-comps">' + (loc.Comps ? 'Comps' : 'Find comps') + '</a>' : '';
+
+    // sold/active listing details from the Comps export, one label/value row each
+    var compRows = '';
+    if (loc.CompFacts) {
+        compRows = '<div style="margin:8px 0;font-size:13px;color:#30294B">' + Object.keys(loc.CompFacts).map(function (k) {
+            return '<div style="display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px solid #eee"><span style="color:#777">' + esc(k) + '</span><b>' + esc(loc.CompFacts[k]) + '</b></div>';
+        }).join('') + '</div>';
+    }
+    if (loc.IsSubject) compRows = '<div style="margin:8px 0;font-weight:700;color:#2E9E5B">&#127968; Subject property</div>' + compRows;
 
     return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<span class="pp-links">' + findComps +
-        '<a href="#" class="pp-zoom">Zoom to parcel</a></span></div><div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' +
+        '<a href="#" class="pp-zoom">Zoom</a></span></div>' + compRows + '<div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' +
         (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + slope + box + equity + comps + statusSection(loc) + actions + '</div>';
 }
 
 // ---- pin colour by auction urgency (shared by Home and the exported map) -----------------------------------------
 // red <= 7 days (pulses), orange <= 30, green later, grey past / no date.
 function pinInfo(loc) {
+    if (loc.PinColor) return { color: loc.PinColor, urgent: false, days: null }; // set by the Comps export
     if (!loc.AuctionDate) return { color: '#9A9A9A', urgent: false, days: null };
     var d = new Date(loc.AuctionDate), t = new Date();
     d.setHours(0, 0, 0, 0); t.setHours(0, 0, 0, 0);

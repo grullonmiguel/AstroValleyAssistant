@@ -18,6 +18,9 @@ public record MarkerLocation : INotifyPropertyChanged
     public string? County { get; init; }     // e.g. "Marion County", from the auction site
     public string? AuctionUrl { get; init; } // the RealAuction page the pin came from
     public DateTime? AuctionDate { get; init; } // drives pin colour and the "This week" filter
+    public string? PinColor { get; init; }      // overrides the auction colour (pins with no auction, e.g. comps)
+    public bool IsSubject { get; init; }        // the property the comps were searched for (Comps export)
+    public Dictionary<string, string>? CompFacts { get; init; } // label -> value rows shown in the popup (Comps export)
 
     // Links shown in the Home map popup (null = not available, so the text is not a link).
     public string? RegridUrl { get; init; }

@@ -237,17 +237,7 @@ public partial class HomeViewModel : ObservableObject
         BeginExport("Exporting map...");
         try
         {
-            var assets = Path.Combine(AppContext.BaseDirectory, "Assets");
-            // Default JSON encoding escapes '<' etc., so the data can't break out of the <script> tag.
-            var pinsJson = JsonSerializer.Serialize(Markers, new JsonSerializerOptions { PropertyNamingPolicy = null });
-
-            var html = (await File.ReadAllTextAsync(Path.Combine(assets, "pinsexport.html")))
-                .Replace("/*POPUP_CSS*/", await File.ReadAllTextAsync(Path.Combine(assets, "pinpopup.css")))
-                .Replace("/*POPUP_JS*/", await File.ReadAllTextAsync(Path.Combine(assets, "pinpopup.js")))
-                .Replace("{{IMAGERY}}", IsImagery ? "true" : "false")
-                .Replace("{{PINS_JSON}}", pinsJson); // last, so pin text can never be mistaken for a placeholder
-
-            await File.WriteAllTextAsync(dialog.FileName, html);
+            await File.WriteAllTextAsync(dialog.FileName, await Services.PinsHtml.BuildAsync(Markers, IsImagery));
             OpenFile(dialog.FileName);
         }
         catch (Exception ex)

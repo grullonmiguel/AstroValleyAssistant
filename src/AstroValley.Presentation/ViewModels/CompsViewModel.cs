@@ -32,6 +32,7 @@ public partial class CompsViewModel : ObservableObject
     private ObservableObject? _returnTo;
     private double? _lat, _lon;
     private string? _type;
+    private (double Lat, double Lon)? _subject; // where the property was placed; the export's first pin
 
     public static readonly (string Name, string Url)[] Sites =
     [
@@ -110,6 +111,7 @@ public partial class CompsViewModel : ObservableObject
         IsHome = subject.PropertyType == "Structures";
         _all.Clear();
         _removed.Clear();
+        _subject = null;
         Message = "Search and filter on the site, then press Analyze.";
         Refresh();
         main.CurrentViewModel = this;
@@ -266,6 +268,7 @@ public partial class CompsViewModel : ObservableObject
         {
             (double Lat, double Lon)? home = _lat is { } la && _lon is { } lo ? (la, lo)
                 : Address.Length > 0 ? await geo.GeocodeAsync(Address, cts.Token) : null;
+            _subject = home;
             if (home is not { } h) { Message += " Distance needs the property's coordinates or a full address."; return; }
 
             var todo = _all.Where(c => c.Miles is null).ToList();
@@ -275,7 +278,11 @@ public partial class CompsViewModel : ObservableObject
             {
                 (double Lat, double Lon)? p = c.Lat is { } y && c.Lon is { } x ? (y, x)
                     : c.Address is { Length: > 0 } a ? await geo.GeocodeAsync(a, cts.Token) : null;
-                if (p is { } q) c.Miles = Math.Round(Miles(h.Lat, h.Lon, q.Lat, q.Lon), 1);
+                if (p is { } q)
+                {
+                    c.Miles = Math.Round(Miles(h.Lat, h.Lon, q.Lat, q.Lon), 1);
+                    c.FoundLat = q.Lat; c.FoundLon = q.Lon;
+                }
                 if (++done % 5 == 0) Refresh();
             }
             Refresh();
@@ -363,6 +370,55 @@ public partial class CompsViewModel : ObservableObject
             Comps = [.. Visible]
         });
         LeaveToTarget();
+    }
+
+    /// <summary>Writes the comps now listed (and the property itself) as pins on a standalone HTML map. Comps that could not be placed are left out.</summary>
+    [RelayCommand]
+    private async Task ExportHtml()
+    {
+        // "113 LAKE EDGE TRL, City, ST 12345" -> "113-lake-edge-trl.html" (street only)
+        var street = System.Text.RegularExpressions.Regex.Replace(Address.Split(',')[0].Trim().ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+        var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "HTML File (*.html)|*.html", FileName = (street.Length > 0 ? street : "comps") + ".html" };
+        if (dialog.ShowDialog() != true) return;
+
+        var us = CultureInfo.GetCultureInfo("en-US");
+        var pins = new List<MarkerLocation>();
+        // the subject is placed by Analyze's distance step; if that has not run, place it now
+        _subject ??= _lat is { } la && _lon is { } lo ? (la, lo) : Address.Length > 0 ? await _serviceProvider.GetRequiredService<IGeocoder>().GeocodeAsync(Address) : null;
+        if (_subject is { } s)
+            pins.Add(new MarkerLocation { Address = Address.Length > 0 ? Address : "Subject property", Latitude = s.Lat, Longitude = s.Lon, Acres = AcresText, PinColor = "#2E9E5B", IsSubject = true });
+        var skipped = 0;
+        foreach (var c in Visible)
+        {
+            if ((c.Lat ?? c.FoundLat) is not { } lat || (c.Lon ?? c.FoundLon) is not { } lon) { skipped++; continue; }
+            pins.Add(new MarkerLocation
+            {
+                CompFacts = new (string, string?)[]
+                {
+                    (c.Sold ? "Sold" : "Status", c.Sold ? (c.SoldText is { Length: > 0 } sd ? sd : "Sold") : "Active"),
+                    ("Price", c.Price.ToString("C0", us)),
+                    ("Lot", c.Acres > 0 ? $"{c.LotText} ({c.LotDetail})" : null),
+                    ("Price per acre", c.Acres > 0 ? c.PricePerAcre.ToString("C0", us) : null),
+                    ("Home size", c.HomeSqft is > 0 ? $"{c.HomeSqft:N0} sqft" : null),
+                    ("Distance", c.Miles is { } m ? $"{m:0.0} mi from subject" : null)
+                }.Where(x => x.Item2 is not null).ToDictionary(x => x.Item1, x => x.Item2!),
+                Address = c.Address ?? "N/A",
+                Latitude = lat,
+                Longitude = lon,
+                Acres = c.Acres > 0 ? c.Acres.ToString("0.####", CultureInfo.InvariantCulture) : null,
+                PinColor = "#CD7B2E",
+                GoogleMapsUrl = c.Url // the address links to the listing
+            });
+        }
+        if (pins.Count == 0) { Message = "No comps with a location to export yet. Wait for the distances, or Analyze first."; return; }
+
+        try
+        {
+            await System.IO.File.WriteAllTextAsync(dialog.FileName, await Services.PinsHtml.BuildAsync(pins, true));
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = dialog.FileName, UseShellExecute = true });
+            Message = $"Exported {pins.Count} pins" + (skipped > 0 ? $" ({skipped} comps had no location)." : ".");
+        }
+        catch (Exception ex) { Message = $"Could not export: {ex.Message}"; }
     }
 
     /// <summary>Returns without sending anything.</summary>

@@ -126,7 +126,13 @@
 
             var el = document.createElement('div');
             el.className = 'item';
-            el.textContent = loc.ParcelID || loc.Address;
+            el.textContent = (loc.IsSubject ? '\u{1F3E0} ' : '') + (loc.ParcelID || loc.Address);
+            if (loc.IsSubject) { // house icon above the green pin
+                var house = document.createElement('span');
+                house.textContent = '\u{1F3E0}';
+                house.style.cssText = 'position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:20px;pointer-events:none';
+                marker.getElement().appendChild(house);
+            }
             if (loc.UndividedInterest) { // purple dot, same as on the pin
                 var ud = document.createElement('span');
                 ud.className = 'dot'; ud.style.background = '#8E44AD'; ud.style.marginRight = '4px'; ud.title = 'Possible undivided interest';

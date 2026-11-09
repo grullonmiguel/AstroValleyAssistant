@@ -328,6 +328,7 @@
                                    Text="Land: acres × $/acre. Home: the median price of the comps."/>
                     </StackPanel>
                 </Border>
+                <Button Content="Export HTML map" Command="{Binding ExportHtmlCommand}" Style="{StaticResource Theme.Button.Outline}" HorizontalAlignment="Right" Margin="0,0,0,8"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                             Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Button Content="Back" Command="{Binding BackWithoutSavingCommand}" Style="{StaticResource Theme.Button.Outline}" Margin="0,0,12,0"/>
