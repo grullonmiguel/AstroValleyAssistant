@@ -442,8 +442,8 @@
                                           ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
                                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                          Margin="{TemplateBinding Padding}" 
-                                          IsHitTestVisible="false" 
+                                          Margin="{TemplateBinding Padding}"
+                                          IsHitTestVisible="false"
                                           SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
                                           TextElement.Foreground="{TemplateBinding Foreground}"/>
 

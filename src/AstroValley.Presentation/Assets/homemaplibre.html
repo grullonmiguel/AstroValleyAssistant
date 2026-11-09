@@ -169,7 +169,7 @@
                 var bounds = new maplibregl.LngLatBounds();
                 list.forEach(function (loc) {
                     var marker = makePin(loc, map); // colour by auction urgency (pinpopup.js)
-                    pinMarkers.push({ marker: marker, lat: loc.Latitude, lon: loc.Longitude });
+                    pinMarkers.push({ marker: marker, lat: loc.Latitude, lon: loc.Longitude, loc: loc });
                     bounds.extend([loc.Longitude, loc.Latitude]);
 
                     if (!loc.ParcelLines) return;
@@ -221,6 +221,20 @@
                 type: 'pinEdit', lat: loc.Latitude, lon: loc.Longitude, status: loc.Status || null, notes: loc.Notes || null,
                 accessStatus: loc.AccessStatus || null, accessFt: loc.AccessDistanceFt == null ? null : loc.AccessDistanceFt,
                 accessRoad: loc.AccessRoad || null, accessChecked: loc.AccessChecked || null });
+        }
+        // "Find comps" in a popup: WPF opens the comps dialog; setComps puts the accepted result back into the open popup.
+        function onFindComps(loc) {
+            if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'findComps', lat: loc.Latitude, lon: loc.Longitude });
+        }
+        function setComps(lat, lon, comps) {
+            var key = pinKey(lat, lon);
+            pinMarkers.forEach(function (p) {
+                if (pinKey(p.lat, p.lon) !== key) return;
+                p.loc.Comps = comps;
+                var popup = p.marker.getPopup();
+                popup.setHTML(popupHtml(p.loc));
+                wireEditor(popup, p.loc, p.marker);
+            });
         }
         function postMode() {
             if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({

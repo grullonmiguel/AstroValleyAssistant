@@ -65,6 +65,7 @@
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                         <RadioButton Content="Regrid" Command="{Binding NavigateCommand}" CommandParameter="Regrid" IsChecked="{Binding IsRegridActive, Mode=TwoWay}" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <RadioButton Content="Real Auction" Command="{Binding NavigateCommand}" CommandParameter="RealAuction" IsChecked="{Binding IsRealAuctionActive, Mode=TwoWay}" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
+                        <RadioButton Content="Comps" Command="{Binding NavigateCommand}" CommandParameter="Comps" IsChecked="{Binding IsCompsActive, Mode=TwoWay}" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <RadioButton Content="Home" Command="{Binding NavigateCommand}" CommandParameter="Home" IsChecked="{Binding IsHomeActive, Mode=TwoWay}" Style="{StaticResource Theme.RadioButton.HeaderLink}"/>
                         <!--<RadioButton Content="Maps" Command="{Binding NavigateCommand}" CommandParameter="Map" Style="{StaticResource Theme.RadioButton.HeaderLink}" />-->
                         <Button x:Name="HamburgerMenuButton" Command="{Binding OpenMenuCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}" Style="{StaticResource Theme.Button.HamburgerMenu}" >
@@ -88,10 +89,27 @@
                             <DataTrigger Binding="{Binding IsFullBleed}" Value="True">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding IsCompsActive}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </ContentControl.Style>
             </ContentControl>
+
+            <!-- Comps: one persistent instance (keeps the browser where it was), below the header. -->
+            <views:CompsView Grid.Row="1" Margin="{StaticResource Margin.Page}" DataContext="{Binding Comps}">
+                <views:CompsView.Style>
+                    <Style TargetType="views:CompsView">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding DataContext.IsCompsActive, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </views:CompsView.Style>
+            </views:CompsView>
 
             <!-- Home: one persistent instance, edge to edge behind the header. -->
             <views:HomeView Grid.Row="0" Grid.RowSpan="2" DataContext="{Binding Home}">
@@ -114,9 +132,9 @@
         <!-- Dialog Host -->
         <Grid Background="{DynamicResource Brush.Background.Dialog}" 
               Visibility="{Binding CurrentDialogViewModel, Converter={StaticResource NullToVisibilityConverter}}">
-            <ContentControl 
+            <ContentControl
                 Style="{StaticResource Theme.ContentControl.DialogWindow}"
-                Content="{Binding CurrentDialogViewModel}" 
+                Content="{Binding CurrentDialogViewModel}"
                 Visibility="{Binding CurrentDialogViewModel, Converter={StaticResource NullToVisibilityConverter}}"/>
         </Grid>
 

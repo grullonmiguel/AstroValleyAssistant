@@ -18,7 +18,8 @@
 
 /* auction pill on the left, zoom link on the right */
 .pp-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
-.pp-zoom { margin-left: auto; font: 600 12px 'Segoe UI', sans-serif; color: #4F4486; text-decoration: none; white-space: nowrap; }
+.pp-links { margin-left: auto; display: flex; gap: 12px; }
+.pp-zoom { font: 600 12px 'Segoe UI', sans-serif; color: #4F4486; text-decoration: none; white-space: nowrap; }
 .pp-zoom:hover { text-decoration: underline; }
 
 /* aerial photo with the parcel outline, inside the scrolling body */

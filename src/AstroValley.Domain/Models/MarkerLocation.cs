@@ -30,6 +30,9 @@ public record MarkerLocation : INotifyPropertyChanged
     public string? Status { get; set; }
     public string? Notes { get; set; }
 
+    /// <summary>Comparable sales the user accepted in the comps dialog; null until then.</summary>
+    public CompsResult? Comps { get; set; }
+
     // Road access check (run from the map popup, saved with the pin): "Road" = a road touches or is within ~100 ft,
     // "Near" = nearest road within ~1,000 ft, "None" = no road found within ~1,000 ft ("possibly landlocked"; map data can miss roads).
     private string? _accessStatus;

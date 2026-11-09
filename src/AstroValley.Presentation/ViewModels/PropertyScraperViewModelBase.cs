@@ -306,6 +306,17 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
     private static string? CountyFrom(string? url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Host.Split('.')[0] is { Length: > 0 } h ? char.ToUpper(h[0]) + h[1..] + " County" : null;
 
+    /// <summary>The grid's Comps button: opens the Comps tab for this row; "Send value back" stores the result on the row.</summary>
+    [RelayCommand]
+    private void OpenComps(PropertyDataViewModel? row)
+    {
+        if (row is null) return;
+        var r = row.Record;
+        double? Coord(string s) => double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
+        var subject = new CompsSubject(string.IsNullOrWhiteSpace(r.Address) ? r.ParcelId : r.Address, r.Acres, r.PropertyType, Coord(r.Latitude), Coord(r.Longitude));
+        _serviceProvider!.GetRequiredService<CompsViewModel>().Open(subject, subject.Address ?? "", result => row.Record = row.Record with { Comps = result });
+    }
+
     [RelayCommand(CanExecute = nameof(CanMap))]
     protected void ViewInMap()
     {
@@ -343,6 +354,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
                     GoogleMapsUrl = UrlBuilder.BuildGoogleMapsUrl(record.Record),
                     FemaUrl = UrlBuilder.BuildFemaFloodUrl(record.Record),
                     AppraiserUrl = string.IsNullOrWhiteSpace(record.AppraiserUrl) ? null : record.AppraiserUrl,
+                    Comps = record.Record.Comps,
                     ExtraDetails = details
                 });
         }

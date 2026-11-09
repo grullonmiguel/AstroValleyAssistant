@@ -69,8 +69,19 @@ function popupHtml(loc, message) {
     var appraiser = loc.AppraiserUrl ? '<a class="pp-btn" href="' + esc(loc.AppraiserUrl).replace(/"/g, '&quot;') + '" target="_blank">Property Appraiser &#8599;</a>' : '';
     var actions = (access || appraiser) ? '<div class="pp-actions">' + access + appraiser + '</div>' : '';
 
-    return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<a href="#" class="pp-zoom">Zoom to parcel</a></div><div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' +
-        (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + slope + box + equity + statusSection(loc) + actions + '</div>';
+    // comps the user accepted in the comps dialog: estimated market value (land: acres x $/acre, home: median price)
+    var comps = '';
+    if (loc.Comps && loc.Comps.EstimatedValue > 0) {
+        var c = loc.Comps;
+        comps = '<div class="pp-eq"><div class="pp-eqtext">' + ico('dollar') + '<span>Est. value <b>' + money(c.EstimatedValue) + '</b> &middot; ' + c.Count + (c.Kind === 'Home' ? ' home' : ' land') + ' comps' +
+            (c.Kind === 'Land' ? ' (' + money(c.PricePerAcre) + '/ac)' : '') + '</span></div></div>';
+    }
+    // Find comps only where WPF can open the dialog (Home map), not in the exported map
+    var findComps = typeof onFindComps === 'function' ? '<a href="#" class="pp-zoom pp-comps">' + (loc.Comps ? 'Edit comps' : 'Find comps') + '</a>' : '';
+
+    return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<span class="pp-links">' + findComps +
+        '<a href="#" class="pp-zoom">Zoom to parcel</a></span></div><div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' +
+        (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + slope + box + equity + comps + statusSection(loc) + actions + '</div>';
 }
 
 // ---- pin colour by auction urgency (shared by Home and the exported map) -----------------------------------------
@@ -104,7 +115,9 @@ function makePin(loc, map) {
         wireEditor(popup, loc, marker); aerialCaption(loc, popup);
         // delegated: the popup's content is replaced on every edit, its root element is not
         popup.getElement().addEventListener('click', function (e) {
-            if (!e.target.closest('.pp-zoom')) return;
+            var comps = e.target.closest('.pp-comps');
+            if (comps) { e.preventDefault(); onFindComps(loc); return; }
+            if (!e.target.closest('.pp-zoom[href="#"]')) return; // not the zoom link
             e.preventDefault();
             var pad = typeof pinPad === 'function' ? pinPad() : { left: 40, top: 40, bottom: 40, right: 40 }; // Home: clear the side panels
             pad.right = 420; // and the popup

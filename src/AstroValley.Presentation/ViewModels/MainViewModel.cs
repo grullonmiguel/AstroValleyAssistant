@@ -28,6 +28,7 @@ public partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(IsHomeActive));
             OnPropertyChanged(nameof(IsRegridActive));
             OnPropertyChanged(nameof(IsRealAuctionActive));
+            OnPropertyChanged(nameof(IsCompsActive));
         }
     }
 
@@ -37,8 +38,11 @@ public partial class MainViewModel : ObservableObject
     public bool IsRegridActive { get => CurrentViewModel is RegridViewModel; set { } }
     public bool IsRealAuctionActive { get => CurrentViewModel is RealAuctionViewModel; set { } }
 
-    // Home's view is created once in MainView (not via DataTemplate) so the map persists.
+    public bool IsCompsActive { get => CurrentViewModel is CompsViewModel; set { } }
+
+    // Home's and Comps' views are created once in MainView (not via DataTemplate) so the map / browser persist.
     public HomeViewModel Home { get; }
+    public CompsViewModel Comps { get; }
 
     // Home draws edge to edge behind the header; other pages sit below it.
     public bool IsFullBleed => CurrentViewModel is HomeViewModel;
@@ -65,6 +69,7 @@ public partial class MainViewModel : ObservableObject
         // Set the initial view.
         _serviceProvider = serviceProvider;
         Home = serviceProvider.GetRequiredService<HomeViewModel>();
+        Comps = serviceProvider.GetRequiredService<CompsViewModel>();
         //CurrentViewModel = _serviceProvider.GetRequiredService<MapViewModel>();
     }
 
@@ -84,6 +89,7 @@ public partial class MainViewModel : ObservableObject
             "Home" => _serviceProvider.GetRequiredService<HomeViewModel>(),
             "Regrid" => _serviceProvider.GetRequiredService<RegridViewModel>(),
             "RealAuction" => _serviceProvider.GetRequiredService<RealAuctionViewModel>(),
+            "Comps" => Comps,
             "Map" => _serviceProvider.GetRequiredService<MapViewModel>(),
             _ => CurrentViewModel // Default case, does nothing
         };

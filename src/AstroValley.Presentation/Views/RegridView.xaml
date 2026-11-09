@@ -216,6 +216,15 @@
                     <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="100" ElementStyle="{StaticResource NumericCellStyle}"/>
                     <DataGridTextColumn Header="Opening Bid" Binding="{Binding Bid, StringFormat={}{0:C}}" Width="110" ElementStyle="{StaticResource NumericCellStyle}"/>
                     <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N4}}" Width="80" ElementStyle="{StaticResource NumericCellStyle}"/>
+                    <DataGridTextColumn Header="Est. Value" Binding="{Binding CompsValue, StringFormat={}{0:C0}}" Width="100" ElementStyle="{StaticResource NumericCellStyle}"/>
+                    <DataGridTemplateColumn Header="" Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Comps" Padding="10,2" Margin="4,0" FontSize="12" Style="{StaticResource Theme.Button.Outline}"
+                                        Command="{Binding DataContext.OpenCompsCommand, Source={x:Reference FrameWorkElementProxy}}" CommandParameter="{Binding}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
             <local:ScrapeOverlay Grid.Row="2"/>

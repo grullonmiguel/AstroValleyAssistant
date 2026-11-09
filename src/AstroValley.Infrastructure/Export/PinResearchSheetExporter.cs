@@ -85,9 +85,15 @@ public class PinResearchSheetExporter : IPinSheetExporter
         }
 
         var row = FirstRow;
+        var homeValue = new Dictionary<int, decimal>(); // homes: Market Value is the comps' median price, not acres x $/acre
         foreach (var p in pinList)
         {
             var d = p.ExtraDetails;
+            if (p.Comps is { } comps)
+            {
+                if (comps.Kind == "Home" && comps.EstimatedValue is { } homeEstimate) homeValue[row] = homeEstimate;
+                else if (comps.PricePerAcre > 0) ws.Cell(row, 25).Value = comps.PricePerAcre; // land: feeds Market Value = Acres x this
+            }
             // Skipped or possibly landlocked pins start as C; A and B are for the user to give
             if (p.Status == "Skip" || p.AccessStatus == "None") ws.Cell(row, 3).Value = "C";
             ws.Cell(row, 4).Value = string.Join(" | ", new[] { p.Status, p.Notes, p.AccessText }.Where(s => !string.IsNullOrWhiteSpace(s)));
@@ -115,7 +121,8 @@ public class PinResearchSheetExporter : IPinSheetExporter
         // Market Value = Acres x Avg Price / Acre, for the pin rows plus spare rows for the user's own entries
         for (var r = FirstRow; r <= last; r++)
         {
-            ws.Cell(r, 26).FormulaA1 = $"=O{r}*Y{r}";             // Market Value = Acres x Avg Price / Acre
+            if (homeValue.TryGetValue(r, out var home)) ws.Cell(r, 26).Value = home;      // home: median price of the comps
+            else ws.Cell(r, 26).FormulaA1 = $"=O{r}*Y{r}";        // Market Value = Acres x Avg Price / Acre
             ws.Cell(r, 30).FormulaA1 = $"=Z{r}/(1+100%)-AC{r}";   // Max Bid = Market Value / 2 - lien amount
         }
         ws.Range(FirstRow, 13, last, 14).Style.NumberFormat.Format = "$#,##0.00";

@@ -51,6 +51,9 @@
     <None Update="Assets\homemaplibre.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\compsreader.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\pinpopup.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

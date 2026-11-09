@@ -31,6 +31,9 @@ public record PropertyRecord
     public string BirdseyeUrl { get; init; } = string.Empty;
     public string? ParcelLines { get; init; } = string.Empty;
 
+    // --- Comps (sent back from the Comps tab) ---
+    public AstroValley.Domain.Models.CompsResult? Comps { get; init; }
+
     // --- State Management ---
     public List<RegridMatch> PotentialMatches { get; init; } = new();
 }

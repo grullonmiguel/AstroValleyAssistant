@@ -79,6 +79,7 @@ public partial class PropertyDataViewModel : ObservableObject
     public string GeoCoordinates => Record.GeoCoordinates;
     public string ParcelLines => Record.ParcelLines;
     public string RegridUrl => Record.RegridUrl;
+    public decimal? CompsValue => Record.Comps?.EstimatedValue; // "Est. Value" column: set when comps were sent back from the Comps tab
 
     // Aerial photo for the details panel (null until the Regrid scrape gives coordinates)
     private AerialImage.Result? _aerial;
@@ -144,6 +145,7 @@ public partial class PropertyDataViewModel : ObservableObject
         OnPropertyChanged(nameof(ElevationHigh));
         OnPropertyChanged(nameof(GeoCoordinates));
         OnPropertyChanged(nameof(RegridUrl));
+        OnPropertyChanged(nameof(CompsValue));
         _aerial = null; _aerialCaption = null; // a new scrape result can move the pin
         OnPropertyChanged(nameof(Aerial));
         OnPropertyChanged(nameof(AerialCaption));

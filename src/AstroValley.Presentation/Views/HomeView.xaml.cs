@@ -25,6 +25,8 @@ public partial class HomeView : UserControl
                 vm.PropertyChanged += OnViewModelPropertyChanged;
                 vm.MarkersAdded += PushMarkers;
                 vm.FilterChanged += () => _ = PushFilter();
+                vm.CompsChanged += pin =>
+                    _ = RunScript($"setComps({Inv(pin.Latitude)}, {Inv(pin.Longitude)}, {JsonSerializer.Serialize(pin.Comps, new JsonSerializerOptions { PropertyNamingPolicy = null })});");
                 vm.TerrainToggleRequested += () => _ = RunScript("toggle3d();");
                 vm.OverlayToggleRequested += key => _ = RunScript($"toggleOverlay('{key}');");
                 vm.TourToggleRequested += () => _ = RunScript("toggleTour();");
@@ -101,6 +103,11 @@ public partial class HomeView : UserControl
                 root.GetProperty("accessStatus").GetString(),
                 root.GetProperty("accessFt").ValueKind == JsonValueKind.Number ? root.GetProperty("accessFt").GetDouble() : null,
                 root.GetProperty("accessRoad").GetString(), root.GetProperty("accessChecked").GetString());
+            return;
+        }
+        if (type == "findComps")
+        {
+            vm.FindComps(root.GetProperty("lat").GetDouble(), root.GetProperty("lon").GetDouble());
             return;
         }
         if (type == "mode")

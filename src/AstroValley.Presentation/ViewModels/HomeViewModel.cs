@@ -41,10 +41,12 @@ public partial class HomeViewModel : ObservableObject
     public ObservableCollection<MarkerLocation> Markers { get; } = [];
 
     private readonly IPinSheetExporter _sheetExporter;
+    private readonly IServiceProvider _serviceProvider; // IDialogService is resolved when needed: it depends on MainViewModel, which holds this view model
 
-    public HomeViewModel(IPinSheetExporter sheetExporter)
+    public HomeViewModel(IPinSheetExporter sheetExporter, IServiceProvider serviceProvider)
     {
         _sheetExporter = sheetExporter;
+        _serviceProvider = serviceProvider;
         Markers.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(MatchCount));
@@ -147,6 +149,20 @@ public partial class HomeViewModel : ObservableObject
         pin.AccessDistanceFt = accessFt;
         pin.AccessRoad = accessRoad;
         pin.AccessChecked = accessChecked;
+    }
+
+    /// <summary>Raised after the user accepted comps for a pin, so the map refreshes its popup.</summary>
+    public event Action<MarkerLocation>? CompsChanged;
+
+    /// <summary>The popup's "Find comps": full-screen browser + sidebar; the accepted result is saved on the pin.</summary>
+    public void FindComps(double lat, double lon)
+    {
+        var pin = Markers.FirstOrDefault(m => Math.Abs(m.Latitude - lat) < 1e-9 && Math.Abs(m.Longitude - lon) < 1e-9);
+        if (pin is null) return;
+        double.TryParse(pin.Acres, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var acres);
+        var subject = new CompsSubject(pin.Address, acres, pin.PropertyType, pin.Latitude, pin.Longitude);
+        Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<CompsViewModel>(_serviceProvider)
+            .Open(subject, pin.Address, result => { pin.Comps = result; CompsChanged?.Invoke(pin); });
     }
 
     // Opens one Google Maps driving route through the pins that are showing (filters applied, skipped ones left out).

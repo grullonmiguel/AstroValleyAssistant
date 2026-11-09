@@ -62,6 +62,7 @@ namespace AstroValley.Presentation
 
             // ── Page ViewModels (Singleton) ──────────────────────────────────
             services.AddSingleton<HomeViewModel>();
+            services.AddSingleton<CompsViewModel>();
             services.AddSingleton<RegridViewModel>();
             services.AddSingleton<RealAuctionViewModel>();
             services.AddSingleton<MapViewModel>();
