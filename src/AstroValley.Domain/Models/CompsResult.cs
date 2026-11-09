@@ -1,8 +1,16 @@
 namespace AstroValley.Domain.Models;
 
 /// <summary>One comparable listing read from a real-estate site.</summary>
-public record Comp(string? Address, decimal Price, double Acres, bool Sold, string? Url, string? SoldText = null, int? HomeSqft = null, double? Lat = null, double? Lon = null, string? Verify = null)
+public record Comp(string? Address, decimal Price, double Acres, bool Sold, string? Url, string? SoldText = null, int? HomeSqft = null, double? Lat = null, double? Lon = null, string? Verify = null,
+    int? Beds = null, double? Baths = null, string? HomeType = null)
 {
+    // HomeType: Zillow's type (SINGLE_FAMILY, MANUFACTURED, LOT, ...), or MANUFACTURED when a card says mobile / manufactured; null = unknown.
+    /// <summary>"Single-family", "Mobile" or "Multi-family" (duplex and up): separate markets. Null when the site did not say, or a vacant lot.</summary>
+    public string? Kind => HomeType switch { null or "LOT" => null, "MANUFACTURED" => "Mobile", "MULTI_FAMILY" => "Multi-family", _ => "Single-family" };
+
+    /// <summary>Price per square foot of the house; 0 without a floor area.</summary>
+    public decimal PricePerSqft => HomeSqft is > 0 ? Math.Round(Price / HomeSqft.Value) : 0;
+
     // Verify: why this comp needs checking before it is trusted (no listing link, no address, or an address guessed from the card text); null = fine.
 
     /// <summary>Miles from the property being valued; set after the comp is placed on the map (null = could not be placed).</summary>
@@ -11,6 +19,18 @@ public record Comp(string? Address, decimal Price, double Acres, bool Sold, stri
     /// <summary>Coordinates found by geocoding the address (sites other than Zillow give none); used to pin the comp on a map.</summary>
     public double? FoundLat { get; set; }
     public double? FoundLon { get; set; }
+
+    // Set by CompScoring each time the list refreshes: how much this comp counts (0-1), why, and why it looks misleading (null = fine).
+    public double Weight { get; set; } = 1;
+    public string? WeightWhy { get; set; }
+    public string? Outlier { get; set; }
+    public string? OutlierTip { get; set; } // a sentence on what that kind of outlier usually means
+    /// <summary>Left out of the value: an outlier the user has not chosen to keep (set by the Comps tab).</summary>
+    public bool IsExcluded { get; set; }
+
+    /// <summary>Weight as 1-4 filled dots, for the card and the map list.</summary>
+    public string WeightDots { get { var n = Math.Clamp((int)Math.Ceiling(Weight * 4), 1, 4); return new string('●', n) + new string('○', 4 - n); } }
+    public string WeightTip => $"Counts {Weight:P0} toward the value: {WeightWhy}. Weight = size match (the lot for land; the house, beds and baths for homes) × distance × how recent the sale is; ●●●● counts fully, ●○○○ barely counts.";
 
     public decimal PricePerAcre => Acres > 0 ? Math.Round(Price / (decimal)Acres) : 0;
 
@@ -28,7 +48,23 @@ public record Comp(string? Address, decimal Price, double Acres, bool Sold, stri
     }.Where(x => x is not null));
 
     /// <summary>The house's floor area, when the card shows one (null for land).</summary>
-    public string? HomeText => HomeSqft is > 0 ? $"{HomeSqft:N0} sqft home" : null;
+    private bool HasHouse => HomeSqft is > 0 || Beds is > 0 || Baths is > 0;
+
+    /// <summary>The card's heading: the house for a home ("2,466 sqft · 4 bd / 2 ba"), the lot otherwise.</summary>
+    public string Headline => !HasHouse ? LotText : string.Join(" · ", new[]
+    {
+        HomeSqft is > 0 ? $"{HomeSqft:N0} sqft" : null,
+        Beds is > 0 || Baths is > 0 ? $"{Beds?.ToString() ?? "?"} bd / {Baths?.ToString("0.#") ?? "?"} ba" : null
+    }.Where(x => x is not null));
+
+    /// <summary>The line under the heading: the lot for a home, the other lot unit for land.</summary>
+    public string SubLine => !HasHouse ? LotDetail : Acres > 0 ? $"Lot {LotText} ({LotDetail})" : "Lot size n/a";
+
+    /// <summary>A home's $/sqft and kind ("$230/sqft · Multi-family"); null for land.</summary>
+    public string? HomeText => !HasHouse ? null : string.Join(" · ", new[]
+    {
+        PricePerSqft > 0 ? $"{PricePerSqft:C0}/sqft" : null, Kind
+    }.Where(x => x is not null)) is { Length: > 0 } t ? t : null;
 
     public DateTime? SoldDate => DateTime.TryParse(SoldText, System.Globalization.CultureInfo.GetCultureInfo("en-US"), out var d) ? d : null;
 
@@ -49,6 +85,10 @@ public record CompsResult
     public decimal PricePerAcre { get; init; }   // the one used (median or average, as chosen)
     public decimal MedianPrice { get; init; }
     public decimal? EstimatedValue { get; init; } // what the parcel is worth by these comps
+    public decimal? RangeLow { get; init; }       // the middle half of the weighted comps, as a value range
+    public decimal? RangeHigh { get; init; }
+    public string? Confidence { get; init; }      // "High" / "Medium" / "Low"
+    public string? ConfidenceText { get; init; }  // the sentence behind it
     public List<Comp> Comps { get; init; } = [];
 
     public static decimal Median(IEnumerable<decimal> values)

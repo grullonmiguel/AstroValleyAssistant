@@ -31,6 +31,17 @@ public record PropertyRecord
     public string BirdseyeUrl { get; init; } = string.Empty;
     public string? ParcelLines { get; init; } = string.Empty;
 
+    // --- House facts from the county record (via Regrid). Any of them can be missing: counties and states report different fields. ---
+    public string UseDescription { get; init; } = string.Empty; // the county's land use, e.g. "MULTIFAMILY 2-9 UNITS : 2 LIVING UNITS"
+    public string HomeType { get; init; } = string.Empty;       // HomeKind label: "Single-family", "Duplex-4plex", "Vacant lot", ... or empty
+    public int? Beds { get; init; }
+    public double? Baths { get; init; }                         // a half bath counts 0.5
+    public int? LivingSqft { get; init; }
+    public int? Units { get; init; }
+    public int? YearBuilt { get; init; }
+    public int? BuildingCount { get; init; }                    // Regrid's building footprints on the parcel
+    public string OtherOwners { get; init; } = string.Empty;    // owner 2-4, "; "-separated (estate / heirs wording shows up here)
+
     // --- Comps (sent back from the Comps tab) ---
     public AstroValley.Domain.Models.CompsResult? Comps { get; init; }
 

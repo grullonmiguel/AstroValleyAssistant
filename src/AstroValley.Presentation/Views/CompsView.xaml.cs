@@ -15,6 +15,21 @@ public partial class CompsView : UserControl
             vm.OpenListing(comp.Url);
     }
 
+    /// <summary>Starts a navigation and waits until it finishes (false = failed or took over 20 s).</summary>
+    private async Task<bool> LoadAsync(Action start)
+    {
+        var core = WebView.CoreWebView2;
+        var loaded = new TaskCompletionSource<bool>();
+        void Done(object? s, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e) => loaded.TrySetResult(e.IsSuccess);
+        core.NavigationCompleted += Done;
+        try
+        {
+            start();
+            return await Task.WhenAny(loaded.Task, Task.Delay(20000)) == loaded.Task && loaded.Task.Result;
+        }
+        finally { core.NavigationCompleted -= Done; }
+    }
+
     public CompsView()
     {
         InitializeComponent();
@@ -47,6 +62,30 @@ public partial class CompsView : UserControl
                     throw new InvalidOperationException(error.TryGetProperty("exception", out var ex) && ex.TryGetProperty("description", out var d) ? d.GetString() : error.GetRawText());
                 return doc.RootElement.GetProperty("result").TryGetProperty("value", out var value) ? value.GetRawText() : "[]";
             };
+            // Opens a page in this browser and reads it with a script once loaded (null = did not load in time). Used to look the
+            // property itself up on Zillow: Zillow's bot check blocks a background fetch of the page, but not a real visit.
+            vm.ReadPageAt = async (url, script) =>
+            {
+                if (!await LoadAsync(() => WebView.CoreWebView2.Navigate(url))) return null;
+                var json = await WebView.CoreWebView2.ExecuteScriptAsync(script);
+                return json == "null" ? null : json;
+            };
+            vm.GoBackAsync = async () => { if (WebView.CoreWebView2.CanGoBack) await LoadAsync(WebView.CoreWebView2.GoBack); };
+            // the reader reports how many listings it has found while it scrolls
+            WebView.CoreWebView2.WebMessageReceived += (_, e) =>
+            {
+                try
+                {
+                    using var msg = System.Text.Json.JsonDocument.Parse(e.WebMessageAsJson);
+                    if (msg.RootElement.TryGetProperty("type", out var t) && t.GetString() == "readProgress")
+                        vm.OnReadProgress(msg.RootElement.GetProperty("found").GetInt32(),
+                            msg.RootElement.TryGetProperty("expected", out var x) && x.ValueKind == System.Text.Json.JsonValueKind.Number ? x.GetInt32() : null);
+                }
+                catch (System.Text.Json.JsonException) { } // a page's own message, not ours
+                catch (InvalidOperationException) { }
+                catch (KeyNotFoundException) { }
+            };
+            vm.IsOnZillow = () => WebView.Source?.Host.Contains("zillow.", StringComparison.OrdinalIgnoreCase) == true;
             vm.NavigateTo = url => WebView.CoreWebView2.Navigate(url);
             vm.GoBackRequested = () => { if (WebView.CoreWebView2.CanGoBack) WebView.CoreWebView2.GoBack(); };
             WebView.CoreWebView2.NewWindowRequested += (_, e) => { e.Handled = true; WebView.CoreWebView2.Navigate(e.Uri); }; // stay in this view

@@ -41,6 +41,18 @@ function popupHtml(loc, message) {
             : '<span class="pp-pill">' + esc(d['Flood Zone']) + '</span>') + '</div>') : '') +
         (d['Owner'] ? fact(ico('person'), 'Owner', '<div class="pp-fval">' + esc(d['Owner']) + '</div>', true) : '');
 
+    // the building, from the county record: "Duplex-4plex · 2 units · 4 bd / 2 ba · 2,110 sqft · built 1941"; each part only when given
+    var n = function (k) { var v = parseFloat(d[k]); return isNaN(v) ? null : v; };
+    var houseParts = [d['Home Type'] ? '<b>' + esc(d['Home Type']) + '</b>' : null,
+        n('Units') > 1 ? n('Units') + ' units' : null,
+        n('Beds') || n('Baths') ? (n('Beds') || '?') + ' bd / ' + (n('Baths') || '?') + ' ba' : null,
+        n('Living Sqft') ? n('Living Sqft').toLocaleString('en-US') + ' sqft' : null,
+        n('Year Built') ? 'built ' + n('Year Built') : null,
+        n('Buildings') > 1 ? n('Buildings') + ' buildings' : null].filter(Boolean);
+    var house = (houseParts.length ? '<div class="pp-house" title="' + esc(d['Land Use'] || '').replace(/"/g, '&quot;') + '">' + ico('home') + houseParts.join(' &middot; ') + '</div>' : '') +
+        (d['House Check'] ? '<div class="pp-warn">&#9888; ' + esc(d['House Check']) + '</div>' : '') +
+        (loc.EstateOwner ? '<div class="pp-warn">&#9888; Estate / heirs owner: probate and title risk. Check who can convey before bidding.</div>' : '');
+
     // slope across the parcel (Regrid high minus low elevation over the longest side): flat is quiet, steep is loud
     var slope = '';
     if (loc.SlopePercent != null) {
@@ -74,7 +86,9 @@ function popupHtml(loc, message) {
     if (loc.Comps && loc.Comps.EstimatedValue > 0) {
         var c = loc.Comps;
         comps = '<div class="pp-eq"><div class="pp-eqtext">' + ico('dollar') + '<span>Est. value <b>' + money(c.EstimatedValue) + '</b> &middot; ' + c.Count + (c.Kind === 'Home' ? ' home' : ' land') + ' comps' +
-            (c.Kind === 'Land' ? ' (' + money(c.PricePerAcre) + '/ac)' : '') + '</span></div></div>';
+            (c.Kind === 'Land' ? ' (' + money(c.PricePerAcre) + '/ac)' : '') +
+            (c.RangeLow > 0 ? '<br/>Range ' + money(c.RangeLow) + ' – ' + money(c.RangeHigh) : '') +
+            (c.Confidence ? '<br/><span title="' + esc(c.ConfidenceText).replace(/"/g, '&quot;') + '">Confidence <b>' + esc(c.Confidence) + '</b></span>' : '') + '</span></div></div>';
     }
     // Find comps only where WPF can open the dialog (Home map), not in the exported map
     var findComps = typeof onFindComps === 'function' ? '<a href="#" class="pp-zoom pp-comps">' + (loc.Comps ? 'Comps' : 'Find comps') + '</a>' : '';
@@ -82,8 +96,11 @@ function popupHtml(loc, message) {
     // sold/active listing details from the Comps export, one label/value row each
     var compRows = '';
     if (loc.CompFacts) {
+        var tips = loc.CompTips || {}; // Weight / Outlier rows explain themselves on hover (black tooltip, see pinsexport.html)
         compRows = '<div style="margin:8px 0;font-size:13px;color:#30294B">' + Object.keys(loc.CompFacts).map(function (k) {
-            return '<div style="display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px solid #eee"><span style="color:#777">' + esc(k) + '</span><b>' + esc(loc.CompFacts[k]) + '</b></div>';
+            var tip = tips[k] ? ' data-tip="' + esc(tips[k]).replace(/"/g, '&quot;') + '" class="has-tip"' : '';
+            return '<div' + tip + ' style="display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px solid #eee"><span style="color:#777">' + esc(k) +
+                (tip ? ' &#9432;' : '') + '</span><b>' + esc(loc.CompFacts[k]) + '</b></div>';
         }).join('') + '</div>';
     }
     if (loc.CompKey && typeof PICKER !== 'undefined' && PICKER) { // Comps review map: keep this comp or leave it out
@@ -94,7 +111,7 @@ function popupHtml(loc, message) {
 
     return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<span class="pp-links">' + findComps +
         '<a href="#" class="pp-zoom">Zoom</a></span></div>' + dataQualityHtml(loc) + compRows + '<div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' +
-        (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + slope + box + equity + comps + statusSection(loc) + actions + '</div>';
+        (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + house + slope + box + equity + comps + statusSection(loc) + actions + '</div>';
 }
 
 // ---- pin colour by auction urgency (shared by Home and the exported map) -----------------------------------------

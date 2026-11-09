@@ -305,8 +305,32 @@ public class RegridScraper : IRegridScraper
         if (string.IsNullOrWhiteSpace(fullAddress)) fullAddress = f.GetJsonString("address");
         if (string.IsNullOrEmpty(fullAddress)) fullAddress = doc.RootElement.GetJsonString("headline");
 
+        // House facts. Standard Regrid names first, then county-specific ones seen in samples (Miami-Dade: bedroom_count, building_heated_area,
+        // unit_count); every one is optional. Living area: Miami-Dade's area_building held one unit (696) while the total was 2,110, so it goes last.
+        // shortcut: field names from 6 samples (FL, IN, MI, UT); add more fallbacks as other states are tested.
+        int? Int(params string[] keys) => f.GetJsonDouble(keys) is { } v && v > 0 ? (int)Math.Round(v) : null;
+        var propertyType = StructureKind.FromRegrid(
+            f.TryGetProperty("struct", out var s) && s.ValueKind is JsonValueKind.True or JsonValueKind.False ? s.ValueKind == JsonValueKind.True : null,
+            f.GetJsonString("usedesc"), f.GetJsonString("lbcs_site_desc"), f.GetJsonString("lbcs_activity_desc"),
+            f.GetJsonDouble("ll_bldg_count"), f.GetJsonDouble("ll_bldg_footprint_sqft"),
+            f.GetJsonDecimal("improvval"), f.GetJsonDecimal("parval"));
+        var units = Int("numunits", "unit_count");
+        var fullBaths = f.GetJsonDouble("num_bath", "bathroom_count");
+        var halfBaths = f.GetJsonDouble("num_bath_partial", "half_bathroom_count");
+        var yearBuilt = Int("yearbuilt");
+
         var parcel = new PropertyRecord
         {
+            UseDescription = f.GetJsonString("usedesc", "dor_desc"),
+            HomeType = HomeKind.From(f.GetJsonString("usedesc", "dor_desc"), f.GetJsonString("lbcs_structure_desc"), units,
+                f.GetJsonString("condo_flag").Equals("Y", StringComparison.OrdinalIgnoreCase), propertyType),
+            Beds = Int("num_bedrooms", "bedroom_count"),
+            Baths = fullBaths is > 0 ? fullBaths + 0.5 * (halfBaths ?? 0) : null,
+            LivingSqft = Int("building_heated_area", "recrdareano", "area_building"),
+            Units = units,
+            YearBuilt = yearBuilt is > 1700 and < 2200 ? yearBuilt : null,
+            BuildingCount = f.GetJsonDouble("ll_bldg_count") is { } bc ? (int)bc : null,
+            OtherOwners = string.Join("; ", new[] { f.GetJsonString("owner2"), f.GetJsonString("owner3"), f.GetJsonString("owner4") }.Where(o => !string.IsNullOrWhiteSpace(o))),
             RegridUrl = regridUrl,
             ParcelId = f.GetJsonString("parcelnumb", "parcelid", "lowparcelid"),
             Address = fullAddress,
@@ -323,11 +347,7 @@ public class RegridScraper : IRegridScraper
             ElevationLow = f.GetJsonString("lowest_parcel_elevation"),
             FloodZone = f.GetJsonString("fema_flood_zone", "fema_flood_zone_subtype", "fema_nri_risk_rating"),
             LegalDescription = f.GetJsonString("legaldesc"),
-            PropertyType = StructureKind.FromRegrid(
-                f.TryGetProperty("struct", out var s) && s.ValueKind is JsonValueKind.True or JsonValueKind.False ? s.ValueKind == JsonValueKind.True : null,
-                f.GetJsonString("usedesc"), f.GetJsonString("lbcs_site_desc"), f.GetJsonString("lbcs_activity_desc"),
-                f.GetJsonDouble("ll_bldg_count"), f.GetJsonDouble("ll_bldg_footprint_sqft"),
-                f.GetJsonDecimal("improvval"), f.GetJsonDecimal("parval")),
+            PropertyType = propertyType,
             AssessedValue = GetAssessedValue(f),
             BirdseyeUrl = doc.RootElement.GetJsonString("birdseye"),
             ParcelLines = doc.RootElement.GetJsonString("geometry")

@@ -313,7 +313,8 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         if (row is null) return;
         var r = row.Record;
         double? Coord(string s) => double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
-        var subject = new CompsSubject(string.IsNullOrWhiteSpace(r.Address) ? r.ParcelId : r.Address, r.Acres, r.PropertyType, Coord(r.Latitude), Coord(r.Longitude), r.Zip);
+        var subject = new CompsSubject(string.IsNullOrWhiteSpace(r.Address) ? r.ParcelId : r.Address, r.Acres, r.PropertyType, Coord(r.Latitude), Coord(r.Longitude), r.Zip,
+            r.LivingSqft, r.Beds, r.Baths, r.HomeType);
         _serviceProvider!.GetRequiredService<CompsViewModel>().Open(subject, subject.Address ?? "", result => row.Record = row.Record with { Comps = result });
     }
 
@@ -338,6 +339,15 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
             if (elevations.Count > 0) details.Add("Elevation", string.Join(" - ", elevations)); // "low - high", or one value when equal
             if (!string.IsNullOrEmpty(record.AssessedValue?.ToString() ?? "")) details.Add("Assessed", record.AssessedValue?.ToString() ?? "");
             if (!string.IsNullOrEmpty(record.Bid?.ToString() ?? "")) details.Add("Minimum Bid", record.Bid?.ToString() ?? "");
+            // house facts from the county record; each only when the county gave it
+            var r0 = record.Record;
+            void Add(string key, object? value) { if (value is not null && $"{value}".Length > 0) details[key] = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture)!; }
+            Add("Home Type", r0.HomeType);
+            Add("Land Use", r0.UseDescription);
+            Add("Beds", r0.Beds); Add("Baths", r0.Baths); Add("Living Sqft", r0.LivingSqft);
+            Add("Units", r0.Units); Add("Year Built", r0.YearBuilt); Add("Buildings", r0.BuildingCount);
+            Add("Other Owners", r0.OtherOwners);
+            Add("House Check", HomeKind.VacantConflict(r0.PropertyType, r0.Beds, r0.LivingSqft, r0.YearBuilt));
 
             if (!string.IsNullOrWhiteSpace(record.Latitude) && !string.IsNullOrEmpty(record.Longitude))
                 mapLocations.Add(new MarkerLocation

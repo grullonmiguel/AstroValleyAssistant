@@ -103,5 +103,7 @@ a.pp-check { border: 0; background: none; padding: 0; text-decoration: underline
 .pin-dq { position: absolute; top: 14px; left: -6px; min-width: 14px; height: 14px; padding: 0 3px; box-sizing: border-box; border-radius: 7px; pointer-events: none;
     color: #fff; font: 700 10px/10px 'Segoe UI', sans-serif; text-align: center; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.4); z-index: 1; }
 .dq-ok { background: #2E9E5B; } .dq-warn { background: #CD7B2E; } .dq-bad { background: #D64545; }
+.pp-house { display: flex; align-items: center; gap: 6px; margin: 6px 0; font-size: 12px; color: #30294B; flex-wrap: wrap; }
+.pp-warn { margin: 6px 0; padding: 5px 10px; border-radius: 8px; background: #FDEFD9; color: #A35A12; font-size: 12px; line-height: 1.4; }
 .pp-dq { margin: 6px 0; padding: 4px 10px; border-radius: 8px; font-size: 12px; color: #fff; }
 .pin-skip { filter: grayscale(1) opacity(.45); }

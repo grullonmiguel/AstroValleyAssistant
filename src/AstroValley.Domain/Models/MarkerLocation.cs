@@ -22,6 +22,7 @@ public record MarkerLocation : INotifyPropertyChanged
     public string? CompKey { get; init; }       // identifies a comp pin when the map is used to exclude comps
     public bool IsSubject { get; init; }       // the property the comps were searched for (Comps export)
     public Dictionary<string, string>? CompFacts { get; init; } // label -> value rows shown in the popup (Comps export)
+    public Dictionary<string, string>? CompTips { get; init; }  // label -> hover explanation for a CompFacts row
 
     // Links shown in the Home map popup (null = not available, so the text is not a link).
     public string? RegridUrl { get; init; }
@@ -79,6 +80,10 @@ public record MarkerLocation : INotifyPropertyChanged
     /// <summary>True when the legal description uses co-ownership wording (undivided / fractional / partial interest, tenants in common).
     /// shortcut: wording match only, so it can miss unusual phrasing or flag a description that merely mentions it; always read the legal description.</summary>
     public bool UndividedInterest => ExtraDetails?.GetValueOrDefault("Legal Description") is { } legal && UndividedWording.IsMatch(legal);
+
+    /// <summary>True when an owner reads as an estate or heirs ("JUANITA FRAZIER EST OF"): probate and title risk.</summary>
+    public bool EstateOwner => AstroValley.Domain.Entities.HomeKind.IsEstateOwner(
+        $"{ExtraDetails?.GetValueOrDefault("Owner")}; {ExtraDetails?.GetValueOrDefault("Other Owners")}");
 
     private static readonly System.Text.RegularExpressions.Regex UndividedWording = new(
         @"UNDIV|\bUND\.?\s*INT|\d+\s*/\s*\d+\s*%?\s*INT|\d+(\.\d+)?\s*%\s*INT|(ONE|TWO|THREE|FOUR|FIVE)[- ](HALF|HALVES|THIRD|THIRDS|FOURTH|FOURTHS|QUARTER|QUARTERS|FIFTH|FIFTHS|SIXTH|EIGHTH)\s+INT|FRACTIONAL\s+INT|PARTIAL\s+INT|TENANT(S|CY)\s+IN\s+COMMON|\bTIC\b|SEV(ERED)?\.?\s*MIN|LIFE\s+EST",

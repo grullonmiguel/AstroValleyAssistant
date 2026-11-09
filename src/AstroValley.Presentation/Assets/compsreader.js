@@ -46,11 +46,15 @@
         // the house's floor area: a square-foot figure that is not labelled lot, and not a "Land" card (whose only size is the lot)
         var living = /\bland\b/i.test(stats ? txt(stats) : text) ? null : /([\d,]{3,})\s*(?:sq\.?\s?ft\.?|sqft)(?!\s*\(?lot)/i.exec(stats ? txt(stats) : text);
         var soldOn = /\bsold\s*([A-Za-z]{3})\s+(\d{1,2}),\s*(\d{4})/i.exec(text); // trulia runs it together: SOLDNOV 2, 2026
+        // "3 bds | 2 ba" / "3 beds 2 baths" on the stats line; a mobile or manufactured home is a different market from a site-built one
+        var st = stats ? txt(stats) : text, beds = /(\d+)\s*(?:bds?|beds?|bd)\b/i.exec(st), baths = /(\d+(?:\.\d+)?)\s*(?:ba|baths?)\b/i.exec(st);
         return {
             addrFrom: ad ? 'card' : 'guess',
             address: (ad ? txt(ad) : ((text.split('\n').find(function (l) { return /\d+\s+\S+.*,/.test(l); }) || (/\S[^$|]*?,\s*[A-Za-z .'-]+,\s*[A-Z]{2}\s*\d{5}/.exec(text) || [''])[0]))).replace(/\s+/g, ' ').trim(),
             price: price, acres: acres, sold: !!soldOn || /\bsold\b(?!\s+summary)/i.test(text), url: a ? a.href : null,
-            soldText: soldOn ? soldOn[1] + ' ' + soldOn[2] + ', ' + soldOn[3] : null, homeSqft: living ? parseInt(living[1].replace(/,/g, ''), 10) : null
+            soldText: soldOn ? soldOn[1] + ' ' + soldOn[2] + ', ' + soldOn[3] : null, homeSqft: living ? parseInt(living[1].replace(/,/g, ''), 10) : null,
+            beds: beds ? parseInt(beds[1], 10) : null, baths: baths ? parseFloat(baths[1]) : null,
+            homeType: /manufactured|mobile home/i.test(text) ? 'MANUFACTURED' : /multi-family|duplex|triplex|fourplex|quadplex/i.test(text) ? 'MULTI_FAMILY' : null
         };
     }
     function fromCards(selector, keep) {
@@ -72,6 +76,7 @@
         if (!h) return {};
         return {
             price: h.price, homeSqft: h.livingArea, lat: h.latitude, lon: h.longitude,
+            beds: h.bedrooms, baths: h.bathrooms, homeType: h.homeType, // SINGLE_FAMILY, MANUFACTURED, LOT, CONDO, TOWNHOUSE, ...
             acres: h.lotAreaValue > 0 ? (/acre/i.test(h.lotAreaUnit || '') ? h.lotAreaValue : h.lotAreaValue / SQFT) : 0,
             sold: /sold/i.test(h.homeStatus || ''),
             soldText: h.dateSold ? new Date(h.dateSold).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : null,
@@ -81,7 +86,14 @@
     }
     var ZILLOW_CARDS = 'article[data-test="property-card"], article.property-card, li[class*="ListItem"] article';
 
+    // tells the app how many listings have been found so far (shown above the browser)
+    function progress(found, expected) {
+        try { window.chrome.webview.postMessage({ type: 'readProgress', found: found, expected: isFinite(expected) ? expected : null }); } catch (e) { }
+    }
+
     async function zillow() {
+        // after a page load (e.g. coming back from the property's own page) the cards draw a moment later
+        for (var i = 0; i < 25 && !document.querySelector(ZILLOW_CARDS); i++) await sleep(200);
         // The page JSON goes stale when the search changes in-page (filters, map move), so it only enriches cards it matches by URL.
         var byUrl = {};
         try {
@@ -122,10 +134,12 @@
         box.scrollTop = 0;
         await sleep(300);
         var count = read();
+        progress(count, expected);
         while (count < expected && same < 3 && Date.now() < until) {
             box.scrollTop += Math.max(350, box.clientHeight * 0.7);
             await sleep(600);
             var now = read(), bottom = box.scrollHeight - box.clientHeight - box.scrollTop <= 24;
+            progress(now, expected);
             same = bottom && now === count ? same + 1 : 0;
             count = now;
         }

@@ -88,7 +88,18 @@ public static class PropertyRecordMerger
 
             BirdseyeUrl = string.IsNullOrWhiteSpace(original.BirdseyeUrl)
                 ? regrid.BirdseyeUrl
-                : original.BirdseyeUrl
+                : original.BirdseyeUrl,
+
+            // house facts: what the record already had wins, as above
+            UseDescription = string.IsNullOrWhiteSpace(original.UseDescription) ? regrid.UseDescription : original.UseDescription,
+            HomeType = string.IsNullOrWhiteSpace(original.HomeType) ? regrid.HomeType : original.HomeType,
+            Beds = original.Beds ?? regrid.Beds,
+            Baths = original.Baths ?? regrid.Baths,
+            LivingSqft = original.LivingSqft ?? regrid.LivingSqft,
+            Units = original.Units ?? regrid.Units,
+            YearBuilt = original.YearBuilt ?? regrid.YearBuilt,
+            BuildingCount = original.BuildingCount ?? regrid.BuildingCount,
+            OtherOwners = string.IsNullOrWhiteSpace(original.OtherOwners) ? regrid.OtherOwners : original.OtherOwners
         };
     }
 }

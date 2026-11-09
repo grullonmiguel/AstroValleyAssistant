@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Research tool, not part of the app or the solution: see data/parcel-research-log.md for how to run it. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Configuration>Debug</Configuration> <!-- the self-checks are Debug.Assert -->
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AstroValley.Infrastructure\AstroValley.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

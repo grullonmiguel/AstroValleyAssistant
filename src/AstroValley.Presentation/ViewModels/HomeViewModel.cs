@@ -160,7 +160,11 @@ public partial class HomeViewModel : ObservableObject
         var pin = Markers.FirstOrDefault(m => Math.Abs(m.Latitude - lat) < 1e-9 && Math.Abs(m.Longitude - lon) < 1e-9);
         if (pin is null) return;
         double.TryParse(pin.Acres, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var acres);
-        var subject = new CompsSubject(pin.Address, acres, pin.PropertyType, pin.Latitude, pin.Longitude, pin.ExtraDetails?.GetValueOrDefault("Zip"));
+        var d = pin.ExtraDetails;
+        int? Int(string key) => int.TryParse(d?.GetValueOrDefault(key), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
+        double? Num(string key) => double.TryParse(d?.GetValueOrDefault(key), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
+        var subject = new CompsSubject(pin.Address, acres, pin.PropertyType, pin.Latitude, pin.Longitude, d?.GetValueOrDefault("Zip"),
+            Int("Living Sqft"), Int("Beds"), Num("Baths"), d?.GetValueOrDefault("Home Type"));
         Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<CompsViewModel>(_serviceProvider)
             .Open(subject, pin.Address, result => { pin.Comps = result; CompsChanged?.Invoke(pin); });
     }
