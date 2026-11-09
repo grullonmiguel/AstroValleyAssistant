@@ -93,7 +93,7 @@ function popupHtml(loc, message) {
     if (loc.IsSubject) compRows = '<div style="margin:8px 0;font-weight:700;color:#2E9E5B">&#127968; Subject property</div>' + compRows;
 
     return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<span class="pp-links">' + findComps +
-        '<a href="#" class="pp-zoom">Zoom</a></span></div>' + compRows + '<div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' +
+        '<a href="#" class="pp-zoom">Zoom</a></span></div>' + dataQualityHtml(loc) + compRows + '<div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' +
         (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + slope + box + equity + comps + statusSection(loc) + actions + '</div>';
 }
 
@@ -158,6 +158,33 @@ function decoratePin(marker, loc) {
     var dot = el.querySelector('.pin-comps-dot'), has = !!(loc.Comps && loc.Comps.EstimatedValue > 0);
     if (has && !dot) { dot = document.createElement('span'); dot.className = 'pin-comps-dot'; dot.title = 'Has comps'; el.appendChild(dot); }
     else if (!has && dot) dot.remove();
+    // bubble with the number of missing research items (green tick = complete); the popup lists them
+    var dq = el.querySelector('.pin-dq'), miss = missingData(loc);
+    if (!dq && miss) { dq = document.createElement('span'); el.appendChild(dq); }
+    if (dq && !miss) dq.remove();
+    else if (dq) { dq.className = 'pin-dq ' + dqTier(miss.length); dq.textContent = miss.length || '✓'; dq.title = miss.length ? 'Missing: ' + miss.join(', ') : 'Data complete'; }
+}
+
+// What research is still missing on a pin; null for comps-export pins, which are not researched. Same checks as the popup shows.
+function missingData(loc) {
+    if (loc.CompKey || loc.IsSubject) return null;
+    var d = loc.ExtraDetails || {}, miss = [];
+    if (!loc.Acres && !loc.ParcelLines) miss.push('Regrid data');
+    if (!d['Property Type']) miss.push('Property type');
+    if (loc.SlopePercent == null) miss.push('Elevation');
+    if (!d['Flood Zone']) miss.push('Flood zone');
+    if (!loc.AccessStatus) miss.push('Road access');
+    if (!(loc.Comps && loc.Comps.EstimatedValue > 0)) miss.push('Comps');
+    if (!(loc.BidAmount > 0)) miss.push('Bid');
+    if (!(loc.AssessedAmount > 0)) miss.push('Assessed value');
+    return miss;
+}
+function dqTier(n) { return n === 0 ? 'dq-ok' : n <= 3 ? 'dq-warn' : 'dq-bad'; }
+
+function dataQualityHtml(loc) {
+    var miss = missingData(loc);
+    if (!miss) return '';
+    return '<div class="pp-dq ' + dqTier(miss.length) + '">' + (miss.length ? '<b>' + miss.length + ' missing:</b> ' + esc(miss.join(', ')) : '<b>&#10003; Data complete</b>') + '</div>';
 }
 
 function statusSection(loc) {
@@ -194,7 +221,7 @@ function wireEditor(popup, loc, marker) {
         root.querySelector('.pp-access').innerHTML = '<span class="pp-label">Checking roads...</span>';
         checkAccess(loc).then(function (r) {
             loc.AccessStatus = r.status; loc.AccessDistanceFt = r.ft; loc.AccessRoad = r.road; loc.AccessChecked = new Date().toISOString().slice(0, 10);
-            popup.setHTML(popupHtml(loc)); wireEditor(popup, loc, marker); onPinEdit(loc);
+            decoratePin(marker, loc); popup.setHTML(popupHtml(loc)); wireEditor(popup, loc, marker); onPinEdit(loc);
         }).catch(function () { // service down: nothing is saved, offer to try again
             popup.setHTML(popupHtml(loc, 'Could not reach the Census road service.')); wireEditor(popup, loc, marker);
         });

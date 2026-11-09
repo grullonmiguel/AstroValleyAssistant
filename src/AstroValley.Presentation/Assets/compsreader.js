@@ -55,10 +55,16 @@
                     homeSqft: h.livingArea || null, lat: h.latitude || null, lon: h.longitude || null,
                     soldText: h.dateSold ? new Date(h.dateSold).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : null, url: r.detailUrl && r.detailUrl.indexOf('http') !== 0 ? 'https://www.zillow.com' + r.detailUrl : r.detailUrl };
             });
-            if (rows.length && document.querySelectorAll('article[data-test="property-card"]').length <= rows.length + 2) return rows;
+            // The embedded JSON goes stale when the search changes in-page (filters, map move), so the cards on screen decide what is
+            // read; a card with a matching JSON row takes that row (coordinates, exact lot), one without is read from its own text.
+            var cards = fromCards(CARDS);
+            if (!cards.length) return rows;
+            var path = function (u) { return (u || '').replace(/^https?:\/\/[^/]+/, '').split('?')[0]; };
+            return cards.map(function (c) { return rows.find(function (r) { return c.url && path(r.url) === path(c.url); }) || c; });
         } catch (e) { }
-        return fromCards('article[data-test="property-card"], li[class*="ListItem"] article');
+        return fromCards(CARDS);
     }
+    var CARDS = 'article[data-test="property-card"], li[class*="ListItem"] article';
 
     if (/zillow\./.test(host)) return zillow();
     if (/homes\.com/.test(host)) return fromCards('li.placard-container, article.placard');
