@@ -37,7 +37,16 @@ public partial class CompsView : UserControl
             }
 
             var reader = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "compsreader.js"));
-            vm.ReadPage = async () => await WebView.CoreWebView2.ExecuteScriptAsync(reader);
+            // Runtime.evaluate waits for the reader's promise (it scrolls Zillow's list first); ExecuteScriptAsync would return "{}"
+            vm.ReadPage = async () =>
+            {
+                var reply = await WebView.CoreWebView2.CallDevToolsProtocolMethodAsync("Runtime.evaluate",
+                    System.Text.Json.JsonSerializer.Serialize(new { expression = reader, awaitPromise = true, returnByValue = true }));
+                using var doc = System.Text.Json.JsonDocument.Parse(reply);
+                if (doc.RootElement.TryGetProperty("exceptionDetails", out var error))
+                    throw new InvalidOperationException(error.TryGetProperty("exception", out var ex) && ex.TryGetProperty("description", out var d) ? d.GetString() : error.GetRawText());
+                return doc.RootElement.GetProperty("result").TryGetProperty("value", out var value) ? value.GetRawText() : "[]";
+            };
             vm.NavigateTo = url => WebView.CoreWebView2.Navigate(url);
             vm.GoBackRequested = () => { if (WebView.CoreWebView2.CanGoBack) WebView.CoreWebView2.GoBack(); };
             WebView.CoreWebView2.NewWindowRequested += (_, e) => { e.Handled = true; WebView.CoreWebView2.Navigate(e.Uri); }; // stay in this view

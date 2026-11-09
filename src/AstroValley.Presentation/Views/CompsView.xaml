@@ -298,8 +298,7 @@
                            Style="{StaticResource Label}" />
 
                 <!-- Filters -->
-                <Border Background="White" CornerRadius="12" Padding="12 8" Margin="0,0,0,8"
-                        Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Border Background="White" CornerRadius="12" Padding="12 8" Margin="0,0,0,8" >
                     <Border.Effect>
                         <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.12" Color="#30294B"/>
                     </Border.Effect>
@@ -521,13 +520,23 @@
                                                     <Border Background="#E3F0FB" CornerRadius="6" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding Badge}" FontSize="10" FontWeight="SemiBold" Foreground="#2F6DA3"/>
                                                     </Border>
+
+                                                    <!-- VERIFY: no link / no address / guessed address; the tooltip says which -->
+                                                    <Border Background="#FDEFD9" CornerRadius="6" Padding="8,2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="{Binding Verify}">
+                                                        <TextBlock Text="VERIFY" FontSize="10" FontWeight="SemiBold" Foreground="#A35A12"/>
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Verify}" Value="{x:Null}">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                    </Border>
                                                 </StackPanel>
 
                                                 <TextBlock Text="{Binding LotDetail}" 
-                                                   FontSize="11" 
-                                                   Foreground="#555555" 
-                                                   Margin="0,2,0,0"/>
-                                                <TextBlock Text="{Binding PriceMiles}" 
                                                    FontSize="11" 
                                                    Foreground="#555555" 
                                                    Margin="0,2,0,0"/>
@@ -545,6 +554,10 @@
                                                         </Style>
                                                     </TextBlock.Style>
                                                 </TextBlock>
+                                                <TextBlock Text="{Binding PriceMiles}" 
+                                                   FontSize="11" 
+                                                   Foreground="#555555" 
+                                                   Margin="0,2,0,0"/>
                                                 <!-- the address opens the listing in the default browser; a button looks like a link and, unlike a Hyperlink, its command binding works here -->
                                                 <Button Margin="0,4,0,0" HorizontalAlignment="Left" Cursor="Hand" ToolTip="Open in your browser" Click="OnListingClick">
                                                     <Button.Template>

@@ -185,6 +185,7 @@ public partial class CompsViewModel : ObservableObject
         IsMapVisible = false; // Analyze reads the browser
         try
         {
+            Message = "Reading the page (Zillow: scrolling through the results)...";
             var json = await ReadPage();
             // ExecuteScriptAsync returns JSON
             var rows = JsonSerializer.Deserialize<List<RawComp>>(json) ?? [];
@@ -192,7 +193,7 @@ public partial class CompsViewModel : ObservableObject
             foreach (var r in rows)
             {
                 if (r.price <= 0) continue; // no lot size is fine: houses are valued by price, land rows without one are left out of the stats
-                var comp = new Comp(r.address, (decimal)r.price, r.acres, r.sold, r.url, r.soldText, r.homeSqft, r.lat, r.lon);
+                var comp = new Comp(r.address, (decimal)r.price, r.acres, r.sold, r.url, r.soldText, r.homeSqft, r.lat, r.lon, r.verify);
                 if (_all.Any(c => Key(c) == Key(comp))) continue;
                 _all.Add(comp);
                 added++;
@@ -205,7 +206,7 @@ public partial class CompsViewModel : ObservableObject
         _ = MeasureDistancesAsync();
     }
 
-    private record RawComp(string? address, double price, double acres, bool sold, string? url, string? soldText, int? homeSqft, double? lat, double? lon);
+    private record RawComp(string? address, double price, double acres, bool sold, string? url, string? soldText, int? homeSqft, double? lat, double? lon, string? verify);
     private static string Key(Comp c) => (c.Address ?? c.Url ?? "") + "|" + (c.Sold ? "S" : "A");
 
     [RelayCommand]

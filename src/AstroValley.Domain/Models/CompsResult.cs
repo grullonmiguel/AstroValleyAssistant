@@ -1,8 +1,10 @@
 namespace AstroValley.Domain.Models;
 
 /// <summary>One comparable listing read from a real-estate site.</summary>
-public record Comp(string? Address, decimal Price, double Acres, bool Sold, string? Url, string? SoldText = null, int? HomeSqft = null, double? Lat = null, double? Lon = null)
+public record Comp(string? Address, decimal Price, double Acres, bool Sold, string? Url, string? SoldText = null, int? HomeSqft = null, double? Lat = null, double? Lon = null, string? Verify = null)
 {
+    // Verify: why this comp needs checking before it is trusted (no listing link, no address, or an address guessed from the card text); null = fine.
+
     /// <summary>Miles from the property being valued; set after the comp is placed on the map (null = could not be placed).</summary>
     public double? Miles { get; set; }
 
