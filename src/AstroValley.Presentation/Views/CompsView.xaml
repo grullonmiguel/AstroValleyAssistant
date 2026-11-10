@@ -230,18 +230,6 @@
 
             <StackPanel>
                 
-                <!-- the property being valued: typed in by hand, or filled when opened from a pin / grid row -->
-                <Border CornerRadius="6"
-                        Padding="10,6" 
-                        Margin="0,0,0,8"
-                        Background="#DBD8E9" 
-                        Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}" >
-                    <TextBlock FontSize="12"                                
-                               FontWeight="SemiBold"
-                               Foreground="#30294B" 
-                               TextTrimming="CharacterEllipsis"
-                               Text="{Binding TargetLabel, StringFormat='For: {0}'}" />
-                </Border>
                 
                 <!-- Action Buttons -->
                 <Border Background="#DBD8E9" CornerRadius="18" Padding="4" Margin="0,0,0,8">

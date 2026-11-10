@@ -35,6 +35,13 @@ public record MarkerLocation : INotifyPropertyChanged
     public string? Status { get; set; }
     public string? Notes { get; set; }
 
+    // Due diligence (saved with the pins): the risk flags found when the pin was made, the user's checklist answers and the names
+    // to search in the official records. State picks the jurisdiction profile (rules and checklist) for the checklist.
+    public string? State { get; init; }
+    public List<AstroValley.Domain.DueDiligence.RiskFlag>? Risks { get; init; }
+    public List<AstroValley.Domain.DueDiligence.DueDiligenceItem>? Checklist { get; set; }
+    public List<string>? SearchNames { get; set; }
+
     /// <summary>Comparable sales the user accepted in the comps dialog; null until then.</summary>
     public CompsResult? Comps { get; set; }
 

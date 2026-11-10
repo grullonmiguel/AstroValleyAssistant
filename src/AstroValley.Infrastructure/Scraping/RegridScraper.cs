@@ -319,8 +319,22 @@ public class RegridScraper : IRegridScraper
         var halfBaths = f.GetJsonDouble("num_bath_partial", "half_bathroom_count");
         var yearBuilt = Int("yearbuilt");
 
+        // Homestead: Miami-Dade left homestead_exemption empty but had hstead_ex_val_cur = 25,000, so the amount counts too
+        var homesteadText = f.GetJsonString("homestead_exemption").ToUpperInvariant();
+        bool? homestead = f.GetJsonDecimal("hstead_ex_val_cur") is > 0 || homesteadText is "Y" or "YES" or "TRUE" or "1" ? true
+            : homesteadText is "N" or "NO" or "FALSE" or "0" ? false : null;
+
         var parcel = new PropertyRecord
         {
+            State = f.GetJsonString("state2").ToUpperInvariant(),
+            LastTransferDate = DateTime.TryParse(f.GetJsonString("last_ownership_transfer_date", "saledate"), System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var transferred) ? transferred : null,
+            LastSalePrice = f.GetJsonDecimal("saleprice"),
+            OwnerCount = Int("owner_count"),
+            Homestead = homestead,
+            ImprovementValue = f.GetJsonDecimal("improvval"),
+            LandValue = f.GetJsonDecimal("landval"),
+            PreviousOwner = f.GetJsonString("previous_owner"),
             UseDescription = f.GetJsonString("usedesc", "dor_desc"),
             HomeType = HomeKind.From(f.GetJsonString("usedesc", "dor_desc"), f.GetJsonString("lbcs_structure_desc"), units,
                 f.GetJsonString("condo_flag").Equals("Y", StringComparison.OrdinalIgnoreCase), propertyType),

@@ -105,5 +105,6 @@ a.pp-check { border: 0; background: none; padding: 0; text-decoration: underline
 .dq-ok { background: #2E9E5B; } .dq-warn { background: #CD7B2E; } .dq-bad { background: #D64545; }
 .pp-house { display: flex; align-items: center; gap: 6px; margin: 6px 0; font-size: 12px; color: #30294B; flex-wrap: wrap; }
 .pp-warn { margin: 6px 0; padding: 5px 10px; border-radius: 8px; background: #FDEFD9; color: #A35A12; font-size: 12px; line-height: 1.4; }
+.pp-risk { margin: 4px 0; padding: 4px 10px; border-radius: 8px; border-left: 4px solid var(--c); background: #F7F6FB; color: #30294B; font-size: 12px; cursor: help; }
 .pp-dq { margin: 6px 0; padding: 4px 10px; border-radius: 8px; font-size: 12px; color: #fff; }
 .pin-skip { filter: grayscale(1) opacity(.45); }

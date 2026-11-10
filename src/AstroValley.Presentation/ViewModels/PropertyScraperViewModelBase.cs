@@ -315,7 +315,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         double? Coord(string s) => double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
         var subject = new CompsSubject(string.IsNullOrWhiteSpace(r.Address) ? r.ParcelId : r.Address, r.Acres, r.PropertyType, Coord(r.Latitude), Coord(r.Longitude), r.Zip,
             r.LivingSqft, r.Beds, r.Baths, r.HomeType);
-        _serviceProvider!.GetRequiredService<CompsViewModel>().Open(subject, subject.Address ?? "", result => row.Record = row.Record with { Comps = result });
+        _serviceProvider!.GetRequiredService<CompsViewModel>().Open(subject, result => row.Record = row.Record with { Comps = result });
     }
 
     [RelayCommand(CanExecute = nameof(CanMap))]
@@ -366,6 +366,9 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
                     FemaUrl = UrlBuilder.BuildFemaFloodUrl(record.Record),
                     AppraiserUrl = string.IsNullOrWhiteSpace(record.AppraiserUrl) ? null : record.AppraiserUrl,
                     Comps = record.Record.Comps,
+                    State = string.IsNullOrWhiteSpace(r0.State) ? null : r0.State,
+                    Risks = AstroValley.Domain.DueDiligence.Jurisdictions.Review(r0, DateTime.Today),
+                    SearchNames = AstroValley.Domain.DueDiligence.Jurisdictions.SearchNames(r0.Owner, r0.OtherOwners, r0.PreviousOwner),
                     ExtraDetails = details
                 });
         }

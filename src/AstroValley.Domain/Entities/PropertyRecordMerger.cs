@@ -99,7 +99,15 @@ public static class PropertyRecordMerger
             Units = original.Units ?? regrid.Units,
             YearBuilt = original.YearBuilt ?? regrid.YearBuilt,
             BuildingCount = original.BuildingCount ?? regrid.BuildingCount,
-            OtherOwners = string.IsNullOrWhiteSpace(original.OtherOwners) ? regrid.OtherOwners : original.OtherOwners
+            OtherOwners = string.IsNullOrWhiteSpace(original.OtherOwners) ? regrid.OtherOwners : original.OtherOwners,
+            State = string.IsNullOrWhiteSpace(original.State) ? regrid.State : original.State,
+            LastTransferDate = original.LastTransferDate ?? regrid.LastTransferDate,
+            LastSalePrice = original.LastSalePrice ?? regrid.LastSalePrice,
+            OwnerCount = original.OwnerCount ?? regrid.OwnerCount,
+            Homestead = original.Homestead ?? regrid.Homestead,
+            ImprovementValue = original.ImprovementValue ?? regrid.ImprovementValue,
+            LandValue = original.LandValue ?? regrid.LandValue,
+            PreviousOwner = string.IsNullOrWhiteSpace(original.PreviousOwner) ? regrid.PreviousOwner : original.PreviousOwner
         };
     }
 }

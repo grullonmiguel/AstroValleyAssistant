@@ -226,6 +226,20 @@
         function onFindComps(loc) {
             if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'findComps', lat: loc.Latitude, lon: loc.Longitude });
         }
+        // "Due diligence" in a popup: WPF opens the checklist; setChecklist puts the answers back into the open popup.
+        function onDueDiligence(loc) {
+            if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'dueDiligence', lat: loc.Latitude, lon: loc.Longitude });
+        }
+        function setChecklist(lat, lon, checklist) {
+            var key = pinKey(lat, lon);
+            pinMarkers.forEach(function (p) {
+                if (pinKey(p.lat, p.lon) !== key) return;
+                p.loc.Checklist = checklist;
+                var popup = p.marker.getPopup();
+                popup.setHTML(popupHtml(p.loc));
+                wireEditor(popup, p.loc, p.marker);
+            });
+        }
         function setComps(lat, lon, comps) {
             var key = pinKey(lat, lon);
             pinMarkers.forEach(function (p) {

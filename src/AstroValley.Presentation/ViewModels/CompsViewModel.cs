@@ -19,7 +19,8 @@ public partial class SiteOption(string name) : ObservableObject
 
 /// <summary>The property a comps search is for. Coordinates are optional (a manual entry has none).</summary>
 public record CompsSubject(string? Address, double? Acres, string? PropertyType, double? Latitude, double? Longitude, string? Zip = null,
-    int? HomeSqft = null, int? Beds = null, double? Baths = null, string? HomeType = null); // house facts from the county record (Regrid), when known
+    int? HomeSqft = null, int? Beds = null, double? Baths = null, string? HomeType = null, // house facts from the county record (Regrid), when known
+    MarkerLocation? Pin = null); // the Home map pin it came from: the comps map shows its full popup for the subject
 
 /// <summary>
 /// The Comps tab: a browser (homes.com, Zillow, ...) plus a sidebar that reads the listings on screen, filters them and
@@ -36,6 +37,7 @@ public partial class CompsViewModel : ObservableObject
     private double? _lat, _lon;
     private string? _type;
     private (double Lat, double Lon)? _subject; // where the property was placed; the export's first pin
+    private MarkerLocation? _subjectPin;         // the Home pin the comps were opened from (null from a grid row or a typed address)
 
     public static readonly (string Name, string Url)[] Sites =
     [
@@ -95,7 +97,6 @@ public partial class CompsViewModel : ObservableObject
 
     // set when opened from a pin or grid row: the value can be sent back to it
     [ObservableProperty] private bool _hasTarget;
-    [ObservableProperty] private string _targetLabel = "";
 
     [ObservableProperty] private bool _useMedian = true;
     // Value from the best few comps only (appraisal practice: 3-5 strong comps beat many weak ones); the rest stay listed, faded.
@@ -119,14 +120,13 @@ public partial class CompsViewModel : ObservableObject
     private double PinAcres => double.TryParse(AcresText, NumberStyles.Float, CultureInfo.InvariantCulture, out var a) ? a : 0;
 
     /// <summary>Opens the Comps tab for a property; <paramref name="onReturn"/> receives the value when the user sends it back.</summary>
-    public void Open(CompsSubject subject, string label, Action<CompsResult> onReturn)
+    public void Open(CompsSubject subject, Action<CompsResult> onReturn)
     {
         var main = _serviceProvider.GetRequiredService<MainViewModel>();
         _returnTo = main.CurrentViewModel is CompsViewModel ? _returnTo : main.CurrentViewModel;
         _distanceCts?.Cancel();
         IsMapVisible = false;
         _onReturn = onReturn;
-        TargetLabel = label;
         HasTarget = true;
         (_lat, _lon, _type) = (subject.Latitude, subject.Longitude, subject.PropertyType);
         Address = subject.Address ?? "";
@@ -149,6 +149,7 @@ public partial class CompsViewModel : ObservableObject
         _removed.Clear();
         _kept.Clear();
         _subject = null;
+        _subjectPin = subject.Pin;
         Message = "Search and filter on the site, then press Analyze.";
         Refresh();
         main.CurrentViewModel = this;
@@ -394,8 +395,8 @@ public partial class CompsViewModel : ObservableObject
         _onReturn = null;
         _returnTo = null;
         (_lat, _lon, _type) = (null, null, null);
+        _subjectPin = null;
         HasTarget = false;
-        TargetLabel = "";
         Address = AcresText = ZipText = HomeSqftText = BedsText = BathsText = "";
         IsHome = IsMobile = IsMultiFamily = false;
         Clear();
@@ -490,6 +491,7 @@ public partial class CompsViewModel : ObservableObject
         }
         _ = RunMapScript($"showOnly({JsonSerializer.Serialize(_all.Where(Passes).Select(Key))});"
             + $"orderList({JsonSerializer.Serialize(Visible.Select(Key))});" // the map's list follows the sort box
+            + $"setTop({JsonSerializer.Serialize(UseTopFive ? Visible.Where(c => !c.IsExcluded).Select(Key) : [])});" // Top 5 pins turn blue
             + string.Concat(_all.Select(c => $"setPick({JsonSerializer.Serialize(Key(c))},{(Excluded(c) || c.OutsideTop ? "true" : "false")});")));
     }
 
@@ -652,7 +654,10 @@ public partial class CompsViewModel : ObservableObject
         // the subject is placed by Analyze's distance step; if that has not run, place it now
         _subject ??= _lat is { } la && _lon is { } lo ? (la, lo) : Address.Length > 0 ? await _serviceProvider.GetRequiredService<IGeocoder>().GeocodeAsync(Address) : null;
         if (_subject is { } s)
-            pins.Add(new MarkerLocation { Address = Address.Length > 0 ? Address : "Subject property", Latitude = s.Lat, Longitude = s.Lon, Acres = AcresText, PinColor = "#2E9E5B", IsSubject = true });
+            pins.Add(_subjectPin is { } home
+                // same popup as on the Home map (facts, house line, risk flags, slope, values), as a green subject pin
+                ? home with { Latitude = s.Lat, Longitude = s.Lon, PinColor = "#2E9E5B", IsSubject = true }
+                : new MarkerLocation { Address = Address.Length > 0 ? Address : "Subject property", Latitude = s.Lat, Longitude = s.Lon, Acres = AcresText, PinColor = "#2E9E5B", IsSubject = true });
         var skipped = 0;
         foreach (var c in source ?? Visible)
         {

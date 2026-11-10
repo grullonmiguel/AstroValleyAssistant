@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using AstroValley.Domain.DueDiligence;
 using AstroValley.Domain.Entities;
 using AstroValley.Domain.Models;
 using AstroValley.Infrastructure.Scraping;
@@ -30,12 +31,15 @@ foreach (var file in Directory.GetFiles(folder, "*.json").Order())
           property type: {Show(r.PropertyType)}   home type: {Show(r.HomeType)}   land use: {Show(r.UseDescription)}
           beds {Show(r.Beds)} / baths {Show(r.Baths)}   sqft {Show(r.LivingSqft)}   units {Show(r.Units)}   built {Show(r.YearBuilt)}   buildings {Show(r.BuildingCount)}
           owner: {Show(r.Owner)}   other owners: {Show(r.OtherOwners)}
-          flags: {(conflict ? "VACANT-LAND CONFLICT " : "")}{(HomeKind.IsEstateOwner($"{r.Owner}; {r.OtherOwners}") ? "ESTATE OWNER" : "")}
+          state {Show(r.State)}   last transfer {Show(r.LastTransferDate?.ToString("yyyy-MM-dd"))} for {Show(r.LastSalePrice)}   owners {Show(r.OwnerCount)}   homestead {Show(r.Homestead)}   building {Show(r.ImprovementValue)} / land {Show(r.LandValue)}
+          flags: {(conflict ? "VACANT-LAND CONFLICT " : "")}{string.Join(", ", Jurisdictions.Review(r, DateTime.Today).Select(f => $"[{f.Severity}] {f.Title}"))}
+          profile: {Jurisdictions.For(r.State, r.County).Name}   names to search: {string.Join(" | ", Jurisdictions.SearchNames(r.Owner, r.OtherOwners, r.PreviousOwner))}
         """);
 }
 
 CompScoring.SelfCheck();
 HomeKind.SelfCheck();
+Jurisdictions.SelfCheck();
 Console.WriteLine(fails == 0 ? "Self-checks passed." : $"Self-checks FAILED: {fails}");
 return fails == 0 ? 0 : 1;
 

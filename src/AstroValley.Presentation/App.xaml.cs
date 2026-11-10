@@ -309,6 +309,13 @@ namespace AstroValley.Presentation
 
         protected override async void OnStartup(StartupEventArgs e)
         {
+            // Debug / Trace output (the [REGRID] lines etc.) also goes to %LocalAppData%\AstroValleyAssistant\logs\app.log, fresh each run.
+            // shortcut: Debug.WriteLine is compiled out of Release builds, so a Release run logs only Trace output.
+            var logDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AstroValleyAssistant", "logs");
+            System.IO.Directory.CreateDirectory(logDir);
+            System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(
+                new System.IO.StreamWriter(System.IO.Path.Combine(logDir, "app.log"), append: false) { AutoFlush = true }));
+
             await _host.StartAsync();
             _host.Services.GetRequiredService<IThemeService>().Initialize();
 

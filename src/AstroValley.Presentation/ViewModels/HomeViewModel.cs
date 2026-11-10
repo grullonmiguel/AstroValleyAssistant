@@ -154,6 +154,28 @@ public partial class HomeViewModel : ObservableObject
     /// <summary>Raised after the user accepted comps for a pin, so the map refreshes its popup.</summary>
     public event Action<MarkerLocation>? CompsChanged;
 
+    /// <summary>Raised after the due-diligence dialog closes, so the map refreshes the popup's "Due diligence n/m".</summary>
+    public event Action<MarkerLocation>? ChecklistChanged;
+
+    /// <summary>
+    /// The popup's "Due diligence": the checklist from the pin's jurisdiction profile (made on first open; items a newer profile adds
+    /// are appended to an older saved checklist), the names to search and the risk flags. Answers are kept on the pin and saved with it.
+    /// </summary>
+    public async void OpenDueDiligence(double lat, double lon)
+    {
+        var pin = Markers.FirstOrDefault(m => Math.Abs(m.Latitude - lat) < 1e-9 && Math.Abs(m.Longitude - lon) < 1e-9);
+        if (pin is null) return;
+        var template = AstroValley.Domain.DueDiligence.Jurisdictions.For(pin.State, pin.County).NewChecklist();
+        pin.Checklist = pin.Checklist is null ? [.. template] : [.. pin.Checklist, .. template.Where(t => pin.Checklist.All(i => i.Key != t.Key))];
+        pin.SearchNames ??= AstroValley.Domain.DueDiligence.Jurisdictions.SearchNames(
+            pin.ExtraDetails?.GetValueOrDefault("Owner"), pin.ExtraDetails?.GetValueOrDefault("Other Owners")); // pins saved before names existed
+        var dialog = new ViewModels.Dialogs.DueDiligenceViewModel(pin);
+        Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Services.IDialogService>(_serviceProvider).ShowDialog(dialog);
+        try { await dialog.Result; }
+        catch (TaskCanceledException) { } // closed with X: the answers were already written to the pin
+        ChecklistChanged?.Invoke(pin);
+    }
+
     /// <summary>The popup's "Find comps": full-screen browser + sidebar; the accepted result is saved on the pin.</summary>
     public void FindComps(double lat, double lon)
     {
@@ -164,9 +186,9 @@ public partial class HomeViewModel : ObservableObject
         int? Int(string key) => int.TryParse(d?.GetValueOrDefault(key), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
         double? Num(string key) => double.TryParse(d?.GetValueOrDefault(key), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
         var subject = new CompsSubject(pin.Address, acres, pin.PropertyType, pin.Latitude, pin.Longitude, d?.GetValueOrDefault("Zip"),
-            Int("Living Sqft"), Int("Beds"), Num("Baths"), d?.GetValueOrDefault("Home Type"));
+            Int("Living Sqft"), Int("Beds"), Num("Baths"), d?.GetValueOrDefault("Home Type"), pin);
         Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<CompsViewModel>(_serviceProvider)
-            .Open(subject, pin.Address, result => { pin.Comps = result; CompsChanged?.Invoke(pin); });
+            .Open(subject, result => { pin.Comps = result; CompsChanged?.Invoke(pin); });
     }
 
     // Opens one Google Maps driving route through the pins that are showing (filters applied, skipped ones left out).

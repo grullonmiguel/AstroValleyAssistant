@@ -42,6 +42,16 @@ public record PropertyRecord
     public int? BuildingCount { get; init; }                    // Regrid's building footprints on the parcel
     public string OtherOwners { get; init; } = string.Empty;    // owner 2-4, "; "-separated (estate / heirs wording shows up here)
 
+    // --- Ownership and value signals for the risk flags (also optional per county) ---
+    public string State { get; init; } = string.Empty;          // two-letter code ("FL"): picks the jurisdiction profile
+    public DateTime? LastTransferDate { get; init; }
+    public decimal? LastSalePrice { get; init; }                // 0 = a $0 transfer (trust, quitclaim, inheritance), not "unknown"
+    public int? OwnerCount { get; init; }
+    public bool? Homestead { get; init; }                       // null = the county did not say
+    public decimal? ImprovementValue { get; init; }             // the building's share of the county's value
+    public decimal? LandValue { get; init; }
+    public string PreviousOwner { get; init; } = string.Empty;
+
     // --- Comps (sent back from the Comps tab) ---
     public AstroValley.Domain.Models.CompsResult? Comps { get; init; }
 

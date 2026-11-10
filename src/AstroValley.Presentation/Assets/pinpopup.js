@@ -49,9 +49,12 @@ function popupHtml(loc, message) {
         n('Living Sqft') ? n('Living Sqft').toLocaleString('en-US') + ' sqft' : null,
         n('Year Built') ? 'built ' + n('Year Built') : null,
         n('Buildings') > 1 ? n('Buildings') + ' buildings' : null].filter(Boolean);
-    var house = (houseParts.length ? '<div class="pp-house" title="' + esc(d['Land Use'] || '').replace(/"/g, '&quot;') + '">' + ico('home') + houseParts.join(' &middot; ') + '</div>' : '') +
+    var house = (houseParts.length ? '<div class="pp-house" title="' + esc(d['Land Use'] || '').replace(/"/g, '&quot;') + '">' + ico('home') + '<span>' + houseParts.join(' &middot; ') + '</span></div>' : '') +
         (d['House Check'] ? '<div class="pp-warn">&#9888; ' + esc(d['House Check']) + '</div>' : '') +
-        (loc.EstateOwner ? '<div class="pp-warn">&#9888; Estate / heirs owner: probate and title risk. Check who can convey before bidding.</div>' : '');
+        (loc.Risks || []).map(function (f) {
+            return '<div class="pp-risk" style="--c:' + ({ High: '#D64545', Caution: '#CD7B2E' }[f.Severity] || '#2F80ED') + '" title="' + esc(f.Detail).replace(/"/g, '&quot;') + '">&#9888; ' + esc(f.Title) + '</div>';
+        }).join('') +
+        (loc.EstateOwner && !loc.Risks ? '<div class="pp-warn">&#9888; Estate / heirs owner: probate and title risk. Check who can convey before bidding.</div>' : '');
 
     // slope across the parcel (Regrid high minus low elevation over the longest side): flat is quiet, steep is loud
     var slope = '';
@@ -92,6 +95,9 @@ function popupHtml(loc, message) {
     }
     // Find comps only where WPF can open the dialog (Home map), not in the exported map
     var findComps = typeof onFindComps === 'function' ? '<a href="#" class="pp-zoom pp-comps">' + (loc.Comps ? 'Comps' : 'Find comps') + '</a>' : '';
+    // due-diligence checklist (Home map only): "Due diligence 3/27" once started
+    var cl = loc.Checklist || [], done = cl.filter(function (i) { return i.Status && i.Status !== 'Pending'; }).length;
+    var dueDiligence = typeof onDueDiligence === 'function' ? '<a href="#" class="pp-zoom pp-dd">Due diligence' + (cl.length ? ' ' + done + '/' + cl.length : '') + '</a>' : '';
 
     // sold/active listing details from the Comps export, one label/value row each
     var compRows = '';
@@ -109,8 +115,8 @@ function popupHtml(loc, message) {
     }
     if (loc.IsSubject) compRows = '<div style="margin:8px 0;font-weight:700;color:#2E9E5B">&#127968; Subject property</div>' + compRows;
 
-    return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<span class="pp-links">' + findComps +
-        '<a href="#" class="pp-zoom">Zoom</a></span></div>' + dataQualityHtml(loc) + compRows + '<div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' +
+    return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<span class="pp-links">' + dueDiligence + findComps +
+        '<a href="#" class="pp-zoom">Zoom</a></span></div>' + dataQualityHtml(loc) + '<div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' + compRows +
         (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + house + slope + box + equity + comps + statusSection(loc) + actions + '</div>';
 }
 
@@ -128,6 +134,7 @@ function pinInfo(loc) {
 
 // Pin size follows acreage on a log scale: 0.25 ac = small, 1 ac = normal, 10 ac = 1.45x, 100 ac = 1.9x (capped). No acreage = normal.
 function pinScale(loc) {
+    if (loc.IsSubject) return 1.7; // the property being valued: always the biggest pin
     var acres = parseFloat(loc.Acres);
     return acres > 0 ? Math.min(1.9, Math.max(0.75, 1 + 0.45 * Math.log10(acres))) : 1;
 }
@@ -148,6 +155,7 @@ function makePin(loc, map) {
         popup.getElement().addEventListener('click', function (e) {
             var comps = e.target.closest('.pp-comps');
             if (comps) { e.preventDefault(); onFindComps(loc); return; }
+            if (e.target.closest('.pp-dd')) { e.preventDefault(); onDueDiligence(loc); return; }
             if (!e.target.closest('.pp-zoom[href="#"]')) return; // not the zoom link
             e.preventDefault();
             var pad = typeof pinPad === 'function' ? pinPad() : { left: 40, top: 40, bottom: 40, right: 40 }; // Home: clear the side panels
