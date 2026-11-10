@@ -40,6 +40,7 @@ foreach (var file in Directory.GetFiles(folder, "*.json").Order())
 CompScoring.SelfCheck();
 HomeKind.SelfCheck();
 Jurisdictions.SelfCheck();
+AstroValley.Infrastructure.Data.JsonPinStore.SelfCheck();
 Console.WriteLine(fails == 0 ? "Self-checks passed." : $"Self-checks FAILED: {fails}");
 return fails == 0 ? 0 : 1;
 

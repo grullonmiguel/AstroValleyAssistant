@@ -96,6 +96,9 @@ namespace AstroValley.Presentation
             // ── Infrastructure: Data Services ────────────────────────────────
             services.AddSingleton<IGeographyDataService, GeographyDataService>();
             services.AddSingleton<IGeocoder, Geocoder>();
+            // per-user and writable without admin rights (unlike ProgramData); beside the app's logs
+            services.AddSingleton<IPinStore>(new JsonPinStore(System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AstroValleyAssistant", "SavedPins")));
 
             // ── Infrastructure: Exporters ────────────────────────────────────
             services.AddTransient<IClipboardExporter, ClipboardExporter>();

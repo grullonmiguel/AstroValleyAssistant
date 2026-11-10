@@ -1,3 +1,4 @@
+using AstroValley.Application.Interfaces.Data;
 using AstroValley.Application.Interfaces.Export;
 using AstroValley.Domain.Entities;
 using AstroValley.Domain.Enums;
@@ -42,12 +43,14 @@ public partial class HomeViewModel : ObservableObject
 
     private readonly IPinSheetExporter _sheetExporter;
     private readonly Services.IBrowserService _browser;
+    private readonly IPinStore _pinStore;
     private readonly IServiceProvider _serviceProvider; // IDialogService is resolved when needed: it depends on MainViewModel, which holds this view model
 
-    public HomeViewModel(IPinSheetExporter sheetExporter, Services.IBrowserService browser, IServiceProvider serviceProvider)
+    public HomeViewModel(IPinSheetExporter sheetExporter, Services.IBrowserService browser, IPinStore pinStore, IServiceProvider serviceProvider)
     {
         _sheetExporter = sheetExporter;
         _browser = browser;
+        _pinStore = pinStore;
         _serviceProvider = serviceProvider;
         Markers.CollectionChanged += (_, _) =>
         {
@@ -151,6 +154,7 @@ public partial class HomeViewModel : ObservableObject
         pin.AccessDistanceFt = accessFt;
         pin.AccessRoad = accessRoad;
         pin.AccessChecked = accessChecked;
+        AutoSave([pin]);
     }
 
     /// <summary>Raised after the user accepted comps for a pin, so the map refreshes its popup.</summary>
@@ -175,6 +179,7 @@ public partial class HomeViewModel : ObservableObject
         Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Services.IDialogService>(_serviceProvider).ShowDialog(dialog);
         try { await dialog.Result; }
         catch (TaskCanceledException) { } // closed with X: the answers were already written to the pin
+        AutoSave([pin]);
         ChecklistChanged?.Invoke(pin);
     }
 
@@ -190,7 +195,7 @@ public partial class HomeViewModel : ObservableObject
         var subject = new CompsSubject(pin.Address, acres, pin.PropertyType, pin.Latitude, pin.Longitude, d?.GetValueOrDefault("Zip"),
             Int("Living Sqft"), Int("Beds"), Num("Baths"), d?.GetValueOrDefault("Home Type"), pin);
         Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<CompsViewModel>(_serviceProvider)
-            .Open(subject, result => { pin.Comps = result; CompsChanged?.Invoke(pin); });
+            .Open(subject, result => { pin.Comps = result; AutoSave([pin]); CompsChanged?.Invoke(pin); });
     }
 
     // Opens one Google Maps driving route through the pins that are showing (filters applied, skipped ones left out).
@@ -238,20 +243,36 @@ public partial class HomeViewModel : ObservableObject
     private void ToggleTour() => TourToggleRequested?.Invoke();
     private readonly HashSet<string> _markerKeys = [];
 
+    /// <summary>
+    /// The fail-safe: every pin that reaches the map, and every edit to one, goes straight to its saved set on disk (see IPinStore).
+    /// Removing pins from the map never deletes them there; a set is deleted from the Saved Pins dialog.
+    /// </summary>
+    private void AutoSave(IReadOnlyCollection<MarkerLocation> pins, bool restoreWork = false)
+    {
+        try { _pinStore.Save(pins, restoreWork); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            // never interrupts the research; Export Pins still works as the manual way out
+            System.Diagnostics.Trace.TraceWarning($"Could not auto-save {pins.Count} pin(s): {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private void OpenSavedPins() =>
+        Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Services.IDialogService>(_serviceProvider)
+            .ShowDialog(new ViewModels.Dialogs.SavedPinsViewModel(_pinStore, _browser, AddMarkers));
+
     /// <summary>Raised with only the pins that were new, so the map never draws a pin twice.</summary>
     public event Action<IReadOnlyList<MarkerLocation>>? MarkersAdded;
 
     public event Action<MarkerLocation>? MarkerRemoved;
     public event Action? MarkersCleared;
 
-    // Parcel IDs can repeat across counties, so the key also includes the (rounded) position.
-    private static string KeyOf(MarkerLocation l) => $"{l.ParcelID}|{l.Latitude:F4}|{l.Longitude:F4}";
-
     [RelayCommand]
     private void RemoveMarker(MarkerLocation marker)
     {
         if (!Markers.Remove(marker)) return;
-        _markerKeys.Remove(KeyOf(marker)); // so the same pin can be sent again later
+        _markerKeys.Remove(marker.Key); // so the same pin can be sent again later
         MarkerRemoved?.Invoke(marker);
     }
 
@@ -350,9 +371,11 @@ public partial class HomeViewModel : ObservableObject
     public int AddMarkers(IEnumerable<MarkerLocation> locations)
     {
         var added = locations
-            .Where(l => l.IsValid && _markerKeys.Add(KeyOf(l)))
+            .Where(l => l.IsValid && _markerKeys.Add(l.Key))
             .ToList();
         if (added.Count == 0) return 0;
+
+        AutoSave(added, restoreWork: true); // before they are drawn, so a parcel scraped again shows the research already done on it
 
         foreach (var m in added) Markers.Add(m);
         IsSidebarOpen = false; // make room for the map and the parcel list

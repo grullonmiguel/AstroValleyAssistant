@@ -1,0 +1,49 @@
+<UserControl x:Class="AstroValley.Presentation.Views.Dialogs.SavedPinsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="720">
+    <!-- The automatically saved pins (SavedPinsViewModel): one card per auction, with Load and Delete. Uses the shared dialog styles. -->
+    <UserControl.Resources>
+        <!-- one saved set: place as the title, auction / pin count / saved time under it, actions on the right -->
+        <DataTemplate x:Key="SavedSet">
+            <HeaderedContentControl Header="{Binding Title}" Tag="{StaticResource Icon.MapMarker}" Style="{StaticResource Theme.Dialog.Card}">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="Delete" Tag="{StaticResource Icon.Delete}" ContentTemplate="{StaticResource Theme.Button.Content.Icon}"
+                                Style="{StaticResource Theme.Dialog.Button.Link}" CommandParameter="{Binding}"
+                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                ToolTip="Move this saved set to the Recycle Bin. Pins already on the map stay there."/>
+                        <Button Content="Load" Tag="{StaticResource Icon.TrayDown}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="14,5" CommandParameter="{Binding}"
+                                Command="{Binding DataContext.LoadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                ToolTip="Put these pins on the map, with the notes, checklist and comps saved with them"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Summary}" Style="{StaticResource Theme.Dialog.Text.Small}" VerticalAlignment="Center"/>
+                </DockPanel>
+            </HeaderedContentControl>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <DockPanel>
+        <!-- what happened last, and the way out -->
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource Theme.Dialog.Footer}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Content="Open folder" Tag="{StaticResource Icon.Web.Search}" Command="{Binding OpenFolderCommand}" Style="{StaticResource Theme.Dialog.Button.Outline}"
+                            ToolTip="Show the saved files; each one can be copied to another computer and loaded there with Import Pins"/>
+                    <Button Content="Close" Tag="{StaticResource Icon.Check}" Command="{Binding CloseCommand}" Style="{StaticResource Theme.Dialog.Button.Primary}"/>
+                </StackPanel>
+                <Path Style="{StaticResource Theme.Dialog.Icon}" Data="{StaticResource Icon.Info}" Margin="{StaticResource Margin.Icon.Right}"/>
+                <TextBlock Text="{Binding Status}" Style="{StaticResource Theme.Dialog.Text.Small}" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <Grid>
+            <ScrollViewer MaxHeight="480" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+                <ItemsControl ItemsSource="{Binding Sets}" ItemTemplate="{StaticResource SavedSet}" Focusable="False"/>
+            </ScrollViewer>
+            <TextBlock Text="Nothing saved yet. Send scraped properties to the Home map and they will appear here."
+                       Style="{StaticResource Theme.Dialog.Text}" HorizontalAlignment="Center" Margin="0,24"
+                       Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        </Grid>
+    </DockPanel>
+</UserControl>

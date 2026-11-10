@@ -45,6 +45,44 @@ public record MarkerLocation : INotifyPropertyChanged
     /// <summary>Comparable sales the user accepted in the comps dialog; null until then.</summary>
     public CompsResult? Comps { get; set; }
 
+    /// <summary>Identifies a parcel on the map and in the saved files. Parcel IDs can repeat across counties, so the (rounded) position is part of it.</summary>
+    [JsonIgnore]
+    public string Key => FormattableString.Invariant($"{ParcelID}|{Latitude:F4}|{Longitude:F4}");
+
+    /// <summary>
+    /// The saved file this pin belongs to: one per auction, "FL_Miami-Dade_2026-12-10"; pins with no auction share "FL_Miami-Dade_no-auction".
+    /// Scraping the same auction again lands in the same file, so the research on it is found again instead of split across versions.
+    /// </summary>
+    [JsonIgnore]
+    public string SetName
+    {
+        get
+        {
+            var county = (County ?? "").Replace(" County", "", StringComparison.OrdinalIgnoreCase).Trim();
+            var place = string.Join("_", new[] { State, county }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            var name = $"{(place.Length > 0 ? place : "Unsorted")}_{AuctionDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? "no-auction"}";
+            return string.Concat(name.Select(c => System.IO.Path.GetInvalidFileNameChars().Contains(c) ? '-' : c));
+        }
+    }
+
+    /// <summary>
+    /// Takes the user's work (status, notes, access check, checklist, comps, added names) from an earlier save of the same parcel,
+    /// wherever this pin has none of its own: a parcel scraped again arrives blank and must not wipe what was researched.
+    /// </summary>
+    public void RestoreWorkFrom(MarkerLocation saved)
+    {
+        Status ??= saved.Status;
+        Notes ??= saved.Notes;
+        Checklist ??= saved.Checklist;
+        Comps ??= saved.Comps;
+        if (saved.SearchNames is not null) SearchNames = [.. (SearchNames ?? []).Union(saved.SearchNames, StringComparer.OrdinalIgnoreCase)];
+        if (AccessStatus is not null) return;
+        AccessStatus = saved.AccessStatus;
+        AccessDistanceFt = saved.AccessDistanceFt;
+        AccessRoad = saved.AccessRoad;
+        AccessChecked = saved.AccessChecked;
+    }
+
     // Road access check (run from the map popup, saved with the pin): "Road" = a road touches or is within ~100 ft,
     // "Near" = nearest road within ~1,000 ft, "None" = no road found within ~1,000 ft ("possibly landlocked"; map data can miss roads).
     private string? _accessStatus;

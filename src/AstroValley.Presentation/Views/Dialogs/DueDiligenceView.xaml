@@ -3,64 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Width="900">
     <!-- Due-diligence checklist for one pin (DueDiligenceViewModel): risk flags, names to search, legal description, checklist and website links by office.
-         Colours, icons and button styles come from the theme; the styles below only size and arrange them for this dialog. -->
+         Cards, text and buttons use the shared Theme.Dialog.* styles; only what is special to this dialog is styled here. -->
     <UserControl.Resources>
-        <!-- text -->
-        <Style x:Key="Text.Line" TargetType="TextBlock" BasedOn="{StaticResource Theme.TextBlock.Base}">
-            <Setter Property="FontSize" Value="{StaticResource FontSize.Normal}"/>
-            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Tertiary}"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-        </Style>
-        <Style x:Key="Text.Small" TargetType="TextBlock" BasedOn="{StaticResource Theme.TextBlock.Base}">
-            <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
-            <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
-            <Setter Property="Opacity" Value="0.75"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-        </Style>
         <!-- a hint under a checklist line; hidden when the line has none -->
-        <Style x:Key="Text.Hint" TargetType="TextBlock" BasedOn="{StaticResource Text.Small}">
+        <Style x:Key="Text.Hint" TargetType="TextBlock" BasedOn="{StaticResource Theme.Dialog.Text.Small}">
             <Style.Triggers>
                 <Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger>
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="Icon" TargetType="Path">
-            <Setter Property="Width" Value="{StaticResource Size.Icon.Small}"/>
-            <Setter Property="Height" Value="{StaticResource Size.Icon.Small}"/>
-            <Setter Property="Stretch" Value="Uniform"/>
-            <Setter Property="Fill" Value="{DynamicResource Brush.Accent}"/>
-        </Style>
-
-        <!-- a section: white card with an icon (Tag = an Icon.* geometry), a bold title (Header) and the content -->
-        <Style x:Key="Card" TargetType="HeaderedContentControl">
-            <Setter Property="Focusable" Value="False"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="HeaderedContentControl">
-                        <Border Background="{DynamicResource Brush.Background.Secondary}" BorderBrush="{DynamicResource Brush.Border}"
-                                BorderThickness="1" CornerRadius="8" Padding="16,12">
-                            <DockPanel>
-                                <Path DockPanel.Dock="Left" Style="{StaticResource Icon}" VerticalAlignment="Top" Margin="0,0,14,0"
-                                      Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"/>
-                                <ContentPresenter DockPanel.Dock="Top" ContentSource="Header" Margin="0,0,0,6"
-                                                  TextElement.FontSize="{StaticResource FontSize.Normal}" TextElement.FontWeight="Bold"
-                                                  TextElement.Foreground="{DynamicResource Brush.Accent.Tertiary}"/>
-                                <ContentPresenter/>
-                            </DockPanel>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- small text action inside a card (Copy, Remove) -->
-        <Style x:Key="LinkButton" TargetType="Button" BasedOn="{StaticResource Theme.Button.IconOnly}">
-            <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="6,2"/>
-            <Setter Property="Margin" Value="4,0,0,0"/>
-        </Style>
         <!-- a record office's website, beside the office name -->
         <Style x:Key="OfficeLinkButton" TargetType="Button" BasedOn="{StaticResource Theme.Button.Outline}">
             <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
@@ -68,19 +19,6 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Margin" Value="10,0,0,0"/>
             <Setter Property="Tag" Value="{StaticResource Icon.Web}"/>
-            <Setter Property="ContentTemplate" Value="{StaticResource Theme.Button.Content.Icon}"/>
-        </Style>
-        <Style x:Key="IconButton.Outline" TargetType="Button" BasedOn="{StaticResource Theme.Button.Outline}">
-            <Setter Property="Margin" Value="10,0,0,0"/>
-            <Setter Property="ContentTemplate" Value="{StaticResource Theme.Button.Content.Icon}"/>
-        </Style>
-        <!-- the primary style has no text size of its own; match the outline button beside it -->
-        <Style x:Key="IconButton.Primary" TargetType="Button" BasedOn="{StaticResource Theme.Button.Primary}">
-            <Setter Property="FontSize" Value="{StaticResource FontSize.Normal}"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="20,10"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="10,0,0,0"/>
             <Setter Property="ContentTemplate" Value="{StaticResource Theme.Button.Content.Icon}"/>
         </Style>
 
@@ -99,8 +37,8 @@
             <Border x:Name="Flag" BorderThickness="4,0,0,0" CornerRadius="6" Padding="10,6" Margin="0,0,0,6"
                     Background="{DynamicResource Brush.Status.Info}" BorderBrush="{DynamicResource Brush.Status.Info.Foreground}">
                 <StackPanel>
-                    <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Line}" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Small}"/>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource Theme.Dialog.Text}" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Detail}" Style="{StaticResource Theme.Dialog.Text.Small}"/>
                 </StackPanel>
             </Border>
             <DataTemplate.Triggers>
@@ -119,10 +57,10 @@
         <DataTemplate x:Key="SearchName">
             <Border Background="{DynamicResource Brush.Background.Hover}" CornerRadius="12" Padding="10,2,4,2" Margin="0,0,6,6">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{Binding}" Style="{StaticResource Text.Line}" FontSize="{StaticResource FontSize.Small}" VerticalAlignment="Center"/>
-                    <Button Content="Copy" Style="{StaticResource LinkButton}" CommandParameter="{Binding}"
+                    <TextBlock Text="{Binding}" Style="{StaticResource Theme.Dialog.Text}" FontSize="{StaticResource FontSize.Small}" VerticalAlignment="Center"/>
+                    <Button Content="Copy" Style="{StaticResource Theme.Dialog.Button.Link}" CommandParameter="{Binding}"
                             Command="{Binding DataContext.CopyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                    <Button Content="Remove" Style="{StaticResource LinkButton}" CommandParameter="{Binding}"
+                    <Button Content="Remove" Style="{StaticResource Theme.Dialog.Button.Link}" CommandParameter="{Binding}"
                             Command="{Binding DataContext.RemoveNameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                 </StackPanel>
             </Border>
@@ -153,7 +91,7 @@
                     <ColumnDefinition Width="270"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
-                    <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Line}"/>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource Theme.Dialog.Text}"/>
                     <TextBlock Text="{Binding Hint}" Style="{StaticResource Text.Hint}"/>
                 </StackPanel>
                 <ComboBox Grid.Column="1" VerticalAlignment="Center" FontSize="{StaticResource FontSize.Small}" Padding="8,5"
@@ -168,45 +106,45 @@
 
     <DockPanel>
         <!-- property and progress -->
-        <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="0,0,0,12" Margin="0,0,0,12">
+        <Border DockPanel.Dock="Top" Style="{StaticResource Theme.Dialog.Header}">
             <DockPanel>
                 <Grid DockPanel.Dock="Left" Width="44" Height="44" Margin="0,0,14,0" VerticalAlignment="Top">
                     <Ellipse Fill="{DynamicResource Brush.Accent}"/>
-                    <Path Style="{StaticResource Icon}" Data="{StaticResource Icon.MapMarker}" Fill="{DynamicResource Brush.Accent.Foreground}"/>
+                    <Path Style="{StaticResource Theme.Dialog.Icon}" Data="{StaticResource Icon.MapMarker}" Fill="{DynamicResource Brush.Accent.Foreground}"/>
                 </Grid>
                 <StackPanel>
-                    <TextBlock Text="{Binding Address}" Style="{StaticResource Text.Line}" FontSize="{StaticResource FontSize.Large}" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Text.Small}" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding Address}" Style="{StaticResource Theme.Dialog.Text}" FontSize="{StaticResource FontSize.Large}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,2,0,0"/>
                     <ContentControl Content="{Binding Progress}" Style="{StaticResource Theme.Control.CountyInfoPill}" HorizontalAlignment="Left" Margin="0,6,0,0"/>
                 </StackPanel>
             </DockPanel>
         </Border>
 
         <!-- where the answers are kept, and the way out -->
-        <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,0" Padding="0,12,0,0" Margin="0,2,0,0">
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource Theme.Dialog.Footer}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Button Content="Save Pins" Tag="{StaticResource Icon.Save}" Command="{Binding SavePinsCommand}" Style="{StaticResource IconButton.Outline}"
-                            ToolTip="Save every pin on the map, with its checklist, to a file"/>
-                    <Button Content="Done" Tag="{StaticResource Icon.Check}" Command="{Binding DoneCommand}" Style="{StaticResource IconButton.Primary}"/>
+                    <Button Content="Export Pins" Tag="{StaticResource Icon.Save}" Command="{Binding SavePinsCommand}" Style="{StaticResource Theme.Dialog.Button.Outline}"
+                            ToolTip="Save a copy of every pin on the map, with its checklist, to a file you choose (for another computer or a backup)"/>
+                    <Button Content="Done" Tag="{StaticResource Icon.Check}" Command="{Binding DoneCommand}" Style="{StaticResource Theme.Dialog.Button.Primary}"/>
                 </StackPanel>
-                <Path Style="{StaticResource Icon}" Data="{StaticResource Icon.Info}" Margin="{StaticResource Margin.Icon.Right}"/>
-                <TextBlock Text="Saved with the pin; use Save Pins to keep it on disk." Style="{StaticResource Text.Small}" VerticalAlignment="Center"/>
+                <Path Style="{StaticResource Theme.Dialog.Icon}" Data="{StaticResource Icon.Info}" Margin="{StaticResource Margin.Icon.Right}"/>
+                <TextBlock Text="Saved automatically with the pin." Style="{StaticResource Theme.Dialog.Text.Small}" VerticalAlignment="Center"/>
             </DockPanel>
         </Border>
 
         <ScrollViewer MaxHeight="560" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
             <StackPanel>
                 <!-- risk flags found in the county record, most serious first -->
-                <HeaderedContentControl Header="Risk flags" Tag="{StaticResource Icon.Alert}" Style="{StaticResource Card}"
+                <HeaderedContentControl Header="Risk flags" Tag="{StaticResource Icon.Alert}" Style="{StaticResource Theme.Dialog.Card}"
                                         Visibility="{Binding HasRisks, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <ItemsControl ItemsSource="{Binding Risks}" ItemTemplate="{StaticResource RiskFlag}" Focusable="False"/>
                 </HeaderedContentControl>
 
                 <!-- names to search: owners from the county record plus anyone the user adds (trust, trustee, lender, case parties) -->
-                <HeaderedContentControl Header="Names to search" Tag="{StaticResource Icon.Person}" Style="{StaticResource Card}">
+                <HeaderedContentControl Header="Names to search" Tag="{StaticResource Icon.Person}" Style="{StaticResource Theme.Dialog.Card}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource Text.Small}" Margin="0,0,0,8"
+                        <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,0,0,8"
                                    Text="Search each name in the recorder's official records and the court docket. A parcel-number search alone misses older documents. Add the trust, trustee, lenders and case parties you find."/>
                         <ItemsControl ItemsSource="{Binding Names}" ItemTemplate="{StaticResource SearchName}" Focusable="False">
                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -216,18 +154,18 @@
                                      Tag="Add another name..." ToolTip="A name to add, e.g. the trust, its trustee, a lender">
                                 <TextBox.InputBindings><KeyBinding Key="Enter" Command="{Binding AddNameCommand}"/></TextBox.InputBindings>
                             </TextBox>
-                            <Button Content="Add name" Tag="{StaticResource Icon.Plus}" Command="{Binding AddNameCommand}" Style="{StaticResource IconButton.Outline}" Padding="12,5"/>
+                            <Button Content="Add name" Tag="{StaticResource Icon.Plus}" Command="{Binding AddNameCommand}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="12,5"/>
                         </StackPanel>
                     </StackPanel>
                 </HeaderedContentControl>
 
                 <!-- the legal description: the best key for the recorder search (lots, block, plat book, OR book / page) -->
-                <HeaderedContentControl Header="Legal description" Tag="{StaticResource Icon.Scale}" Style="{StaticResource Card}"
+                <HeaderedContentControl Header="Legal description" Tag="{StaticResource Icon.Scale}" Style="{StaticResource Theme.Dialog.Card}"
                                         Visibility="{Binding HasLegalDescription, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <DockPanel>
                         <Button DockPanel.Dock="Right" Content="Copy" Tag="{StaticResource Icon.Copy}" ContentTemplate="{StaticResource Theme.Button.Content.Icon}"
-                                Style="{StaticResource LinkButton}" VerticalAlignment="Top" Command="{Binding CopyCommand}" CommandParameter="{Binding LegalDescription}"/>
-                        <TextBlock Text="{Binding LegalDescription}" Style="{StaticResource Text.Line}" FontSize="{StaticResource FontSize.Small}"/>
+                                Style="{StaticResource Theme.Dialog.Button.Link}" VerticalAlignment="Top" Command="{Binding CopyCommand}" CommandParameter="{Binding LegalDescription}"/>
+                        <TextBlock Text="{Binding LegalDescription}" Style="{StaticResource Theme.Dialog.Text}" FontSize="{StaticResource FontSize.Small}"/>
                     </DockPanel>
                 </HeaderedContentControl>
 
@@ -235,7 +173,7 @@
                 <ItemsControl ItemsSource="{Binding Groups}" Focusable="False">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <HeaderedContentControl Header="{Binding}" HeaderTemplate="{StaticResource OfficeHeader}" Tag="{StaticResource Icon.Document}" Style="{StaticResource Card}">
+                            <HeaderedContentControl Header="{Binding}" HeaderTemplate="{StaticResource OfficeHeader}" Tag="{StaticResource Icon.Document}" Style="{StaticResource Theme.Dialog.Card}">
                                 <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource ChecklistLine}" Focusable="False"/>
                             </HeaderedContentControl>
                         </DataTemplate>

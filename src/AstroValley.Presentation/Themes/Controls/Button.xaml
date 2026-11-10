@@ -463,4 +463,29 @@
         </Style.Triggers>
     </Style>
 
+    <!--#region Dialog buttons -->
+    <!-- Buttons of the shared dialog look (see the Dialogs region in _Resources.xaml) -->
+    <!-- small text action inside a card (Copy, Remove) -->
+    <Style x:Key="Theme.Dialog.Button.Link" TargetType="Button" BasedOn="{StaticResource Theme.Button.IconOnly}">
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="Margin" Value="4,0,0,0"/>
+    </Style>
+
+    <Style x:Key="Theme.Dialog.Button.Outline" TargetType="Button" BasedOn="{StaticResource Theme.Button.Outline}">
+        <Setter Property="Margin" Value="10,0,0,0"/>
+        <Setter Property="ContentTemplate" Value="{StaticResource Theme.Button.Content.Icon}"/>
+    </Style>
+    <!-- the primary style has no text size of its own; match the outline button beside it -->
+    <Style x:Key="Theme.Dialog.Button.Primary" TargetType="Button" BasedOn="{StaticResource Theme.Button.Primary}">
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Normal}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="20,10"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Margin" Value="10,0,0,0"/>
+        <Setter Property="ContentTemplate" Value="{StaticResource Theme.Button.Content.Icon}"/>
+    </Style>
+    <!--#endregion-->
+
 </ResourceDictionary>

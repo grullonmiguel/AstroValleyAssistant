@@ -1329,4 +1329,66 @@
     </Style>
     <!--#endregion-->
 
+    <!--#region Dialogs -->
+    <!-- Shared look of the app's dialogs: a header and a footer bar around white cards, each card with an icon and a title.
+         Colours, sizes and button looks come from the theme; these only arrange them. -->
+
+    <!-- the bar above the cards (what the dialog is about) and the one below (where the buttons are) -->
+    <Style x:Key="Theme.Dialog.Header" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="0,0,0,12"/>
+        <Setter Property="Margin" Value="0,0,0,12"/>
+    </Style>
+    <Style x:Key="Theme.Dialog.Footer" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        <Setter Property="Padding" Value="0,12,0,0"/>
+        <Setter Property="Margin" Value="0,2,0,0"/>
+    </Style>
+
+    <!-- text -->
+    <Style x:Key="Theme.Dialog.Text" TargetType="TextBlock" BasedOn="{StaticResource Theme.TextBlock.Base}">
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Normal}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Tertiary}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style x:Key="Theme.Dialog.Text.Small" TargetType="TextBlock" BasedOn="{StaticResource Theme.TextBlock.Base}">
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+        <Setter Property="Opacity" Value="0.75"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <Style x:Key="Theme.Dialog.Icon" TargetType="Path">
+        <Setter Property="Width" Value="{StaticResource Size.Icon.Small}"/>
+        <Setter Property="Height" Value="{StaticResource Size.Icon.Small}"/>
+        <Setter Property="Stretch" Value="Uniform"/>
+        <Setter Property="Fill" Value="{DynamicResource Brush.Accent}"/>
+    </Style>
+
+    <!-- a section: white card with an icon (Tag = an Icon.* geometry), a bold title (Header) and the content -->
+    <Style x:Key="Theme.Dialog.Card" TargetType="HeaderedContentControl">
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Margin" Value="0,0,0,10"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="HeaderedContentControl">
+                    <Border Background="{DynamicResource Brush.Background.Secondary}" BorderBrush="{DynamicResource Brush.Border}"
+                            BorderThickness="1" CornerRadius="8" Padding="16,12">
+                        <DockPanel>
+                            <Path DockPanel.Dock="Left" Style="{StaticResource Theme.Dialog.Icon}" VerticalAlignment="Top" Margin="0,0,14,0"
+                                  Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"/>
+                            <ContentPresenter DockPanel.Dock="Top" ContentSource="Header" Margin="0,0,0,6"
+                                              TextElement.FontSize="{StaticResource FontSize.Normal}" TextElement.FontWeight="Bold"
+                                              TextElement.Foreground="{DynamicResource Brush.Accent.Tertiary}"/>
+                            <ContentPresenter/>
+                        </DockPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!--#endregion-->
+
 </ResourceDictionary>

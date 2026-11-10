@@ -265,6 +265,13 @@
                                           Fill="{DynamicResource Brush.Accent}"/>
                                 </MenuItem.Icon>
                             </MenuItem>
+                            <MenuItem Header="Saved Pins" Command="{Binding OpenSavedPinsCommand}"
+                                      ToolTip="Pins are saved automatically, one set per auction. Load a set back onto the map, or delete it.">
+                                <MenuItem.Icon>
+                                    <Path Width="14" Height="14" Stretch="Uniform" Data="{StaticResource Icon.List.Numbered}"
+                                          Fill="{DynamicResource Brush.Accent}"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
                             <MenuItem Header="Import Pins" Command="{Binding LoadPinsCommand}"
                                       ToolTip="Add pins from a JSON file.">
                                 <MenuItem.Icon>
@@ -274,7 +281,7 @@
                             </MenuItem>
                             <Separator/>
                             <MenuItem Header="Export Pins" Command="{Binding SavePinsCommand}"
-                                      ToolTip="Save the current pins to a JSON file.">
+                                      ToolTip="Save a copy of the current pins to a JSON file you choose (for another computer or a backup).">
                                 <MenuItem.Icon>
                                     <Path Width="14" Height="14" Stretch="Uniform" Data="{StaticResource Icon.Save}"
                                           Fill="{DynamicResource Brush.Accent}"/>
