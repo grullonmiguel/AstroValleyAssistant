@@ -54,7 +54,8 @@
             price: price, acres: acres, sold: !!soldOn || /\bsold\b(?!\s+summary)/i.test(text), url: a ? a.href : null,
             soldText: soldOn ? soldOn[1] + ' ' + soldOn[2] + ', ' + soldOn[3] : null, homeSqft: living ? parseInt(living[1].replace(/,/g, ''), 10) : null,
             beds: beds ? parseInt(beds[1], 10) : null, baths: baths ? parseFloat(baths[1]) : null,
-            homeType: /manufactured|mobile home/i.test(text) ? 'MANUFACTURED' : /multi-family|duplex|triplex|fourplex|quadplex/i.test(text) ? 'MULTI_FAMILY' : null,
+            homeType: /manufactured|mobile home/i.test(text) ? 'MANUFACTURED' : /multi-family|duplex|triplex|fourplex|quadplex/i.test(text) ? 'MULTI_FAMILY'
+                : /townho(use|me)/i.test(text) ? 'TOWNHOUSE' : /\bcondo|\bvilla\b/i.test(text) ? 'CONDO' : null,
             photo: photoOf(card)
         };
     }
@@ -167,10 +168,16 @@
         });
     }
 
+    // After Analyze opens a search the page reports "loaded" before its cards are drawn: wait (up to 5 s) for the first card.
+    async function ready(selector) {
+        for (var i = 0; i < 25 && !document.querySelector(selector); i++) await sleep(200);
+        return selector;
+    }
+
     if (/zillow\./.test(host)) return await zillow();
-    if (/homes\.com/.test(host)) return fromCards('li.placard-container, article.placard');
-    if (/realtor\.com/.test(host)) return fromCards('[data-testid="property-card"], [data-testid="result-card"], li[data-testid*="card"]');
-    if (/trulia\./.test(host)) return fromCards('li[data-testid^="srp-home-card"]');
-    if (/redfin\./.test(host)) return redfin();
-    return fromCards('article, li[class*="card" i]');
+    if (/homes\.com/.test(host)) return fromCards(await ready('li.placard-container, article.placard'));
+    if (/realtor\.com/.test(host)) return fromCards(await ready('[data-testid="property-card"], [data-testid="result-card"], li[data-testid*="card"]'));
+    if (/trulia\./.test(host)) return fromCards(await ready('li[data-testid^="srp-home-card"]'));
+    if (/redfin\./.test(host)) { await ready('.HomeCardContainer'); return redfin(); }
+    return fromCards(await ready('article, li[class*="card" i]'));
 })()

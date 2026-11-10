@@ -352,13 +352,25 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Border Width="46" Height="46" CornerRadius="10" Background="#F3F0FC" VerticalAlignment="Top">
-                                <Path Data="{StaticResource Icon.Home}" Fill="#4F4486" Width="26" Height="26" Stretch="Uniform"/>
-                            </Border>
+                            <Grid Width="64" Height="64" VerticalAlignment="Top">
+                                <Border CornerRadius="10" Background="#F3F0FC">
+                                    <Path Data="{StaticResource Icon.Home}" Fill="#4F4486" Width="28" Height="28" Stretch="Uniform"/>
+                                </Border>
+                                <!-- the property's photo from the current site, when it has one (covers the icon) -->
+                                <Border CornerRadius="10">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="{Binding SubjectPhoto, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
+                                    </Border.Background>
+                                </Border>
+                            </Grid>
                             <StackPanel Grid.Column="1" Margin="12,0,8,0">
                                 <TextBlock Text="{Binding SubjectTitle}" FontSize="15" FontWeight="Bold" Foreground="#171528" TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{Binding SubjectLine2}" FontSize="12" Foreground="#555555" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{Binding SubjectLine3}" FontSize="12" Foreground="#555555" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                <!-- its listing on the site of the last Analyze (each site's link is kept; this swaps with the site) -->
+                                <Button Content="{Binding SubjectLinkText}" Style="{StaticResource IconLink}" Tag="{StaticResource Icon.Web}" Margin="-4,2,0,0" HorizontalAlignment="Left"
+                                        Command="{Binding OpenSubjectListingCommand}" ToolTip="{Binding SubjectUrl}"
+                                        Visibility="{Binding SubjectUrl, Converter={StaticResource NullToVisibilityConverter}}"/>
                             </StackPanel>
                             <ToggleButton Grid.Column="2" IsChecked="{Binding IsEditingSubject}" VerticalAlignment="Top" Cursor="Hand" ToolTip="Edit the property's details">
                                 <ToggleButton.Template>
@@ -414,6 +426,8 @@
                                           ToolTip="Mobile and manufactured homes sell in a different market: comps of the other kind are flagged as outliers"/>
                                 <CheckBox Content="Duplex / multi" IsChecked="{Binding IsMultiFamily}" VerticalAlignment="Center" Margin="10,4,0,4"
                                           ToolTip="A duplex or other 2-4 unit building (appraiser land use 'Multifamily'): Zillow is searched for multi-family sales, and single-family comps are flagged as outliers. Use the building's total sqft, beds and baths."/>
+                                <CheckBox Content="Condo / villa" IsChecked="{Binding IsCondo}" VerticalAlignment="Center" Margin="10,4,0,4"
+                                          ToolTip="An attached home: condo, villa or townhouse (shares a wall, usually an HOA). Zillow is searched for condos and townhouses, and detached houses are flagged as outliers."/>
                             </WrapPanel>
                         </Grid>
                         </Border>
@@ -603,7 +617,7 @@
                                         <CheckBox Content="Median" IsChecked="{Binding UseMedian}" VerticalAlignment="Center"/>
                                         <Path Data="{StaticResource Icon.Info}" Fill="#8A7FCB" Width="13" Height="13" Stretch="Uniform" Margin="5,0,14,0"
                                               ToolTip="Value from the weighted median (close, recent, similar comps count more). Untick for the plain average."/>
-                                        <CheckBox Content="Top 5" IsChecked="{Binding UseTopFive}" VerticalAlignment="Center"/>
+                                        <CheckBox Content="Top 5" IsChecked="{Binding UseTopFive}" IsEnabled="{Binding HasSubject}" VerticalAlignment="Center"/>
                                         <Path Data="{StaticResource Icon.Info}" Fill="#8A7FCB" Width="13" Height="13" Stretch="Uniform" Margin="5,0,0,0"
                                               ToolTip="Value from the 5 best matches only (highest weight). The rest stay listed and on the map, faded; remove one and the next best moves up, or Include anyway to add one."/>
                                     </StackPanel>
@@ -704,7 +718,8 @@
                                             <TextBlock Text="{Binding RateLine}" FontSize="12" Foreground="#555555" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                             <!-- tags: how well it matches (hover for the weight and why), data to check, misleading sales -->
                                             <WrapPanel Margin="0,2,0,0">
-                                                <Border x:Name="Match" CornerRadius="10" Padding="7,2" Margin="0,2,4,0" Background="#EEEEEE" ToolTip="{Binding WeightTip}">
+                                                <Border x:Name="Match" CornerRadius="10" Padding="7,2" Margin="0,2,4,0" Background="#EEEEEE" ToolTip="{Binding WeightTip}"
+                                                        Visibility="{Binding DataContext.HasSubject, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                     <StackPanel Orientation="Horizontal">
                                                         <Path x:Name="MatchIcon" Data="{StaticResource Icon.Check}" Fill="#777777" Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0"/>
                                                         <TextBlock x:Name="MatchText" Text="{Binding MatchLabel}" FontSize="10" FontWeight="SemiBold" Foreground="#777777"/>
@@ -794,7 +809,7 @@
                         <TextBlock Text="{Binding EstimateText}" FontSize="24" FontWeight="Bold" Foreground="#171528" ToolTip="{Binding ValueHow}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" ToolTip="{Binding ConfidenceText}"
-                                Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                Visibility="{Binding ShowConfidence, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Border x:Name="Confidence" HorizontalAlignment="Left" CornerRadius="12" Padding="8,3" Background="#FBE3E3">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="{StaticResource Icon.Check}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center">

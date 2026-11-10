@@ -86,7 +86,9 @@ public partial class CompsView : UserControl
                 catch (KeyNotFoundException) { }
             };
             vm.IsOnZillow = () => WebView.Source?.Host.Contains("zillow.", StringComparison.OrdinalIgnoreCase) == true;
+            vm.CurrentHost = () => WebView.Source?.Host;
             vm.NavigateTo = url => WebView.CoreWebView2.Navigate(url);
+            vm.NavigateAsync = url => LoadAsync(() => WebView.CoreWebView2.Navigate(url));
             vm.GoBackRequested = () => { if (WebView.CoreWebView2.CanGoBack) WebView.CoreWebView2.GoBack(); };
             WebView.CoreWebView2.NewWindowRequested += (_, e) => { e.Handled = true; WebView.CoreWebView2.Navigate(e.Uri); }; // stay in this view
             WebView.CoreWebView2.HistoryChanged += (_, _) => vm.CanGoBack = WebView.CoreWebView2.CanGoBack;

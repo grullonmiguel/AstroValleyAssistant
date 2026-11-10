@@ -35,6 +35,11 @@ public partial class CompsViewModel : ObservableObject
     private Action<CompsResult>? _onReturn;
     private ObservableObject? _returnTo;
     private double? _lat, _lon;
+    private string? _coordsFor;   // the address _lat/_lon belong to (a pin's, or a typed one placed for the Zillow search)
+    private string? _searchKey;   // the property the browser's last site search was built for (see SubjectKey)
+    /// <summary>The property's coordinates, only while the address is still the one they were found for.</summary>
+    private (double Lat, double Lon)? Coords => _lat is { } la && _lon is { } lo && _coordsFor == Address ? (la, lo) : null;
+    private string SubjectKey => $"{Address}|{ZipText}|{IsHome}|{IsMobile}|{IsMultiFamily}|{IsCondo}";
     private string? _type;
     private (double Lat, double Lon)? _subject; // where the property was placed; the export's first pin
     private MarkerLocation? _subjectPin;         // the Home pin the comps were opened from (null from a grid row or a typed address)
@@ -62,7 +67,7 @@ public partial class CompsViewModel : ObservableObject
 
     /// <summary>The site buttons; the one being visited is highlighted.</summary>
     public ObservableCollection<SiteOption> SiteOptions { get; } = [.. Sites.Select(s => new SiteOption(s.Name) { IsSelected = s.Name == "Homes.com" })];
-    partial void OnSiteChanged(string value) { foreach (var o in SiteOptions) o.IsSelected = o.Name == value; }
+    partial void OnSiteChanged(string value) { foreach (var o in SiteOptions) o.IsSelected = o.Name == value; NotifySubjectLink(); }
 
     /// <summary>A comp's address opens the listing in the default browser, not in the embedded one.</summary>
     public void OpenListing(string? url)
@@ -108,7 +113,7 @@ public partial class CompsViewModel : ObservableObject
     [ObservableProperty] private string _message = "Search and filter on the site, then press Analyze.";
     [ObservableProperty] private bool _canGoBack;
 
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasComps))] private int _count;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasComps), nameof(ShowConfidence))] private int _count;
     [ObservableProperty] private int _totalCount; // everything read from the site, before the filter box and map exclusions
     public bool HasComps => Count > 0; // the sort box and View on Map only make sense with comps listed
     [ObservableProperty] private decimal _avgPpa, _medianPpa, _avgPrice, _medianPrice, _estimate;
@@ -129,6 +134,9 @@ public partial class CompsViewModel : ObservableObject
         _onReturn = onReturn;
         HasTarget = true;
         (_lat, _lon, _type) = (subject.Latitude, subject.Longitude, subject.PropertyType);
+        _coordsFor = subject.Address ?? "";
+        _lookedUpFor = null;
+        ForgetSubjectLinks();
         Address = subject.Address ?? "";
         ZipText = subject.Zip ?? "";
         if (ZipText.Length == 0) ZipText = Place().Zip ?? "";                // the address may end in one
@@ -145,6 +153,7 @@ public partial class CompsViewModel : ObservableObject
         BathsText = useFacts && subject.Baths is > 0 ? subject.Baths.Value.ToString("0.#", CultureInfo.InvariantCulture) : "";
         IsMobile = kind == HomeKind.Mobile;
         IsMultiFamily = HomeKind.IsMultiUnit(kind);
+        IsCondo = kind == HomeKind.Condo;
         IsEditingSubject = Address.Length == 0; // opened from a pin / row: show the summary; Edit opens the boxes
         _all.Clear();
         _removed.Clear();
@@ -154,7 +163,7 @@ public partial class CompsViewModel : ObservableObject
         Message = "Search and filter on the site, then press Analyze.";
         Refresh();
         main.CurrentViewModel = this;
-        if (_lat is not null) GoSite("Zillow"); // Zillow can be centred on the property; other sites start where the browser was
+        if (_lat is not null) _ = GoSite("Zillow"); // Zillow can be centred on the property; other sites start where the browser was
     }
 
     // Zillow recently-sold search: around the coordinates when known, else by the address; same property type, 90 days. No lot-size range: the user sets that on the page.
@@ -166,14 +175,15 @@ public partial class CompsViewModel : ObservableObject
         // homes: houses and townhouses; or only mobile / manufactured homes, or only multi-family (duplex and up), when the property is one
         if (IsHome)
         {
-            var single = !IsMobile && !IsMultiFamily;
-            f["land"] = No; f["sf"] = f["tow"] = single ? Yes : No; f["manu"] = IsMobile ? Yes : No; f["mf"] = IsMultiFamily ? Yes : No;
-            f["con"] = No; f["apa"] = No; f["apco"] = No;
+            var single = !IsMobile && !IsMultiFamily && !IsCondo;
+            f["land"] = No; f["sf"] = single ? Yes : No; f["tow"] = single || IsCondo ? Yes : No; f["manu"] = IsMobile ? Yes : No; f["mf"] = IsMultiFamily ? Yes : No;
+            f["con"] = IsCondo ? Yes : No; f["apa"] = No; f["apco"] = No;
         }
         else { f["land"] = Yes; foreach (var k in new[] { "sf", "tow", "mf", "con", "apa", "manu", "apco" }) f[k] = No; }
         object state;
-        if (_lat is { } lat && _lon is { } lon)
+        if (Coords is { } c)
         {
+            var (lat, lon) = c;
             double d = 0.03, dx = d / Math.Cos(lat * Math.PI / 180);
             state = new { pagination = new { }, isMapVisible = true, usersSearchTerm = "", mapBounds = new { west = lon - dx, east = lon + dx, south = lat - d, north = lat + d }, filterState = f, isListVisible = true };
         }
@@ -184,7 +194,8 @@ public partial class CompsViewModel : ObservableObject
     // City, state and ZIP from "street, City, ST 12345" (or the ZIP box); the sold-listing URLs below are built from them, like the extension does.
     private (string? City, string? State, string? Zip) Place()
     {
-        var m = System.Text.RegularExpressions.Regex.Match(Address ?? "", @",\s*([^,]+?),\s*([A-Za-z]{2})\s+(\d{5})");
+        // "street, City, ST 12345" or "street, City ST 12345" (the comma before the state is optional; ZIP+4 is fine)
+        var m = System.Text.RegularExpressions.Regex.Match(Address ?? "", @",\s*([^,]+?),?\s+([A-Za-z]{2})[\s,-]+(\d{5})");
         var zip = ZipText.Trim().Length == 5 ? ZipText.Trim() : m.Success ? m.Groups[3].Value
             : System.Text.RegularExpressions.Regex.Match(Address ?? "", @"\b(\d{5})(?:-\d{4})?\s*$") is { Success: true } z ? z.Groups[1].Value : null;
         return m.Success ? (m.Groups[1].Value.Trim(), m.Groups[2].Value.ToUpperInvariant(), zip) : (null, null, zip);
@@ -199,7 +210,7 @@ public partial class CompsViewModel : ObservableObject
         var home = Sites.First(s => s.Name == name).Url;
         switch (name)
         {
-            case "Zillow": return _lat is not null || Address.Length > 0 || zip is not null ? ZillowUrl() : home;
+            case "Zillow": return Coords is not null || Address.Length > 0 || zip is not null ? ZillowUrl() : home;
             case "Homes.com" when city is not null && state is not null:
                 return $"https://www.homes.com/{city.ToLowerInvariant().Replace(' ', '-')}-{state.ToLowerInvariant()}/sold/?{(land ? "property_type=32&" : "")}sd=4";
             case "Realtor" when zip is not null: return $"https://www.realtor.com/realestateandhomes-search/{zip}{(land ? "/type-land" : "")}/soldwithin-6";
@@ -210,12 +221,34 @@ public partial class CompsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void GoSite(string name)
+    private async Task GoSite(string name)
     {
-        Site = name;
-        PendingUrl = SiteUrl(name);
+        PendingUrl = await PrepareSearchAsync(name);
         NavigateTo?.Invoke(PendingUrl); // before the browser is ready, the view loads PendingUrl when it starts
     }
+
+    /// <summary>
+    /// The search URL for the property in the boxes. A typed-in address is placed first (geocoded), so Zillow opens centred on it
+    /// like a pin's; without that, Zillow kept showing whatever area the browser last had.
+    /// </summary>
+    private async Task<string> PrepareSearchAsync(string site)
+    {
+        Site = site;
+        if (site == "Zillow" && Coords is null && HasValidAddress)
+        {
+            try
+            {
+                if (await _serviceProvider.GetRequiredService<IGeocoder>().GeocodeAsync(Address) is { } p)
+                    (_lat, _lon, _coordsFor) = (p.Lat, p.Lon, Address);
+            }
+            catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or TaskCanceledException) { } // not placed: Zillow searches by the address text instead
+        }
+        _searchKey = SubjectKey;
+        return SiteUrl(site);
+    }
+
+    // view hook: navigate and wait until the page has loaded
+    public Func<string, Task>? NavigateAsync { get; set; }
 
     [RelayCommand]
     private void GoBack() => GoBackRequested?.Invoke();
@@ -228,13 +261,34 @@ public partial class CompsViewModel : ObservableObject
         IsScraping = true;
         try
         {
-            // 1. the property itself first, so the cards are weighed against its size, beds and baths from the start
+            if (CurrentSite() is { } onSite) Site = onSite; // the provider of this Analyze: its link and photo show on the property card
+
+            // 1. the property itself first (before the search: what it fills, e.g. House or Duplex, decides which listings to search for), so the cards are weighed against its size, beds and baths from the start
             try { await LookUpSubjectAsync(); }
             catch (Exception ex) { _subjectNote = "Could not look the property up on Zillow: " + ex.Message; }
             finally { HideBrowser = false; }
 
+            // then, if the boxes now describe a different property than the page was searched for, search again (empty boxes = read the page as it is,
+            //    e.g. a ZIP and filters typed straight into Zillow)
+            if ((Address.Length > 0 || ZipText.Trim().Length == 5) && SubjectKey != _searchKey && NavigateAsync is not null)
+            {
+                var site = Site;
+                Step($"Searching {site} for this property...");
+                var url = await PrepareSearchAsync(site);
+                if (url != Sites.First(s => s.Name == site).Url) // the site's home page means "not enough to search with"
+                {
+                    var note = _subjectNote;
+                    Clear(); // the comps read so far were for the previous property
+                    if (_lookedUpFor != Address) ForgetSubjectLinks(); // and so were its links (a lookup just now keeps this one's)
+                    _subjectNote = note;
+                    await NavigateAsync(url);
+                }
+            }
+
             // 2. the cards
             await ReadCardsAsync();
+            if (HasValidAddress && !_subjectLinks.ContainsKey(Site) && _all.FirstOrDefault(IsSubjectListing) is { } own)
+                SetSubjectLink(Site, own.Url, own.PhotoUrl); // the property is among this site's listings
             if (_subjectNote.Length > 0) Message = _subjectNote + " " + Message;
 
             // 3. distances (the list fills in as they arrive)
@@ -301,10 +355,48 @@ public partial class CompsViewModel : ObservableObject
             var cp = JSON.parse(document.getElementById('__NEXT_DATA__').textContent).props.pageProps.componentProps;
             var c = typeof cp.gdpClientCache === 'string' ? JSON.parse(cp.gdpClientCache) : cp.gdpClientCache;
             var p = Object.values(c)[0].property;
-            return { street: p.streetAddress, zip: p.zipcode, beds: p.bedrooms, baths: p.bathrooms, sqft: p.livingArea, homeType: p.homeType, yearBuilt: p.yearBuilt };
+            return { street: p.streetAddress, zip: p.zipcode, beds: p.bedrooms, baths: p.bathrooms, sqft: p.livingArea, homeType: p.homeType, yearBuilt: p.yearBuilt,
+                     lot: p.lotAreaValue || p.lotSize || null, lotUnit: p.lotAreaUnits || null,
+                     url: location.href.split('?')[0],
+                     photo: p.hiResImageLink || p.desktopWebHdpImageLink || (document.querySelector('meta[property="og:image"]') || {}).content || null };
         } catch (e) { return null; } })()
         """;
-    private record ZillowHome(string? street, string? zip, int? beds, double? baths, int? sqft, string? homeType, int? yearBuilt);
+    private record ZillowHome(string? street, string? zip, int? beds, double? baths, int? sqft, string? homeType, int? yearBuilt, double? lot, string? lotUnit, string? url, string? photo);
+
+    // --- the property's own listing on each site (link + photo), kept per site and swapped when the browser moves to another site ---
+    private readonly Dictionary<string, (string? Url, string? Photo)> _subjectLinks = new();
+    public string? SubjectUrl => _subjectLinks.GetValueOrDefault(Site).Url;
+    public string? SubjectPhoto => _subjectLinks.GetValueOrDefault(Site).Photo;
+    public string SubjectLinkText => $"Open on {Site} ↗";
+    private void SetSubjectLink(string site, string? url, string? photo)
+    {
+        if (url is null && photo is null) return;
+        _subjectLinks[site] = (url, photo);
+        NotifySubjectLink();
+    }
+    private void NotifySubjectLink()
+    {
+        OnPropertyChanged(nameof(SubjectUrl)); OnPropertyChanged(nameof(SubjectPhoto)); OnPropertyChanged(nameof(SubjectLinkText));
+    }
+    private void ForgetSubjectLinks() { _subjectLinks.Clear(); NotifySubjectLink(); }
+
+    [RelayCommand]
+    private void OpenSubjectListing() => OpenListing(SubjectUrl);
+
+    /// <summary>The site the browser is on (by its host), or null for a page that is not one of the listing sites.</summary>
+    public Func<string?>? CurrentHost { get; set; }
+    private string? CurrentSite() => CurrentHost?.Invoke() is { } host
+        ? Sites.Select(s => s.Name).FirstOrDefault(n => host.Contains(new Uri(Sites.First(x => x.Name == n).Url).Host.Replace("www.", ""), StringComparison.OrdinalIgnoreCase))
+        : null;
+
+    // the property itself among the cards just read (it sold or is listed on this site): same street number and street name
+    private bool IsSubjectListing(Comp c) => StreetNumber(c.Address) is { Length: > 0 } n && n == StreetNumber(Address) && StreetName(c.Address) == StreetName(Address);
+    private static readonly HashSet<string> Directions = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
+    private static string StreetName(string? address) =>
+        (address ?? "").Split(',')[0].Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(1)
+            .Select(t => System.Text.RegularExpressions.Regex.Replace(t.ToLowerInvariant(), @"(?<=\d)(st|nd|rd|th)$|[^a-z0-9]", ""))
+            .FirstOrDefault(t => t.Length > 0 && !Directions.Contains(t)) ?? "";
+    private string? _lookedUpFor; // the address already looked up, so a repeat Analyze does not leave the results page again
     private string _subjectNote = "", _mergeNote = ""; // kept in the status line after the distances finish // what the Zillow lookup filled in; kept in the status line after the distances finish
 
     /// <summary>
@@ -314,9 +406,10 @@ public partial class CompsViewModel : ObservableObject
     private async Task LookUpSubjectAsync()
     {
         _subjectNote = "";
-        // anything typed in Sqft / Beds / Baths was entered by hand (e.g. from the appraiser), so the lookup is skipped entirely
-        if (!IsHome || !HasValidAddress || HomeSqftText.Trim().Length + BedsText.Trim().Length + BathsText.Trim().Length > 0
-            || ReadPageAt is null || IsOnZillow?.Invoke() != true) return;
+        // Fills only what is missing (acres, House, sqft, beds, baths, mobile / duplex); anything typed stays as typed. Runs once per address.
+        var missing = PinAcres <= 0 || !IsHome || HomeSqftText.Trim().Length == 0 || BedsText.Trim().Length == 0 || BathsText.Trim().Length == 0;
+        if (!(missing || !_subjectLinks.ContainsKey("Zillow")) || !HasValidAddress || _lookedUpFor == Address || ReadPageAt is null || IsOnZillow?.Invoke() != true) return;
+        _lookedUpFor = Address;
         var zip = Place().Zip;
         var text = System.Text.RegularExpressions.Regex.Replace(Address.Contains(zip!) ? Address : $"{Address} {zip}", @"(\d{5})-\d{4}", "$1"); // ZIP+4 -> ZIP
         var url = $"https://www.zillow.com/homes/{System.Text.RegularExpressions.Regex.Replace(text, "[^A-Za-z0-9,]+", "-").Trim('-')}_rb/";
@@ -335,13 +428,30 @@ public partial class CompsViewModel : ObservableObject
             _subjectNote = $"Zillow matched {h.street}, {h.zip}, not this property; nothing filled.";
             return;
         }
+        SetSubjectLink("Zillow", h.url, h.photo);
         var filled = new List<string>();
-        if (h.sqft > 0) { HomeSqftText = h.sqft.Value.ToString(CultureInfo.InvariantCulture); filled.Add($"{h.sqft:N0} sqft"); }
-        if (BedsText.Length == 0 && h.beds > 0) { BedsText = h.beds.Value.ToString(CultureInfo.InvariantCulture); filled.Add($"{h.beds} bd"); }
-        if (BathsText.Length == 0 && h.baths > 0) { BathsText = h.baths.Value.ToString("0.#", CultureInfo.InvariantCulture); filled.Add($"{h.baths:0.#} ba"); }
-        if (h.homeType == "MANUFACTURED" && !IsMobile) { IsMobile = true; filled.Add("mobile home"); }
-        if (h.homeType == "MULTI_FAMILY" && !IsMultiFamily) { IsMultiFamily = true; filled.Add("duplex / multi-family"); }
-        _subjectNote = filled.Count == 0 ? "Zillow's page for this property has no size, beds or baths; enter them from the appraiser."
+        if (PinAcres <= 0 && h.lot > 0)
+        {
+            var acres = (h.lotUnit ?? "").Contains("acre", StringComparison.OrdinalIgnoreCase) ? h.lot.Value : h.lot.Value / 43560;
+            AcresText = acres.ToString("0.####", CultureInfo.InvariantCulture);
+            filled.Add($"{acres:0.###} acres");
+        }
+        // a building Zillow calls a home ticks House (and the kind) unless the boxes already say otherwise; a vacant lot ("LOT") leaves House alone
+        var isHomeType = h.homeType is { Length: > 0 } t && t != "LOT";
+        if (!IsHome && isHomeType) { IsHome = true; filled.Add("house"); }
+        if (IsHome && !IsMobile && !IsMultiFamily && !IsCondo)
+        {
+            if (h.homeType is "CONDO" or "TOWNHOUSE") { IsCondo = true; filled.Add("condo / villa / townhouse"); }
+            if (h.homeType == "MANUFACTURED") { IsMobile = true; filled.Add("mobile home"); }
+            if (h.homeType == "MULTI_FAMILY") { IsMultiFamily = true; filled.Add("duplex / multi-family"); }
+        }
+        if (IsHome)
+        {
+            if (HomeSqftText.Trim().Length == 0 && h.sqft > 0) { HomeSqftText = h.sqft.Value.ToString(CultureInfo.InvariantCulture); filled.Add($"{h.sqft:N0} sqft"); }
+            if (BedsText.Trim().Length == 0 && h.beds > 0) { BedsText = h.beds.Value.ToString(CultureInfo.InvariantCulture); filled.Add($"{h.beds} bd"); }
+            if (BathsText.Trim().Length == 0 && h.baths > 0) { BathsText = h.baths.Value.ToString("0.#", CultureInfo.InvariantCulture); filled.Add($"{h.baths:0.#} ba"); }
+        }
+        _subjectNote = filled.Count == 0 ? "Zillow's page had nothing to add to what you entered."
             : $"Filled from Zillow's page: {string.Join(", ", filled)}{(h.yearBuilt > 0 ? $" (built {h.yearBuilt})" : "")}. Check against the appraiser.";
     }
 
@@ -396,10 +506,12 @@ public partial class CompsViewModel : ObservableObject
         _onReturn = null;
         _returnTo = null;
         (_lat, _lon, _type) = (null, null, null);
+        _coordsFor = _searchKey = _lookedUpFor = null;
+        ForgetSubjectLinks();
         _subjectPin = null;
         HasTarget = false;
         Address = AcresText = ZipText = HomeSqftText = BedsText = BathsText = "";
-        IsHome = IsMobile = IsMultiFamily = false;
+        IsHome = IsMobile = IsMultiFamily = IsCondo = false;
         IsEditingSubject = true; // a typed-in property starts with the boxes open
         Clear();
     }
@@ -435,13 +547,14 @@ public partial class CompsViewModel : ObservableObject
         var geo = _serviceProvider.GetRequiredService<IGeocoder>();
         try
         {
-            (double Lat, double Lon)? home = _lat is { } la && _lon is { } lo ? (la, lo)
+            (double Lat, double Lon)? home = !HasSubject ? null : Coords is { } placed ? placed
                 : Address.Length > 0 ? await geo.GeocodeAsync(Address, cts.Token) : null;
             _subject = home;
-            if (home is not { } h) { Message += " Distance needs the property's coordinates or a full address."; return; }
 
-            var todo = _all.Where(c => c.Miles is null).ToList();
-            Message = $"Measuring distance for {todo.Count} comps...";
+            // with a property: every comp gets a distance; without one (a ZIP or a search typed into the site): comps are only placed, for the map
+            var todo = _all.Where(c => home is not null ? c.Miles is null : c.Lat is null && c.FoundLat is null).ToList();
+            Message = home is null ? $"No property to compare to: listing the {_all.Count} sales as found. Placing {todo.Count} on the map..."
+                : $"Measuring distance for {todo.Count} comps...";
             var done = 0;
             foreach (var c in todo)
             {
@@ -450,20 +563,21 @@ public partial class CompsViewModel : ObservableObject
                     : c.Address is { Length: > 0 } a ? await geo.GeocodeAsync(a, cts.Token) : null;
                 if (p is { } q)
                 {
-                    c.Miles = Math.Round(Miles(h.Lat, h.Lon, q.Lat, q.Lon), 1);
+                    if (home is { } h) c.Miles = Math.Round(Miles(h.Lat, h.Lon, q.Lat, q.Lon), 1);
                     c.FoundLat = q.Lat; c.FoundLon = q.Lon;
                 }
                 if (++done % 5 == 0) Refresh();
             }
             Refresh();
-            Message = $"Distance found for {_all.Count(c => c.Miles is not null)} of {_all.Count} comps." + (_mergeNote.Length > 0 ? " " + _mergeNote : "") + (_subjectNote.Length > 0 ? " " + _subjectNote : "");
+            Message = (home is null ? $"No property to compare to: {_all.Count} sales listed as found (no best match or Top 5)."
+                : $"Distance found for {_all.Count(c => c.Miles is not null)} of {_all.Count} comps.") + (_mergeNote.Length > 0 ? " " + _mergeNote : "") + (_subjectNote.Length > 0 ? " " + _subjectNote : "");
         }
         catch (OperationCanceledException) { } // a newer Analyze, Clear or property took over
     }
 
     private static readonly HashSet<string> Triggers = [nameof(IsHome), nameof(Sort), nameof(UseMedian),
         nameof(MinPrice), nameof(MaxPrice), nameof(MinAcres), nameof(MaxAcres), nameof(MinPpa), nameof(MaxPpa), nameof(AcresText),
-        nameof(HomeSqftText), nameof(BedsText), nameof(BathsText), nameof(IsMobile), nameof(IsMultiFamily), nameof(UseTopFive)]; // acres: size match is rescored
+        nameof(HomeSqftText), nameof(BedsText), nameof(BathsText), nameof(IsMobile), nameof(IsMultiFamily), nameof(IsCondo), nameof(UseTopFive), nameof(Address), nameof(ZipText)]; // address / ZIP: a property to compare to or not // acres: size match is rescored
 
     // --- the sidebar's property card: a summary, with the boxes behind Edit ---
     [ObservableProperty] private bool _isEditingSubject = true;
@@ -479,10 +593,17 @@ public partial class CompsViewModel : ObservableObject
         SubjectBeds is { } b ? $"{b} beds" : null,
         SubjectBaths is { } ba ? $"{ba:0.#} baths" : null,
         SubjectSqft is { } sq ? $"{sq:N0} sqft" : null,
-        IsMobile ? "Mobile home" : IsMultiFamily ? "Duplex / multi" : "House"
+        IsMobile ? "Mobile home" : IsMultiFamily ? "Duplex / multi" : IsCondo ? "Condo / villa" : "House"
     }.Where(x => x is not null));
     private static readonly HashSet<string> SubjectInputs = [nameof(Address), nameof(AcresText), nameof(ZipText), nameof(HomeSqftText),
-        nameof(BedsText), nameof(BathsText), nameof(IsHome), nameof(IsMobile), nameof(IsMultiFamily)];
+        nameof(BedsText), nameof(BathsText), nameof(IsHome), nameof(IsMobile), nameof(IsMultiFamily), nameof(IsCondo)];
+
+    /// <summary>
+    /// A property to compare the comps to: a full address (street number + ZIP) or a pin's coordinates. Without one (just a ZIP, or a search
+    /// typed straight into the site) the comps are listed as found: no best-match order, no Top 5, no confidence; the map has no subject pin.
+    /// </summary>
+    public bool HasSubject => HasValidAddress || Coords is not null;
+    public bool ShowConfidence => HasComps && HasSubject;
 
     // --- filters: "(2 active)" in the header, and one button to empty them ---
     public int ActiveFilterCount => new[] { MinAcres, MaxAcres, MinPrice, MaxPrice, MinPpa, MaxPpa }.Count(v => !string.IsNullOrWhiteSpace(v));
@@ -497,6 +618,7 @@ public partial class CompsViewModel : ObservableObject
         if (e.PropertyName is { } sn && SubjectInputs.Contains(sn))
         {
             OnPropertyChanged(nameof(SubjectTitle)); OnPropertyChanged(nameof(SubjectLine2)); OnPropertyChanged(nameof(SubjectLine3));
+            OnPropertyChanged(nameof(HasSubject)); OnPropertyChanged(nameof(ShowConfidence));
         }
         if (e.PropertyName is nameof(MinAcres) or nameof(MaxAcres) or nameof(MinPrice) or nameof(MaxPrice) or nameof(MinPpa) or nameof(MaxPpa))
             OnPropertyChanged(nameof(FiltersSummary));
@@ -525,7 +647,7 @@ public partial class CompsViewModel : ObservableObject
         }
         _ = RunMapScript($"showOnly({JsonSerializer.Serialize(_all.Where(Passes).Select(Key))});"
             + $"orderList({JsonSerializer.Serialize(Visible.Select(Key))});" // the map's list follows the sort box
-            + $"setTop({JsonSerializer.Serialize(UseTopFive ? Visible.Where(c => !c.IsExcluded).Select(Key) : [])});" // Top 5 pins turn blue
+            + $"setTop({JsonSerializer.Serialize(UseTopFive && HasSubject ? Visible.Where(c => !c.IsExcluded).Select(Key) : [])});" // Top 5 pins turn blue
             + string.Concat(_all.Select(c => $"setPick({JsonSerializer.Serialize(Key(c))},{(Excluded(c) || c.OutsideTop ? "true" : "false")});")));
     }
 
@@ -533,9 +655,9 @@ public partial class CompsViewModel : ObservableObject
     {
         // listed: passes the filters and not removed by hand; outliers stay listed (dimmed) so the reason shows, but do not count
         var listed = _all.Where(c => !_removed.Contains(Key(c)) && Passes(c)).ToList();
-        CompScoring.Score(listed, PinAcres, IsHome, DateTime.Today, SubjectSqft, SubjectBeds, SubjectBaths, IsMobile, IsMultiFamily);
+        CompScoring.Score(listed, PinAcres, IsHome, DateTime.Today, SubjectSqft, SubjectBeds, SubjectBaths, IsMobile, IsMultiFamily, IsCondo);
         foreach (var c in _all) c.OutsideTop = false;
-        if (UseTopFive)
+        if (UseTopFive && HasSubject)
         {
             var counted = listed.Where(c => !Excluded(c)).ToList();
             var slots = Math.Max(0, TopCount - counted.Count(c => _kept.Contains(Key(c))));
@@ -547,7 +669,7 @@ public partial class CompsViewModel : ObservableObject
         Visible.Clear();
         IEnumerable<Comp> ordered = Sort switch
         {
-            "Best match" => listed.OrderBy(c => c.IsExcluded).ThenByDescending(c => c.Weight),
+            "Best match" => HasSubject ? listed.OrderBy(c => c.IsExcluded).ThenByDescending(c => c.Weight) : listed, // no property: the site's order
             "Featured" => listed, // the order the site listed them
             "Distance: Nearest first" => listed.OrderBy(c => c.Miles ?? double.MaxValue), // comps that could not be placed go last
             "Price: Low to High" => listed.OrderBy(c => c.Price),
@@ -594,10 +716,11 @@ public partial class CompsViewModel : ObservableObject
 
     // the property being valued, for homes: floor area, beds, baths (blank = not compared) and mobile / manufactured
     [ObservableProperty] private string _homeSqftText = "", _bedsText = "", _bathsText = "";
-    [ObservableProperty] private bool _isMobile, _isMultiFamily;
+    [ObservableProperty] private bool _isMobile, _isMultiFamily, _isCondo;
     // one kind at a time: mobile, duplex / multi-family, or neither (a single-family house)
-    partial void OnIsMobileChanged(bool value) { if (value) IsMultiFamily = false; }
-    partial void OnIsMultiFamilyChanged(bool value) { if (value) IsMobile = false; }
+    partial void OnIsMobileChanged(bool value) { if (value) IsMultiFamily = IsCondo = false; }
+    partial void OnIsMultiFamilyChanged(bool value) { if (value) IsMobile = IsCondo = false; }
+    partial void OnIsCondoChanged(bool value) { if (value) IsMobile = IsMultiFamily = false; }
     private int? SubjectSqft => int.TryParse(HomeSqftText.Replace(",", ""), NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) && v > 0 ? v : null;
     private int? SubjectBeds => int.TryParse(BedsText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) && v >= 0 ? v : null;
     private double? SubjectBaths => double.TryParse(BathsText, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) && v >= 0 ? v : null;
@@ -686,7 +809,7 @@ public partial class CompsViewModel : ObservableObject
         var us = CultureInfo.GetCultureInfo("en-US");
         var pins = new List<MarkerLocation>();
         // the subject is placed by Analyze's distance step; if that has not run, place it now
-        _subject ??= _lat is { } la && _lon is { } lo ? (la, lo) : Address.Length > 0 ? await _serviceProvider.GetRequiredService<IGeocoder>().GeocodeAsync(Address) : null;
+        _subject ??= !HasSubject ? null : Coords is { } placed ? placed : Address.Length > 0 ? await _serviceProvider.GetRequiredService<IGeocoder>().GeocodeAsync(Address) : null;
         if (_subject is { } s)
             pins.Add(_subjectPin is { } home
                 // same popup as on the Home map (facts, house line, risk flags, slope, values), as a green subject pin

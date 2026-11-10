@@ -28,9 +28,9 @@ public static class CompScoring
     /// home or a duplex / multi-family building (otherwise a single-family house).
     /// </summary>
     public static void Score(IReadOnlyCollection<Comp> comps, double subjectAcres, bool isHome, DateTime today,
-        int? homeSqft = null, int? beds = null, double? baths = null, bool mobile = false, bool multi = false)
+        int? homeSqft = null, int? beds = null, double? baths = null, bool mobile = false, bool multi = false, bool attached = false)
     {
-        var kind = mobile ? "Mobile" : multi ? "Multi-family" : "Single-family";
+        var kind = mobile ? "Mobile" : multi ? "Multi-family" : attached ? "Condo / villa / townhouse" : "Single-family";
         foreach (var c in comps)
         {
             var why = new List<string>();
@@ -110,7 +110,8 @@ public static class CompScoring
                 {
                     "Mobile" => ("Mobile / manufactured home", "Mobile and manufactured homes sell in a different market from site-built houses, usually for much less. Tick Mobile home if the property is one."),
                     "Multi-family" => ("Duplex / multi-family", "Duplexes and other multi-unit buildings sell as income properties, priced differently from single-family houses. Tick Duplex / multi if the property is one."),
-                    _ => ("Single-family house", $"The property is marked as {(mobile ? "a mobile home" : "a duplex / multi-family building")}; single-family houses sell in a different market.")
+                    "Condo / villa / townhouse" => ("Condo / villa / townhouse", "Attached homes (condos, villas, townhouses: a shared wall, usually HOA fees) sell in a different market from detached houses. Tick Condo / villa if the property is one."),
+                    _ => ("Single-family house", $"The property is marked as {(mobile ? "a mobile home" : multi ? "a duplex / multi-family building" : "a condo / villa / townhouse")}; detached single-family houses sell in a different market.")
                 };
         }
 
@@ -199,6 +200,9 @@ public static class CompScoring
         Debug.Assert(homes[0].Weight >= Strong, "same size, beds and baths is strong");
         Debug.Assert(homes[1].Weight < homes[0].Weight * 0.5, "a house 2.3x bigger with 2 more beds counts far less");
         Debug.Assert(homes[2].Outlier!.StartsWith("Mobile") && homes[3].Outlier == "Vacant lot", "mobile home and vacant lot are flagged for a site-built house");
+        var villa = new List<Comp> { Home(400000, 1300, 2, 2, "CONDO"), Home(420000, 1300, 2, 2, "TOWNHOUSE"), Home(600000, 1300, 2, 2) };
+        Score(villa, 0, true, today, homeSqft: 1300, beds: 2, baths: 2, attached: true);
+        Debug.Assert(villa[0].Outlier is null && villa[1].Outlier is null && villa[2].Outlier == "Single-family house", "a villa is compared with condos / townhouses, not detached houses");
         var duplex = new List<Comp> { Home(500000, 2000, 4, 2, "MULTI_FAMILY"), Home(450000, 2000, 4, 2) };
         Score(duplex, 0.24, true, today, homeSqft: 2110, beds: 4, baths: 2, multi: true);
         Debug.Assert(duplex[0].Outlier is null && duplex[1].Outlier == "Single-family house", "a duplex is compared with duplexes, not houses");

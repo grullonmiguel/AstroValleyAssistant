@@ -6,6 +6,7 @@
         <ResourceDictionary Source="/Themes/Controls/Button.xaml"/>
         <ResourceDictionary Source="/Themes/Controls/RadioButton.xaml"/>
         <ResourceDictionary Source="/Themes/Controls/ListBox.xaml"/>
+        <ResourceDictionary Source="/Themes/Controls/ToolTip.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

@@ -15,7 +15,7 @@ public static class HomeKind
     public const string SmallMulti = "Duplex-4plex";
     public const string MultiFamily = "Multi-family";     // multi-unit, unit count not given
     public const string Apartments = "5+ units";
-    public const string Condo = "Condo / townhouse";
+    public const string Condo = "Condo / villa / townhouse";
     public const string Mobile = "Mobile home";
     public const string MobilePark = "Mobile home park";
     public const string VacantLot = "Vacant lot";
@@ -49,7 +49,7 @@ public static class HomeKind
             return Has(t, @"\bAG(RI|\b)|FARM|PASTURE|TIMBER|GROVE|ORCHARD|CROP|RANCH") ? Agricultural : VacantLot;
 
         if (Has(t, @"\bMOBILE\b|MANUFACTURED|\bM/H\b|\bMH\b")) return Mobile;
-        if (condo || Has(t, @"CONDO|TOWNHO(USE|ME)|\bPUD UNIT")) return Condo;
+        if (condo || Has(t, @"CONDO|TOWNHO(USE|ME)|\bVILLA|\bPUD UNIT|ZERO LOT")) return Condo; // attached / zero-lot-line homes share one market
         if (units is >= 5 || Has(t, @"APARTMENT|\b(5|FIVE)\s*(\+|OR MORE)|10 UNITS OR MORE")) return Apartments;
         if (units is >= 2 and <= 4 || Has(t, @"DUPLEX|TRIPLEX|FOURPLEX|QUADPLEX|\b2-4 UNITS")) return SmallMulti;
         if (Has(t, @"MULTI[- ]?FAMILY|MULTIPLE FAMILY")) return MultiFamily;

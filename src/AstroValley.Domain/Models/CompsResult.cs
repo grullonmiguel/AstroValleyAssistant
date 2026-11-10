@@ -5,8 +5,15 @@ public record Comp(string? Address, decimal Price, double Acres, bool Sold, stri
     int? Beds = null, double? Baths = null, string? HomeType = null, string? PhotoUrl = null) // PhotoUrl: the listing's photo on the site, loaded only when shown
 {
     // HomeType: Zillow's type (SINGLE_FAMILY, MANUFACTURED, LOT, ...), or MANUFACTURED when a card says mobile / manufactured; null = unknown.
-    /// <summary>"Single-family", "Mobile" or "Multi-family" (duplex and up): separate markets. Null when the site did not say, or a vacant lot.</summary>
-    public string? Kind => HomeType switch { null or "LOT" => null, "MANUFACTURED" => "Mobile", "MULTI_FAMILY" => "Multi-family", _ => "Single-family" };
+    /// <summary>
+    /// "Single-family" (detached), "Mobile", "Multi-family" (duplex and up) or "Condo / villa / townhouse" (attached: shares a wall, often an HOA):
+    /// separate markets. Null when the site did not say, or a vacant lot.
+    /// </summary>
+    public string? Kind => HomeType switch
+    {
+        null or "LOT" => null, "MANUFACTURED" => "Mobile", "MULTI_FAMILY" => "Multi-family",
+        "CONDO" or "TOWNHOUSE" or "APARTMENT" => "Condo / villa / townhouse", _ => "Single-family"
+    };
 
     /// <summary>Price per square foot of the house; 0 without a floor area.</summary>
     public decimal PricePerSqft => HomeSqft is > 0 ? Math.Round(Price / HomeSqft.Value) : 0;
@@ -34,7 +41,9 @@ public record Comp(string? Address, decimal Price, double Acres, bool Sold, stri
 
     /// <summary>Weight as 1-4 filled dots, for the card and the map list.</summary>
     public string WeightDots { get { var n = Math.Clamp((int)Math.Ceiling(Weight * 4), 1, 4); return new string('●', n) + new string('○', 4 - n); } }
-    public string WeightTip => $"Counts {Weight:P0} toward the value: {WeightWhy}. Weight = size match (the lot for land; the house, beds and baths for homes) × distance × how recent the sale is; ●●●● counts fully, ●○○○ barely counts.";
+    /// <summary>"Counts 24% toward the value" and one short line per reason (the map legend explains what the weight is).</summary>
+    public string WeightTip => $"{MatchLabel} · counts {Weight:P0} toward the value\n"
+        + string.Join("\n", (WeightWhy ?? "").Split(", ", StringSplitOptions.RemoveEmptyEntries).Select(r => "• " + r));
 
     public decimal PricePerAcre => Acres > 0 ? Math.Round(Price / (decimal)Acres) : 0;
 
@@ -49,7 +58,7 @@ public record Comp(string? Address, decimal Price, double Acres, bool Sold, stri
     public string RateLine => string.Join(" · ", new[]
     {
         HomeSqft is > 0 ? $"{PricePerSqft:C0}/sqft" : Acres > 0 ? $"{PricePerAcre:C0}/acre" : null,
-        Kind is "Mobile" or "Multi-family" ? Kind : null,
+        Kind is "Single-family" ? null : Kind,
         Miles is { } m ? $"{m:0.0} mi away" : null
     }.Where(x => x is not null));
 
