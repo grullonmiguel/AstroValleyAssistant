@@ -2,7 +2,7 @@ namespace AstroValley.Domain.Models;
 
 /// <summary>One comparable listing read from a real-estate site.</summary>
 public record Comp(string? Address, decimal Price, double Acres, bool Sold, string? Url, string? SoldText = null, int? HomeSqft = null, double? Lat = null, double? Lon = null, string? Verify = null,
-    int? Beds = null, double? Baths = null, string? HomeType = null)
+    int? Beds = null, double? Baths = null, string? HomeType = null, string? PhotoUrl = null) // PhotoUrl: the listing's photo on the site, loaded only when shown
 {
     // HomeType: Zillow's type (SINGLE_FAMILY, MANUFACTURED, LOT, ...), or MANUFACTURED when a card says mobile / manufactured; null = unknown.
     /// <summary>"Single-family", "Mobile" or "Multi-family" (duplex and up): separate markets. Null when the site did not say, or a vacant lot.</summary>
@@ -45,6 +45,21 @@ public record Comp(string? Address, decimal Price, double Acres, bool Sold, stri
     public string LotDetail => Acres <= 0 ? "" : Acres >= 1 ? $"{Acres * 43560:N0} sqft" : $"{Acres:0.00} acres";
 
     /// <summary>Price per acre and distance, on their own line.</summary>
+    /// <summary>The card's rate line: "$230/sqft · Multi-family · 0.6 mi away" for a home, "$12,400/acre · 0.6 mi away" for land.</summary>
+    public string RateLine => string.Join(" · ", new[]
+    {
+        HomeSqft is > 0 ? $"{PricePerSqft:C0}/sqft" : Acres > 0 ? $"{PricePerAcre:C0}/acre" : null,
+        Kind is "Mobile" or "Multi-family" ? Kind : null,
+        Miles is { } m ? $"{m:0.0} mi away" : null
+    }.Where(x => x is not null));
+
+    /// <summary>How well it matches, from its weight: "Strong match" (counts nearly fully), "Fair match", "Weak match".</summary>
+    public string MatchLabel => Weight >= CompScoring.Strong ? "Strong match" : Weight >= 0.3 ? "Fair match" : "Weak match";
+    public string MatchLevel => Weight >= CompScoring.Strong ? "Strong" : Weight >= 0.3 ? "Fair" : "Weak";
+
+    /// <summary>"Oct 15, 2026" for a sale, "Active" for a listing.</summary>
+    public string DateText => Sold ? (SoldText is { Length: > 0 } ? SoldText : "Sold") : "Active";
+
     public string PriceMiles => string.Join(" · ", new[]
     {
         Acres > 0 ? $"{PricePerAcre:C0} per Acre" : null,

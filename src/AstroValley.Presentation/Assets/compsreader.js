@@ -54,8 +54,17 @@
             price: price, acres: acres, sold: !!soldOn || /\bsold\b(?!\s+summary)/i.test(text), url: a ? a.href : null,
             soldText: soldOn ? soldOn[1] + ' ' + soldOn[2] + ', ' + soldOn[3] : null, homeSqft: living ? parseInt(living[1].replace(/,/g, ''), 10) : null,
             beds: beds ? parseInt(beds[1], 10) : null, baths: baths ? parseFloat(baths[1]) : null,
-            homeType: /manufactured|mobile home/i.test(text) ? 'MANUFACTURED' : /multi-family|duplex|triplex|fourplex|quadplex/i.test(text) ? 'MULTI_FAMILY' : null
+            homeType: /manufactured|mobile home/i.test(text) ? 'MANUFACTURED' : /multi-family|duplex|triplex|fourplex|quadplex/i.test(text) ? 'MULTI_FAMILY' : null,
+            photo: photoOf(card)
         };
+    }
+    // the listing's photo link (not downloaded here): an off-screen card often keeps it in data-src / srcset until it scrolls into view
+    function photoOf(card) {
+        var img = card.querySelector('img');
+        if (!img) return null;
+        var src = [img.getAttribute('src'), img.getAttribute('data-src'), img.getAttribute('data-lazy-src'), (img.getAttribute('srcset') || '').split(' ')[0]]
+            .find(function (u) { return u && /^https?:\/\//.test(u) && !/\.svg(\?|$)/i.test(u); });
+        return src || null;
     }
     function fromCards(selector, keep) {
         return checked([].filter.call(document.querySelectorAll(selector), keep || function () { return true; })
@@ -100,7 +109,7 @@
             var data = JSON.parse(document.getElementById('__NEXT_DATA__').textContent);
             (data.props.pageProps.searchPageState.cat1.searchResults.listResults || []).forEach(function (r) {
                 var url = r.detailUrl && r.detailUrl.indexOf('http') !== 0 ? 'https://www.zillow.com' + r.detailUrl : r.detailUrl;
-                byUrl[path(url)] = fill({ address: r.address, addrFrom: r.address ? 'data' : null, price: r.unformattedPrice || money(r.price), url: url, sold: /sold/i.test(r.statusType || '') }, homeInfo(r.hdpData && r.hdpData.homeInfo));
+                byUrl[path(url)] = fill({ address: r.address, addrFrom: r.address ? 'data' : null, price: r.unformattedPrice || money(r.price), url: url, sold: /sold/i.test(r.statusType || ''), photo: r.imgSrc }, homeInfo(r.hdpData && r.hdpData.homeInfo));
             });
         } catch (e) { }
 

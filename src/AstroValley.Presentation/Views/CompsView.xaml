@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:AstroValley.Presentation.Views"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
     <UserControl.Resources>
         <Style x:Key="Label" TargetType="TextBlock">
@@ -108,12 +109,109 @@
             <Setter Property="Foreground" Value="#8791A8"/>
             <Setter Property="Margin" Value="0,6,0,3"/>
         </Style>
+        <!-- sidebar (redesign): white cards, outline / filled action buttons with an icon (Tag = path data) -->
+        <Style x:Key="Stat" TargetType="StackPanel">
+            <Setter Property="Margin" Value="6,6"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="StatValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#2D2654"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="StatLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#4F4486"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        <!-- slides open / closed (height and fade, 0.2 s) when Tag turns true / false; starts closed, so nothing flickers on load -->
+        <Style x:Key="Collapsible" TargetType="Border">
+            <Setter Property="ClipToBounds" Value="True"/>
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="LayoutTransform"><Setter.Value><ScaleTransform ScaleY="0"/></Setter.Value></Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}">
+                    <DataTrigger.Value><sys:Boolean>True</sys:Boolean></DataTrigger.Value>
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard><Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="(Border.LayoutTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.2">
+                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
+                        </Storyboard></BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <BeginStoryboard><Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="(Border.LayoutTransform).(ScaleTransform.ScaleY)" To="0" Duration="0:0:0.18">
+                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseIn"/></DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/>
+                        </Storyboard></BeginStoryboard>
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Effect">
+                <Setter.Value><DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.10" Color="#30294B"/></Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="Action" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#4F4486"/>
+            <Setter Property="BorderBrush" Value="#CFCBE2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="B" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Fill="{TemplateBinding Foreground}" Width="15" Height="15" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{TemplateBinding Content}" FontSize="13" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Background" Value="#F3F0FC"/></Trigger>
+                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="B" Property="Opacity" Value="0.5"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ActionPrimary" TargetType="Button" BasedOn="{StaticResource Action}">
+            <Setter Property="Background" Value="#4F4486"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#4F4486"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="B" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Fill="{TemplateBinding Foreground}" Width="15" Height="15" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{TemplateBinding Content}" FontSize="13" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Background" Value="#665C9E"/></Trigger>
+                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="B" Property="Opacity" Value="0.5"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="380"/>
+            <ColumnDefinition Width="440"/>
         </Grid.ColumnDefinitions>
 
         <!-- Browser -->
@@ -221,6 +319,7 @@
         </Grid>
 
         <!-- Sidebar -->
+        <!-- Sidebar: actions, the property, the value, filters, the comps, then the value to apply -->
         <Grid Grid.Column="1" Margin="12,0,8,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -229,511 +328,520 @@
             </Grid.RowDefinitions>
 
             <StackPanel>
-                
-                
-                <!-- Action Buttons -->
-                <Border Background="#DBD8E9" CornerRadius="18" Padding="4" Margin="0,0,0,8">
-                    <Grid >
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition />
-                            <ColumnDefinition />
-                            <ColumnDefinition />
-                        </Grid.ColumnDefinitions>
-                        <!-- Clear Button -->
-                        <Button Content="Clear" 
-                                Padding="18,6" 
-                                Margin="2,0,2,0"
-                                Style="{StaticResource Pill}"
-                                Command="{Binding ClearCommand}"/>
-                        <!-- New Property Button -->
-                        <Button Grid.Column="1" 
-                                Padding="12,6"
-                                Margin="2,0,2,0"
-                                Content="New property" 
-                                Style="{StaticResource Pill}"
-                                Command="{Binding NewPropertyCommand}" />
-                        <!-- Analyze Button -->
-                        <Button Grid.Column="2" 
-                                Content="Analyze" 
-                                Padding="18,6" 
-                                Margin="2,0,2,0"
-                                Style="{StaticResource PillOn}"
-                                Command="{Binding AnalyzeCommand}" />
-                    </Grid>
-                </Border>
-
-                <!-- Property Address -->
-                <Grid Margin="0,0,0,6">
+                <!-- actions -->
+                <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="60"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
-                    <!-- Address -->
-                    <TextBlock Text="Address" Style="{StaticResource Label}"/>
-                    <TextBox Grid.Column="1" 
-                             Style="{StaticResource Field}"
-                             Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" />
-                    <!-- Acres / Zip Code / Is House or Lot -->
-                    <TextBlock Grid.Row="1" Text="Acres" Style="{StaticResource Label}"/>
-                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
-                        <TextBox Text="{Binding AcresText, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource Field}"/>
-                        <TextBlock Text="Zip" Style="{StaticResource Label}" Margin="10,0,4,0"/>
-                        <TextBox Text="{Binding ZipText, UpdateSourceTrigger=PropertyChanged}" Width="70" MaxLength="5" Style="{StaticResource Field}"/>
-                        <CheckBox Content="House" ToolTip="Value the house: $/sqft x its sqft (or the median price without a sqft), comparing home size, beds and baths instead of the lot" IsChecked="{Binding IsHome}" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                    </StackPanel>
-                    <!-- the house, from the property appraiser; blank boxes are simply not compared -->
-                    <TextBlock Grid.Row="2" Text="Sqft" Style="{StaticResource Label}"
-                               Visibility="{Binding IsHome, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                    <!-- wraps: Mobile home / Duplex / multi drop to a second line when the panel is narrow -->
-                    <WrapPanel Grid.Row="2" Grid.Column="1" Margin="0,4,0,0"
-                                Visibility="{Binding IsHome, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBox Text="{Binding HomeSqftText, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource Field}" ToolTip="The house's living area in square feet (property appraiser)"/>
-                        <TextBlock Text="Beds" Style="{StaticResource Label}" Margin="10,0,4,0"/>
-                        <TextBox Text="{Binding BedsText, UpdateSourceTrigger=PropertyChanged}" Width="34" Style="{StaticResource Field}"/>
-                        <TextBlock Text="Baths" Style="{StaticResource Label}" Margin="8,0,4,0"/>
-                        <TextBox Text="{Binding BathsText, UpdateSourceTrigger=PropertyChanged}" Width="34" Style="{StaticResource Field}"/>
-                        <CheckBox Content="Mobile home" IsChecked="{Binding IsMobile}" VerticalAlignment="Center" Margin="10,4,0,4"
-                                  ToolTip="Mobile and manufactured homes sell in a different market: comps of the other kind are flagged as outliers"/>
-                        <CheckBox Content="Duplex / multi" IsChecked="{Binding IsMultiFamily}" VerticalAlignment="Center" Margin="10,4,0,4"
-                                  ToolTip="A duplex or other 2-4 unit building (appraiser land use 'Multifamily'): Zillow is searched for multi-family sales, and single-family comps are flagged as outliers. Use the building's total sqft, beds and baths."/>
-                    </WrapPanel>
+                    <Button Content="Clear" Style="{StaticResource Action}" Margin="0,0,6,0" Command="{Binding ClearCommand}"
+                            Tag="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+                    <Button Grid.Column="1" Content="New Property" Style="{StaticResource Action}" Margin="3,0,3,0" Command="{Binding NewPropertyCommand}"
+                            Tag="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M17,13H13V17H11V13H7V11H11V7H13V11H17V13Z"/>
+                    <Button Grid.Column="2" Content="Analyze" Style="{StaticResource ActionPrimary}" Margin="6,0,0,0" Command="{Binding AnalyzeCommand}"
+                            Tag="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
                 </Grid>
-                
-                <!-- Status -->
-                <TextBlock Margin="0,0,0,8"
-                           TextWrapping="Wrap"
-                           Text="{Binding Message}" 
-                           Style="{StaticResource Label}" />
 
-                <!-- Filters -->
-                <Border Background="White" CornerRadius="12" Padding="12 8" Margin="0,0,0,8" >
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.12" Color="#30294B"/>
-                    </Border.Effect>
+                <!-- the property being valued: a summary; Edit shows the boxes (open by default for a typed-in property) -->
+                <Border Style="{StaticResource Card}" Padding="14,12">
                     <StackPanel>
-                        <ToggleButton x:Name="FiltersToggle" IsChecked="True" Cursor="Hand" FocusVisualStyle="{x:Null}">
-                            <ToggleButton.Template>
-                                <ControlTemplate TargetType="ToggleButton">
-                                    <Grid Background="Transparent">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Border Width="28" Height="28" CornerRadius="8" Background="#F3F0FC">
-                                                <Path Stretch="None"
-                                                  Stroke="#5B4BA6" 
-                                                  StrokeThickness="2" 
-                                                  StrokeStartLineCap="Round" 
-                                                  StrokeEndLineCap="Round"
-                                                  HorizontalAlignment="Center" 
-                                                  VerticalAlignment="Center" 
-                                                  Data="M4,7 H20 M7,12 H17 M10,17 H14" />
-                                            </Border>
-                                            <TextBlock Text="Filters" 
-                                                       FontSize="14" 
-                                                       FontWeight="SemiBold" 
-                                                       Foreground="#171528" 
-                                                       VerticalAlignment="Center"
-                                                       Margin="14,0,16,0"/>
-                                        </StackPanel>
-                                        <!-- Comps Total -->
-                                        <TextBlock Grid.Column="1"
-                                                   FontSize="16"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="#8A7FCB"
-                                                   VerticalAlignment="Center">
-                                            <Run Text="("/><Run Text="{Binding Count, Mode=OneWay}"/><Run Text=" of "/><Run Text="{Binding TotalCount, Mode=OneWay}"/><Run Text=")"/>
-                                        </TextBlock>
-                                        <Path Grid.Column="2" 
-                                              x:Name="Chevron" 
-                                              Data="M1,1 L7,7 L13,1" 
-                                              Stroke="#8791A8" 
-                                              StrokeThickness="2" 
-                                              StrokeStartLineCap="Round" 
-                                              StrokeEndLineCap="Round"
-                                              VerticalAlignment="Center"
-                                              HorizontalAlignment="Right"
-                                              RenderTransformOrigin="0.5,0.5">
-                                            <Path.RenderTransform>
-                                                <RotateTransform x:Name="ChevronTurn" Angle="0"/>
-                                            </Path.RenderTransform>
-                                        </Path>
-                                    </Grid>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsChecked" Value="False">
-                                            <Trigger.EnterActions>
-                                                <BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="ChevronTurn" Storyboard.TargetProperty="Angle" To="-90" Duration="0:0:0.2"/></Storyboard></BeginStoryboard>
-                                            </Trigger.EnterActions>
-                                            <Trigger.ExitActions>
-                                                <BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="ChevronTurn" Storyboard.TargetProperty="Angle" To="0" Duration="0:0:0.2"/></Storyboard></BeginStoryboard>
-                                            </Trigger.ExitActions>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </ToggleButton.Template>
-                        </ToggleButton>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="46" Height="46" CornerRadius="10" Background="#F3F0FC" VerticalAlignment="Top">
+                                <Path Data="{StaticResource Icon.Home}" Fill="#4F4486" Width="26" Height="26" Stretch="Uniform"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="12,0,8,0">
+                                <TextBlock Text="{Binding SubjectTitle}" FontSize="15" FontWeight="Bold" Foreground="#171528" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding SubjectLine2}" FontSize="12" Foreground="#555555" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding SubjectLine3}" FontSize="12" Foreground="#555555" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                            <ToggleButton Grid.Column="2" IsChecked="{Binding IsEditingSubject}" VerticalAlignment="Top" Cursor="Hand" ToolTip="Edit the property's details">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="B" BorderBrush="#CFCBE2" BorderThickness="1" CornerRadius="14" Padding="10,4" Background="White">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource Icon.Edit}" Fill="#4F4486" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Edit" FontSize="12" FontWeight="SemiBold" Foreground="#4F4486"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Background" Value="#F3F0FC"/></Trigger>
+                                            <Trigger Property="IsChecked" Value="True"><Setter TargetName="B" Property="Background" Value="#E6E1F6"/></Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                        </Grid>
 
-                        <!-- body: squashes to nothing when collapsed -->
-                        <Border ClipToBounds="True" Margin="0,8,0,0">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="LayoutTransform"><Setter.Value><ScaleTransform ScaleY="1"/></Setter.Value></Setter>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsChecked, ElementName=FiltersToggle}" Value="False">
-                                            <DataTrigger.EnterActions>
-                                                <BeginStoryboard><Storyboard>
-                                                    <DoubleAnimation Storyboard.TargetProperty="(Border.LayoutTransform).(ScaleTransform.ScaleY)" To="0" Duration="0:0:0.22"/>
-                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.22"/>
-                                                </Storyboard></BeginStoryboard>
-                                            </DataTrigger.EnterActions>
-                                            <DataTrigger.ExitActions>
-                                                <BeginStoryboard><Storyboard>
-                                                    <DoubleAnimation Storyboard.TargetProperty="(Border.LayoutTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.22"/>
-                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.22"/>
-                                                </Storyboard></BeginStoryboard>
-                                            </DataTrigger.ExitActions>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Margin="0,0,6,0">
-                                <TextBlock Text="Acres" Style="{StaticResource FilterHead}"/>
-                                <!-- Min / Max look like the other labels; clicking one fills a size band around the property's lot -->
-                                <TextBlock Text="Min" Style="{StaticResource FilterSub}" Cursor="Hand" ToolTip="{Binding MinAcresTip}">
-                                    <TextBlock.InputBindings>
-                                        <MouseBinding Gesture="LeftClick" Command="{Binding FillAcresCommand}" CommandParameter="Min"/>
-                                    </TextBlock.InputBindings>
-                                </TextBlock>
-                                <TextBox Text="{Binding MinAcres, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
-                                <TextBlock Text="Max" Style="{StaticResource FilterSub}" Cursor="Hand" ToolTip="{Binding MaxAcresTip}">
-                                    <TextBlock.InputBindings>
-                                        <MouseBinding Gesture="LeftClick" Command="{Binding FillAcresCommand}" CommandParameter="Max"/>
-                                    </TextBlock.InputBindings>
-                                </TextBlock>
-                                <TextBox Text="{Binding MaxAcres, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Margin="3,0,3,0">
-                                <TextBlock Text="Price" Style="{StaticResource FilterHead}"/>
-                                <TextBlock Text="Min" Style="{StaticResource FilterSub}"/>
-                                <TextBox Text="{Binding MinPrice, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
-                                <TextBlock Text="Max" Style="{StaticResource FilterSub}"/>
-                                <TextBox Text="{Binding MaxPrice, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" Margin="6,0,0,0">
-                                <TextBlock Text="$/Acre" Style="{StaticResource FilterHead}"/>
-                                <TextBlock Text="Min" Style="{StaticResource FilterSub}"/>
-                                <TextBox Text="{Binding MinPpa, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
-                                <TextBlock Text="Max" Style="{StaticResource FilterSub}"/>
-                                <TextBox Text="{Binding MaxPpa, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
-                            </StackPanel>
-                            </Grid>
+                        <!-- the boxes -->
+                        <Border Style="{StaticResource Collapsible}" Tag="{Binding IsEditingSubject}">
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="56"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Address" Style="{StaticResource Label}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Grid.Row="1" Text="Acres" Style="{StaticResource Label}"/>
+                            <WrapPanel Grid.Row="1" Grid.Column="1">
+                                <TextBox Text="{Binding AcresText, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource Field}"/>
+                                <TextBlock Text="Zip" Style="{StaticResource Label}" Margin="10,0,4,0"/>
+                                <TextBox Text="{Binding ZipText, UpdateSourceTrigger=PropertyChanged}" Width="70" MaxLength="5" Style="{StaticResource Field}"/>
+                                <CheckBox Content="House" IsChecked="{Binding IsHome}" VerticalAlignment="Center" Margin="10,0,0,0"
+                                          ToolTip="Value the house: $/sqft x its sqft (or the median price without a sqft), comparing home size, beds and baths instead of the lot"/>
+                            </WrapPanel>
+                            <!-- the house, from the county record or the appraiser; blank boxes are simply not compared -->
+                            <TextBlock Grid.Row="2" Text="Sqft" Style="{StaticResource Label}"
+                                       Visibility="{Binding IsHome, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <WrapPanel Grid.Row="2" Grid.Column="1" Margin="0,4,0,0"
+                                       Visibility="{Binding IsHome, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBox Text="{Binding HomeSqftText, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource Field}" ToolTip="The house's living area in square feet (property appraiser)"/>
+                                <TextBlock Text="Beds" Style="{StaticResource Label}" Margin="10,0,4,0"/>
+                                <TextBox Text="{Binding BedsText, UpdateSourceTrigger=PropertyChanged}" Width="34" Style="{StaticResource Field}"/>
+                                <TextBlock Text="Baths" Style="{StaticResource Label}" Margin="8,0,4,0"/>
+                                <TextBox Text="{Binding BathsText, UpdateSourceTrigger=PropertyChanged}" Width="34" Style="{StaticResource Field}"/>
+                                <CheckBox Content="Mobile home" IsChecked="{Binding IsMobile}" VerticalAlignment="Center" Margin="10,4,0,4"
+                                          ToolTip="Mobile and manufactured homes sell in a different market: comps of the other kind are flagged as outliers"/>
+                                <CheckBox Content="Duplex / multi" IsChecked="{Binding IsMultiFamily}" VerticalAlignment="Center" Margin="10,4,0,4"
+                                          ToolTip="A duplex or other 2-4 unit building (appraiser land use 'Multifamily'): Zillow is searched for multi-family sales, and single-family comps are flagged as outliers. Use the building's total sqft, beds and baths."/>
+                            </WrapPanel>
+                        </Grid>
                         </Border>
                     </StackPanel>
                 </Border>
 
+                <!-- status -->
+                <TextBlock Margin="2,0,2,8" TextWrapping="Wrap" Text="{Binding Message}" Style="{StaticResource Label}"/>
             </StackPanel>
 
-            <!-- Comps -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <Border Background="White" CornerRadius="12" Padding="12 8"
-                        Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.12" Color="#30294B"/>
-                    </Border.Effect>
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <!-- -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
+                <StackPanel>
+                    <!-- the value and the figures behind it; the rate box and View on Map underneath -->
+                    <Border Style="{StaticResource Card}" Background="#DBD8E9" Padding="14,12"
+                            Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel>
-
-                            <!-- Stats -->
-                            <Border  Padding="12,8" Margin="0,0,0,12" Background="#DBD8E9" CornerRadius="8">
-                                <Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Estimated Market Value" FontSize="13" FontWeight="SemiBold" Foreground="#4F4486"/>
+                                        <Border Background="Transparent" ToolTip="{Binding ValueHow}" Margin="6,0,0,0" VerticalAlignment="Center">
+                                            <Path Data="{StaticResource Icon.Info}" Fill="#8A7FCB" Width="13" Height="13" Stretch="Uniform"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding EstimateText}" FontSize="27" FontWeight="Bold" Foreground="#4F4486" Margin="0,2,0,0"/>
+                                    <TextBlock Text="{Binding RangeText}" FontSize="11" Foreground="#555555" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <Rectangle Grid.Column="1" Width="1" Fill="#CFC8EC" Margin="10,2"/>
+                                <!-- 2 x 2: averages, median, and how many comps were read -->
+                                <Grid Grid.Column="2" VerticalAlignment="Center">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="70"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="1"/>
+                                        <ColumnDefinition/>
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition/>
-                                        <RowDefinition Height="auto"/>
-                                        <RowDefinition/>
-                                        <RowDefinition Height="auto"/>
+                                        <RowDefinition Height="1"/>
                                         <RowDefinition/>
                                     </Grid.RowDefinitions>
-                                    
-                                    <TextBlock Grid.Column="1" Text="{Binding SizeHead}" FontWeight="SemiBold" FontSize="12"/>
-                                    <TextBlock Grid.Column="2" Text="Price" FontWeight="SemiBold" FontSize="12"/>
-                                    <TextBlock Grid.Column="3" Text="{Binding RateHead}" FontWeight="SemiBold" FontSize="12"/>
-                                    <TextBlock Grid.Row="2" Text="Avg" FontWeight="Bold" FontSize="12" Margin="0,4,0,0"/>
-                                    <Border Grid.Row="1" Grid.ColumnSpan="34" Background="#C0C0C0" Height="1" Margin="0 4 0 3" />
-                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AvgSizeText}" FontSize="12" Margin="0,4,0,0"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding AvgPrice, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding AvgPpa, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
-
-                                    <Border Grid.Row="3" Grid.ColumnSpan="34" Background="#C0C0C0" Height="1" Margin="0 4 0 3" />
-                                    <TextBlock Grid.Row="4" Text="Median" FontWeight="Bold" FontSize="12" Margin="0,4,0,0"/>
-                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding MedianSizeText}" FontSize="12" Margin="0,4,0,0"/>
-                                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding MedianPrice, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
-                                    <TextBlock Grid.Row="4" Grid.Column="3" Text="{Binding MedianPpa, StringFormat={}{0:C0}}" FontSize="12" Margin="0,4,0,0"/>
+                                    <Rectangle Grid.Column="1" Grid.RowSpan="3" Fill="#CFC8EC"/>
+                                    <Rectangle Grid.Row="1" Grid.ColumnSpan="3" Fill="#CFC8EC"/>
+                                    <StackPanel Style="{StaticResource Stat}">
+                                        <TextBlock Text="{Binding AvgPrice, StringFormat={}{0:C0}}" Style="{StaticResource StatValue}"/>
+                                        <TextBlock Text="Avg Price" Style="{StaticResource StatLabel}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Style="{StaticResource Stat}">
+                                        <TextBlock Text="{Binding MedianPrice, StringFormat={}{0:C0}}" Style="{StaticResource StatValue}"/>
+                                        <TextBlock Text="Median Price" Style="{StaticResource StatLabel}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Style="{StaticResource Stat}">
+                                        <TextBlock Text="{Binding AvgPpa, StringFormat={}{0:C0}}" Style="{StaticResource StatValue}"/>
+                                        <TextBlock Style="{StaticResource StatLabel}"><Run Text="Avg "/><Run Text="{Binding RateHead, Mode=OneWay}"/></TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Grid.Column="2" Style="{StaticResource Stat}">
+                                        <TextBlock Text="{Binding Visible.Count}" Style="{StaticResource StatValue}"/>
+                                        <TextBlock Text="Comparable Sales" Style="{StaticResource StatLabel}"/>
+                                    </StackPanel>
                                 </Grid>
-                            </Border>
-
-                            <!-- View on Map | Sort By-->
-                            <Grid Margin="0 0 0 12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <!-- View on Map -->
-                                <Button Content="View on Map" 
-                                        Style="{StaticResource IconLink}" 
-                                        Tag="{StaticResource Icon.MapPin}"
-                                        Command="{Binding ReviewOnMapCommand}"                            
-                                        Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                <!-- Sort By -->
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" >
-                                    <TextBlock Text="Sort:" Style="{StaticResource Label}" Margin="0,0,6,0"/>
-                                    <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding Sort}" MinWidth="150" FontSize="12">
-                                        <!-- the app's item style has light text for dark drop-downs; this one opens on white, so dark text, light on hover / selected -->
-                                        <ComboBox.ItemContainerStyle>
-                                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
-                                                <Setter Property="Foreground" Value="#30294B"/>
-                                                <Setter Property="Padding" Value="10,6"/>
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="White"/></Trigger>
-                                                    <Trigger Property="IsSelected" Value="True"><Setter Property="Foreground" Value="White"/></Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </ComboBox.ItemContainerStyle>
-                                    </ComboBox>
-                                </StackPanel>
                             </Grid>
-
+                            <!-- the rate behind the value (editable to override it), and the map -->
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding RateLabel}" Style="{StaticResource Label}" Margin="0,0,6,0"/>
+                                    <TextBox Text="{Binding PpaText, UpdateSourceTrigger=PropertyChanged}" Width="90" Style="{StaticResource Field}" ToolTip="{Binding ValueHow}"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Command="{Binding ReviewOnMapCommand}" Cursor="Hand" ToolTip="Show the comps on a map">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="B" Background="#DDD8F0" CornerRadius="10" Padding="12,6">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource Icon.MapMarker}" Fill="#4F4486" Width="16" Height="16" Stretch="Uniform" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="View on Map" FontSize="12" FontWeight="SemiBold" Foreground="#4F4486" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Background" Value="#CFC8EC"/></Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
                         </StackPanel>
+                    </Border>
 
-                        <!-- Property List -->
-                        <ItemsControl Grid.Row="1" ItemsSource="{Binding Visible}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="White" 
-                                            BorderBrush="#E2DFEE" 
-                                            BorderThickness="1" 
-                                            CornerRadius="10" 
-                                            Padding="14,10" Margin="0,0,0,10">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Style.Triggers>
-                                                    <!-- an outlier left out of the value -->
-                                                    <DataTrigger Binding="{Binding IsExcluded}" Value="True">
-                                                        <Setter Property="Opacity" Value="0.6"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <Border.Effect>
-                                            <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.12" Color="#30294B"/>
-                                        </Border.Effect>
-                                        <Grid>
+                    <!-- filters (collapsible) -->
+                    <Border Style="{StaticResource Card}" Padding="14,10">
+                        <StackPanel>
+                            <ToggleButton x:Name="FiltersToggle" IsChecked="False" Cursor="Hand" FocusVisualStyle="{x:Null}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Grid Background="Transparent">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel>
-                                                <WrapPanel> <!-- heading and badges wrap instead of cutting off "SOLD OCT 15, 2026" -->
-                                                    <!-- Lot Size -->
-                                                    <TextBlock Text="{Binding Headline}" FontSize="15" FontWeight="Bold" Foreground="#333333" VerticalAlignment="Center"/>
-
-                                                    <!-- SOLD -->
-                                                    <Border Background="#E3F0FB" CornerRadius="6" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Badge}" FontSize="10" FontWeight="SemiBold" Foreground="#2F6DA3"/>
-                                                    </Border>
-
-                                                    <!-- VERIFY: no link / no address / guessed address; the tooltip says which -->
-                                                    <Border Background="#FDEFD9" CornerRadius="6" Padding="8,2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="{Binding Verify}">
-                                                        <TextBlock Text="VERIFY" FontSize="10" FontWeight="SemiBold" Foreground="#A35A12"/>
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Verify}" Value="{x:Null}">
-                                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                    </Border>
-
-                                                    <!-- OUTLIER: a misleading sale (house on a land comp, token price, far from the median) -->
-                                                    <Border Background="#FBE3E3" CornerRadius="6" Padding="8,2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="{Binding OutlierTip}">
-                                                        <TextBlock Text="OUTLIER" FontSize="10" FontWeight="SemiBold" Foreground="#B23A3A"/>
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Outlier}" Value="{x:Null}">
-                                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                    </Border>
-                                                </WrapPanel>
-
-                                                <TextBlock Text="{Binding SubLine}" 
-                                                   FontSize="11" 
-                                                   Foreground="#555555" 
-                                                   Margin="0,2,0,0"/>
-                                                <TextBlock Text="{Binding HomeText}" TextWrapping="Wrap" 
-                                                   FontSize="11" 
-                                                   Foreground="#555555" 
-                                                   Margin="0,2,0,0">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding HomeText}" Value="{x:Null}">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                                <TextBlock Text="{Binding PriceMiles}" 
-                                                   FontSize="11" 
-                                                   Foreground="#555555" 
-                                                   Margin="0,2,0,0"/>
-
-                                                <!-- how much this comp counts; the tooltip says why -->
-                                                <TextBlock FontSize="11" Foreground="#555555" Margin="0,2,0,0" TextWrapping="Wrap" ToolTip="{Binding WeightTip}">
-                                                    <Run Text="Weight"/>
-                                                    <Run Text="{Binding WeightDots, Mode=OneWay}" Foreground="#534B80" FontSize="12"/>
-                                                    <Run Text="{Binding WeightWhy, Mode=OneWay}"/>
-                                                </TextBlock>
-                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                    <StackPanel.Style>
-                                                        <Style TargetType="StackPanel">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding LeftOutWhy}" Value="{x:Null}">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </StackPanel.Style>
-                                                    <TextBlock Text="{Binding LeftOutWhy}" ToolTip="{Binding OutlierTip}" FontSize="11" Foreground="#B23A3A" TextWrapping="Wrap" MaxWidth="230" VerticalAlignment="Center"/>
-                                                    <!-- only while it is left out; the X removes it again -->
-                                                    <Button Content="Include anyway" Margin="8,0,0,0" FontSize="11" Padding="6,1" VerticalAlignment="Center"
-                                                            Command="{Binding DataContext.IncludeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"
-                                                            Visibility="{Binding IsExcluded, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                                </StackPanel>
-                                                <!-- the address opens the listing in the default browser; a button looks like a link and, unlike a Hyperlink, its command binding works here -->
-                                                <Button Margin="0,4,0,0" HorizontalAlignment="Left" Cursor="Hand" ToolTip="Open in your browser" Click="OnListingClick">
-                                                    <Button.Template>
-                                                        <ControlTemplate TargetType="Button">
-                                                            <Border Background="Transparent">
-                                                                <!-- a background so the whole text area catches the mouse -->
-                                                                <TextBlock x:Name="Link" Text="{Binding Address}" FontSize="12" Foreground="#4F4486" TextTrimming="CharacterEllipsis"/>
-                                                            </Border>
-                                                            <ControlTemplate.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter TargetName="Link" Property="TextDecorations" Value="Underline"/>
-                                                                </Trigger>
-                                                            </ControlTemplate.Triggers>
-                                                        </ControlTemplate>
-                                                    </Button.Template>
-                                                </Button>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Stretch="None" Stroke="#4F4486" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                      VerticalAlignment="Center" Data="M2,4 H18 M2,10 H18 M2,16 H18 M6,1 V7 M14,7 V13 M9,13 V19"/>
+                                                <TextBlock Text="Filters" FontSize="14" FontWeight="SemiBold" Foreground="#171528" VerticalAlignment="Center" Margin="12,0,8,0"/>
+                                                <TextBlock Text="{Binding FiltersSummary}" FontSize="14" FontWeight="SemiBold" Foreground="#8A7FCB" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                                                <Button Content="✕" HorizontalAlignment="Right" Style="{StaticResource Theme.Button.IconOnly}" FontSize="11" Padding="4,0"
-                                                Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"/>
-                                                <TextBlock Text="{Binding Price, StringFormat='{}{0:C0}'}" FontSize="17" FontWeight="Bold" Foreground="#8E7CC3" HorizontalAlignment="Right" Margin="0,2,0,0"/>
-                                            </StackPanel>
+                                            <Path Grid.Column="2" x:Name="Chevron" Data="M1,7 L7,1 L13,7" Stroke="#8791A8" StrokeThickness="2"
+                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                                <Path.RenderTransform><RotateTransform Angle="180"/></Path.RenderTransform>
+                                            </Path>
                                         </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="Chevron" Property="RenderTransform"><Setter.Value><RotateTransform Angle="0"/></Setter.Value></Setter>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+
+                            <Border Style="{StaticResource Collapsible}" Tag="{Binding IsChecked, ElementName=FiltersToggle}">
+                            <StackPanel Margin="0,10,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
+                                    <!-- each group: a heading, then Min | Max side by side -->
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Acreage" Style="{StaticResource FilterHead}"/>
+                                        <UniformGrid Columns="2">
+                                            <StackPanel Margin="0,0,3,0">
+                                                <!-- Min / Max look like labels; clicking one fills a size band around the property's lot -->
+                                                <TextBlock Text="Min" Style="{StaticResource FilterSub}" Cursor="Hand" ToolTip="{Binding MinAcresTip}">
+                                                    <TextBlock.InputBindings><MouseBinding Gesture="LeftClick" Command="{Binding FillAcresCommand}" CommandParameter="Min"/></TextBlock.InputBindings>
+                                                </TextBlock>
+                                                <TextBox Text="{Binding MinAcres, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="3,0,0,0">
+                                                <TextBlock Text="Max" Style="{StaticResource FilterSub}" Cursor="Hand" ToolTip="{Binding MaxAcresTip}">
+                                                    <TextBlock.InputBindings><MouseBinding Gesture="LeftClick" Command="{Binding FillAcresCommand}" CommandParameter="Max"/></TextBlock.InputBindings>
+                                                </TextBlock>
+                                                <TextBox Text="{Binding MaxAcres, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
+                                            </StackPanel>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="3,0,3,0">
+                                        <TextBlock Text="Price" Style="{StaticResource FilterHead}"/>
+                                        <UniformGrid Columns="2">
+                                            <StackPanel Margin="0,0,3,0">
+                                                <TextBlock Text="Min" Style="{StaticResource FilterSub}"/>
+                                                <TextBox Text="{Binding MinPrice, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="3,0,0,0">
+                                                <TextBlock Text="Max" Style="{StaticResource FilterSub}"/>
+                                                <TextBox Text="{Binding MaxPrice, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
+                                            </StackPanel>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Margin="6,0,0,0">
+                                        <TextBlock Text="$/Acre" Style="{StaticResource FilterHead}"/>
+                                        <UniformGrid Columns="2">
+                                            <StackPanel Margin="0,0,3,0">
+                                                <TextBlock Text="Min" Style="{StaticResource FilterSub}"/>
+                                                <TextBox Text="{Binding MinPpa, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="3,0,0,0">
+                                                <TextBlock Text="Max" Style="{StaticResource FilterSub}"/>
+                                                <TextBox Text="{Binding MaxPpa, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FilterBox}"/>
+                                            </StackPanel>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <CheckBox Content="Median" IsChecked="{Binding UseMedian}" VerticalAlignment="Center"/>
+                                        <Path Data="{StaticResource Icon.Info}" Fill="#8A7FCB" Width="13" Height="13" Stretch="Uniform" Margin="5,0,14,0"
+                                              ToolTip="Value from the weighted median (close, recent, similar comps count more). Untick for the plain average."/>
+                                        <CheckBox Content="Top 5" IsChecked="{Binding UseTopFive}" VerticalAlignment="Center"/>
+                                        <Path Data="{StaticResource Icon.Info}" Fill="#8A7FCB" Width="13" Height="13" Stretch="Uniform" Margin="5,0,0,0"
+                                              ToolTip="Value from the 5 best matches only (highest weight). The rest stay listed and on the map, faded; remove one and the next best moves up, or Include anyway to add one."/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Clear Filters" Style="{StaticResource Action}" Padding="10,5" Command="{Binding ClearFiltersCommand}"
+                                            Tag="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+                                </Grid>
+                            </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- comparable properties: count, restore, sort -->
+                    <Border Background="#ECE9F7" CornerRadius="10" Padding="12,8" Margin="0,0,0,10"
+                            Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource Icon.Home}" Fill="#4F4486" Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0"/>
+                                    <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#171528">
+                                        <Run Text="Comparables"/>
+                                        <Run Text="{Binding Visible.Count, Mode=OneWay, StringFormat=({0})}" Foreground="#4F4486"/>
+                                    </TextBlock>
+                                </StackPanel>
+                                <Button Content="Restore removed" Style="{StaticResource IconLink}" Margin="-4,2,0,0" HorizontalAlignment="Left" Tag="{StaticResource Icon.ArrowLeft}"
+                                        ToolTip="Bring back every comp removed by hand, on the map, or left out as an outlier"
+                                        Command="{Binding ShowRemovedCommand}" Visibility="{Binding HasRemoved, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Sort by:" Style="{StaticResource Label}" Margin="0,0,6,0"/>
+                                <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding Sort}" MinWidth="130" FontSize="12">
+                                    <!-- the app's item style has light text for dark drop-downs; this one opens on white -->
+                                    <ComboBox.ItemContainerStyle>
+                                        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
+                                            <Setter Property="Foreground" Value="#30294B"/>
+                                            <Setter Property="Padding" Value="10,6"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="White"/></Trigger>
+                                                <Trigger Property="IsSelected" Value="True"><Setter Property="Foreground" Value="White"/></Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ComboBox.ItemContainerStyle>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- the comps -->
+                    <ItemsControl ItemsSource="{Binding Visible}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="White" BorderBrush="#E2DFEE" BorderThickness="1" CornerRadius="12" Padding="10" Margin="0,0,0,10">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <!-- left out of the value (outlier, removed, outside the top 5) -->
+                                                <DataTrigger Binding="{Binding IsExcluded}" Value="True"><Setter Property="Opacity" Value="0.6"/></DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.10" Color="#30294B"/>
+                                    </Border.Effect>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- the listing's photo (loaded from the site when shown); a house icon when there is none -->
+                                        <Grid Height="84" VerticalAlignment="Top">
+                                            <Border CornerRadius="8" Background="#EEECF6">
+                                                <Path Data="{StaticResource Icon.Home}" Fill="#C9C3E3" Width="28" Height="28" Stretch="Uniform"/>
+                                            </Border>
+                                            <Border CornerRadius="8">
+                                                <Border.Background>
+                                                    <ImageBrush ImageSource="{Binding PhotoUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
+                                                </Border.Background>
+                                            </Border>
+                                        </Grid>
+                                        <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Headline}" FontSize="14" FontWeight="Bold" Foreground="#171528" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                                <Button Grid.Column="1" Content="✕" Style="{StaticResource Theme.Button.IconOnly}" FontSize="11" Padding="4,0" Margin="4,0,0,0" VerticalAlignment="Top" ToolTip="Remove this comp"
+                                                        Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"/>
+                                            </Grid>
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <TextBlock Text="{Binding Price, StringFormat='{}{0:C0}'}" FontSize="17" FontWeight="Bold" Foreground="#4F4486" VerticalAlignment="Center"/>
+                                                <Path Data="{StaticResource Icon.Calendar}" Fill="#777777" Width="12" Height="12" Stretch="Uniform" Margin="10,0,4,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding DateText}" FontSize="12" Foreground="#555555" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding RateLine}" FontSize="12" Foreground="#555555" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                            <!-- tags: how well it matches (hover for the weight and why), data to check, misleading sales -->
+                                            <WrapPanel Margin="0,2,0,0">
+                                                <Border x:Name="Match" CornerRadius="10" Padding="7,2" Margin="0,2,4,0" Background="#EEEEEE" ToolTip="{Binding WeightTip}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Path x:Name="MatchIcon" Data="{StaticResource Icon.Check}" Fill="#777777" Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0"/>
+                                                        <TextBlock x:Name="MatchText" Text="{Binding MatchLabel}" FontSize="10" FontWeight="SemiBold" Foreground="#777777"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <Border Background="#FDEFD9" CornerRadius="6" Padding="6,1" Margin="0,2,4,0" ToolTip="{Binding Verify}">
+                                                    <TextBlock Text="VERIFY" FontSize="9" FontWeight="SemiBold" Foreground="#A35A12"/>
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Style.Triggers><DataTrigger Binding="{Binding Verify}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                </Border>
+                                                <Border Background="#FBE3E3" CornerRadius="6" Padding="6,1" Margin="0,2,4,0" ToolTip="{Binding OutlierTip}">
+                                                    <TextBlock Text="OUTLIER" FontSize="9" FontWeight="SemiBold" Foreground="#B23A3A"/>
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Style.Triggers><DataTrigger Binding="{Binding Outlier}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                </Border>
+                                            </WrapPanel>
+                                            <!-- why it is left out, and the way back in -->
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Style.Triggers><DataTrigger Binding="{Binding LeftOutWhy}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+                                                <TextBlock Text="{Binding LeftOutWhy}" ToolTip="{Binding OutlierTip}" FontSize="11" Foreground="#B23A3A" TextWrapping="Wrap" MaxWidth="170" VerticalAlignment="Center"/>
+                                                <Button Content="Include anyway" Margin="6,0,0,0" FontSize="11" Padding="6,1" VerticalAlignment="Center"
+                                                        Command="{Binding DataContext.IncludeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"
+                                                        Visibility="{Binding IsExcluded, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            </StackPanel>
+                                            <!-- the address opens the listing in the default browser -->
+                                            <Button Margin="0,4,0,0" HorizontalAlignment="Left" Cursor="Hand" ToolTip="Open the listing in your browser" Click="OnListingClick">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <StackPanel Orientation="Horizontal" Background="Transparent">
+                                                            <Path Data="{StaticResource Icon.MapMarker}" Fill="#4F4486" Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                            <TextBlock x:Name="Link" Text="{Binding Address}" FontSize="12" Foreground="#4F4486" TextTrimming="CharacterEllipsis" MaxWidth="230"/>
+                                                        </StackPanel>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Link" Property="TextDecorations" Value="Underline"/></Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding MatchLevel}" Value="Strong">
+                                        <Setter TargetName="Match" Property="Background" Value="#E3F5EA"/>
+                                        <Setter TargetName="MatchIcon" Property="Fill" Value="#2E9E5B"/>
+                                        <Setter TargetName="MatchText" Property="Foreground" Value="#2E9E5B"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding MatchLevel}" Value="Fair">
+                                        <Setter TargetName="Match" Property="Background" Value="#FDF1E3"/>
+                                        <Setter TargetName="MatchIcon" Property="Fill" Value="#CD7B2E"/>
+                                        <Setter TargetName="MatchText" Property="Foreground" Value="#CD7B2E"/>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
             </ScrollViewer>
-            <!-- Analyze progress over the comps list (the shared busy overlay) -->
+            <!-- Analyze progress over the list (the shared busy overlay) -->
             <Grid Grid.Row="1" Visibility="{Binding ShowListOverlay, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <local:ScrapeOverlay/>
             </Grid>
 
-            <!-- Market value -->
-            <StackPanel Grid.Row="2" Margin="-8,0,0,0">
-                <Border Background="#DBD8E9" CornerRadius="8" Padding="12,8" Margin="0,0,0,8">
-                    <StackPanel>
-                        <TextBlock Text="Market value" Style="{StaticResource Label}"/>
-                        <TextBlock Text="{Binding EstimateText}" FontSize="22" FontWeight="Bold" Foreground="#30294B"/>
-                        <TextBlock Text="{Binding RangeText}" Style="{StaticResource Label}"/>
-                        <!-- how far to trust the value: High (3+ strong comps) / Medium / Low, and why -->
-                        <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap">
-                            <Run FontWeight="Bold" Text="{Binding ConfidenceLevel, Mode=OneWay}">
-                                <Run.Style>
-                                    <Style TargetType="Run">
-                                        <Setter Property="Foreground" Value="#B23A3A"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ConfidenceLevel}" Value="High"><Setter Property="Foreground" Value="#2E9E5B"/></DataTrigger>
-                                            <DataTrigger Binding="{Binding ConfidenceLevel}" Value="Medium"><Setter Property="Foreground" Value="#CD7B2E"/></DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Run.Style>
-                            </Run>
-                            <Run Text="{Binding ConfidenceText, Mode=OneWay}" Foreground="#555555"/>
-                        </TextBlock>
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                            <TextBlock Text="{Binding RateLabel}" Style="{StaticResource Label}" Margin="0,0,6,0"/>
-                            <TextBox Text="{Binding PpaText, UpdateSourceTrigger=PropertyChanged}" Width="90" Style="{StaticResource Field}"/>
-                            <CheckBox Content="Median" IsChecked="{Binding UseMedian}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                            <CheckBox Content="Top 5" IsChecked="{Binding UseTopFive}" VerticalAlignment="Center" Margin="8,0,0,0"
-                                      ToolTip="Value from the 5 best matches only (highest weight). The rest stay listed and on the map, faded; remove one and the next best moves up, or Include anyway to add one."/>
-                        </StackPanel>
-                        <TextBlock TextWrapping="Wrap" 
-                                   Margin="0,4,0,0"
-                                   Style="{StaticResource Label}" 
-                                   Text="{Binding ValueHow}"/>
-                    </StackPanel>
-                </Border>
-                
-                <Grid Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <!-- the value, how far to trust it, and sending it back -->
+            <Border Grid.Row="2" Background="#ECE9F7" CornerRadius="12" Padding="14,10" Margin="0,4,0,8">
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition />
-                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0"
-                            Margin="0,0,8,8"
-                            Content="Restore" ToolTip="Bring back every comp removed by hand, on the map, or left out as an outlier" 
-                            Command="{Binding ShowRemovedCommand}" 
-                            Style="{StaticResource Theme.Button.Outline}" 
-                            Visibility="{Binding HasRemoved, Converter={StaticResource BooleanToVisibilityConverter}}"/>  
-                    <Button Grid.Column="1" 
-                            Content="Return" 
-                            Command="{Binding BackWithoutSavingCommand}" 
-                            Style="{StaticResource Theme.Button.Outline}" 
-                            Margin="0,0,12,8"/>
-                    <Button Grid.Column="2" 
-                            Content="Apply Value" 
-                            Command="{Binding UseCompsCommand}" 
-                            Style="{StaticResource Theme.Button.Primary}" 
-                            Margin="0 0 0 8"/>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="ESTIMATED MARKET VALUE" FontSize="10" FontWeight="Bold" Foreground="#4F4486"/>
+                        <TextBlock Text="{Binding EstimateText}" FontSize="24" FontWeight="Bold" Foreground="#171528" ToolTip="{Binding ValueHow}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" ToolTip="{Binding ConfidenceText}"
+                                Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border x:Name="Confidence" HorizontalAlignment="Left" CornerRadius="12" Padding="8,3" Background="#FBE3E3">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource Icon.Check}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center">
+                                    <Path.Style>
+                                        <Style TargetType="Path">
+                                            <Setter Property="Fill" Value="#B23A3A"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ConfidenceLevel}" Value="High"><Setter Property="Fill" Value="#2E9E5B"/></DataTrigger>
+                                                <DataTrigger Binding="{Binding ConfidenceLevel}" Value="Medium"><Setter Property="Fill" Value="#CD7B2E"/></DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Path.Style>
+                                </Path>
+                                <TextBlock FontSize="12" FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#B23A3A"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ConfidenceLevel}" Value="High"><Setter Property="Foreground" Value="#2E9E5B"/></DataTrigger>
+                                                <DataTrigger Binding="{Binding ConfidenceLevel}" Value="Medium"><Setter Property="Foreground" Value="#CD7B2E"/></DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                    <Run Text="{Binding ConfidenceLevel, Mode=OneWay}"/><Run Text=" Confidence"/>
+                                </TextBlock>
+                            </StackPanel>
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ConfidenceLevel}" Value="High"><Setter Property="Background" Value="#E3F5EA"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding ConfidenceLevel}" Value="Medium"><Setter Property="Background" Value="#FDF1E3"/></DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                        <TextBlock FontSize="11" Foreground="#555555" Margin="0,3,0,0">
+                            <Run Text="Based on"/> <Run Text="{Binding Count, Mode=OneWay}"/> <Run Text="selected properties"/>
+                        </TextBlock>
+                    </StackPanel>
+                    <!-- only when opened from a pin or a grid row -->
+                    <UniformGrid Grid.Row="1" Grid.ColumnSpan="2" Columns="2" Margin="0,10,0,0"
+                                 Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Button Content="Return" Command="{Binding BackWithoutSavingCommand}" Style="{StaticResource Theme.Button.Outline}" Margin="0,0,6,0"/>
+                        <Button Content="Apply Value" Command="{Binding UseCompsCommand}" Style="{StaticResource Theme.Button.Primary}" Margin="6,0,0,0"/>
+                    </UniformGrid>
                 </Grid>
-            </StackPanel>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

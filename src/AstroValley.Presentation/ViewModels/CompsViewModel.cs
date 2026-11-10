@@ -145,6 +145,7 @@ public partial class CompsViewModel : ObservableObject
         BathsText = useFacts && subject.Baths is > 0 ? subject.Baths.Value.ToString("0.#", CultureInfo.InvariantCulture) : "";
         IsMobile = kind == HomeKind.Mobile;
         IsMultiFamily = HomeKind.IsMultiUnit(kind);
+        IsEditingSubject = Address.Length == 0; // opened from a pin / row: show the summary; Edit opens the boxes
         _all.Clear();
         _removed.Clear();
         _kept.Clear();
@@ -275,7 +276,7 @@ public partial class CompsViewModel : ObservableObject
             foreach (var r in rows)
             {
                 if (r.price <= 0) continue; // no lot size is fine: houses are valued by price, land rows without one are left out of the stats
-                var comp = new Comp(r.address, (decimal)r.price, r.acres, r.sold, r.url, r.soldText, r.homeSqft, r.lat, r.lon, r.verify, r.beds, r.baths, r.homeType);
+                var comp = new Comp(r.address, (decimal)r.price, r.acres, r.sold, r.url, r.soldText, r.homeSqft, r.lat, r.lon, r.verify, r.beds, r.baths, r.homeType, r.photo);
                 if (_all.Any(c => Key(c) == Key(comp))) continue;
                 if (_all.Any(c => SameSale(c, comp))) { merged++; continue; } // one duplex sale listed under "1613" and "1613-1615"
                 _all.Add(comp);
@@ -344,7 +345,7 @@ public partial class CompsViewModel : ObservableObject
             : $"Filled from Zillow's page: {string.Join(", ", filled)}{(h.yearBuilt > 0 ? $" (built {h.yearBuilt})" : "")}. Check against the appraiser.";
     }
 
-    private record RawComp(string? address, double price, double acres, bool sold, string? url, string? soldText, int? homeSqft, double? lat, double? lon, string? verify, int? beds, double? baths, string? homeType);
+    private record RawComp(string? address, double price, double acres, bool sold, string? url, string? soldText, int? homeSqft, double? lat, double? lon, string? verify, int? beds, double? baths, string? homeType, string? photo);
     // The same sale under two addresses (a duplex as "1613 NW 45th St" and "1613-1615 NW 45th St"): same price, same sale date, same street number.
     // Sale dates only need to be close: the two records of one duplex sale can carry different dates. A card without a date still matches.
     // shortcut: 60 days is a guess; two units at one street number selling for the exact same price within 60 days would also merge.
@@ -399,6 +400,7 @@ public partial class CompsViewModel : ObservableObject
         HasTarget = false;
         Address = AcresText = ZipText = HomeSqftText = BedsText = BathsText = "";
         IsHome = IsMobile = IsMultiFamily = false;
+        IsEditingSubject = true; // a typed-in property starts with the boxes open
         Clear();
     }
 
@@ -463,9 +465,41 @@ public partial class CompsViewModel : ObservableObject
         nameof(MinPrice), nameof(MaxPrice), nameof(MinAcres), nameof(MaxAcres), nameof(MinPpa), nameof(MaxPpa), nameof(AcresText),
         nameof(HomeSqftText), nameof(BedsText), nameof(BathsText), nameof(IsMobile), nameof(IsMultiFamily), nameof(UseTopFive)]; // acres: size match is rescored
 
+    // --- the sidebar's property card: a summary, with the boxes behind Edit ---
+    [ObservableProperty] private bool _isEditingSubject = true;
+    public string SubjectTitle => Address.Split(',')[0].Trim() is { Length: > 0 } street ? street : "No property yet";
+    public string SubjectLine2 => string.Join(" • ", new[]
+    {
+        // the rest of the address ("FL- 33142-0000" -> "FL 33142"), or the Zip box when the address has none
+        Address.Contains(',') ? System.Text.RegularExpressions.Regex.Replace(Address[(Address.IndexOf(',') + 1)..], @"(\d{5})-\d{4}|-(?=\s)", "$1").Trim() : ZipText.Trim(),
+        PinAcres > 0 ? $"{PinAcres:0.####} acres" : null
+    }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    public string SubjectLine3 => !IsHome ? "Land" : string.Join(" • ", new[]
+    {
+        SubjectBeds is { } b ? $"{b} beds" : null,
+        SubjectBaths is { } ba ? $"{ba:0.#} baths" : null,
+        SubjectSqft is { } sq ? $"{sq:N0} sqft" : null,
+        IsMobile ? "Mobile home" : IsMultiFamily ? "Duplex / multi" : "House"
+    }.Where(x => x is not null));
+    private static readonly HashSet<string> SubjectInputs = [nameof(Address), nameof(AcresText), nameof(ZipText), nameof(HomeSqftText),
+        nameof(BedsText), nameof(BathsText), nameof(IsHome), nameof(IsMobile), nameof(IsMultiFamily)];
+
+    // --- filters: "(2 active)" in the header, and one button to empty them ---
+    public int ActiveFilterCount => new[] { MinAcres, MaxAcres, MinPrice, MaxPrice, MinPpa, MaxPpa }.Count(v => !string.IsNullOrWhiteSpace(v));
+    public string FiltersSummary => ActiveFilterCount == 0 ? "(none)" : $"({ActiveFilterCount} active)";
+
+    [RelayCommand]
+    private void ClearFilters() => MinAcres = MaxAcres = MinPrice = MaxPrice = MinPpa = MaxPpa = "";
+
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
+        if (e.PropertyName is { } sn && SubjectInputs.Contains(sn))
+        {
+            OnPropertyChanged(nameof(SubjectTitle)); OnPropertyChanged(nameof(SubjectLine2)); OnPropertyChanged(nameof(SubjectLine3));
+        }
+        if (e.PropertyName is nameof(MinAcres) or nameof(MaxAcres) or nameof(MinPrice) or nameof(MaxPrice) or nameof(MinPpa) or nameof(MaxPpa))
+            OnPropertyChanged(nameof(FiltersSummary));
         if (e.PropertyName is { } n && Triggers.Contains(n)) Refresh();
         if (e.PropertyName is nameof(PpaText) or nameof(Address) or nameof(ZipText)) UpdateEstimate(); // address / ZIP: a home needs a valid one
     }
