@@ -13,6 +13,8 @@
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Accent"                          Color="{StaticResource Color.Primary}" />
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Accent.Hover"                    Color="#3E3175" />
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Accent.Secondary"                Color="{StaticResource Color.Secondary}" />
+    <!-- one step darker than Accent.Secondary: hover on a pill, dividers on a lavender card -->
+    <SolidColorBrush po:Freeze="True" x:Key="Brush.Accent.Secondary.Hover"          Color="#CFCBE2" />
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Accent.Tertiary"                 Color="{StaticResource Color.Tertiary}" />
 
     <SolidColorBrush po:Freeze="True" x:Key="Brush.Background.Primary"              Color="#EDEBF2" />

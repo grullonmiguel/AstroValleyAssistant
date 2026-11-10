@@ -229,10 +229,16 @@
             var color = pinInfo(loc).color, fillEl = [].find.call(marker.getElement().querySelectorAll('[fill]'), function (n) { return n.getAttribute('fill') === color; });
             pins.push({ marker: marker, el: el, lat: loc.Latitude, lon: loc.Longitude, key: loc.CompKey, dot: pickDot, color: color, fillEl: fillEl });
         }
+        // header of the list. Comps map: "39 comps + this property" (the subject has no key), the same count as the Comps tab shows;
+        // a plain pin export has no comps and keeps "Total Properties".
+        function countText(shown) {
+            var comps = shown.filter(function (p) { return p.key; }).length;
+            return comps ? comps + ' comps' + (shown.length > comps ? ' + this property' : '') : 'Total Properties: ' + shown.length;
+        }
         // also called by the app to add pins a batch at a time, so they appear as they are ready
         function addPins(arr) {
             arr.forEach(addPin);
-            document.getElementById('count').textContent = 'Total Properties: ' + pins.length;
+            document.getElementById('count').textContent = countText(pins);
             if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: PAD, maxZoom: 17, duration: 0 });
         }
         // the comps the value uses (the Top 5) are blue on the map and marked in the list; the rest keep their colour
@@ -256,7 +262,7 @@
                 p.el.style.display = show ? '' : 'none';
                 if (show) n++;
             });
-            document.getElementById('count').textContent = 'Total Properties: ' + n;
+            document.getElementById('count').textContent = countText(pins.filter(function (p) { return p.el.style.display !== 'none'; }));
         }
         // the app's sort: list rows follow the comps tab's order (subject first, comps the app did not list keep their order at the end)
         function orderList(keys) {

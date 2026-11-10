@@ -1,4 +1,18 @@
 /* Pin popup look, shared by the Home map (homemaplibre.html) and the exported map (pinsexport.html). */
+/* The app's palette, so the popup matches the WPF dialogs: same values as Themes/Accents/Purple.xaml and Themes/Palettes/Light.xaml. */
+:root {
+    --av-accent: #534B80; --av-accent-hover: #3E3175; --av-ink: #30294B; --av-pill: #DBD8E9; --av-hover: #EDEBF2;
+    --av-text: #333333; --av-muted: #777777; --av-border: #E0E0E0; --av-card: #FFFFFF;
+    --av-success: #D4EDDA; --av-success-ink: #155724; --av-warning: #FFF3CD; --av-warning-ink: #856404;
+    --av-danger: #F8D7DA; --av-danger-ink: #721C24; --av-info: #D1ECF1; --av-info-ink: #0C5460;
+}
+/* tinted line with a coloured edge, as the risk flags in the due-diligence dialog */
+.pp-success { --bg: var(--av-success); --ink: var(--av-success-ink); }
+.pp-warning { --bg: var(--av-warning); --ink: var(--av-warning-ink); }
+.pp-danger { --bg: var(--av-danger); --ink: var(--av-danger-ink); }
+.pp-info { --bg: var(--av-info); --ink: var(--av-info-ink); }
+.pp-flag { margin: 0 0 6px; padding: 5px 10px; border-radius: 6px; border-left: 4px solid var(--ink); background: var(--bg); color: var(--av-ink); font-size: 12px; line-height: 1.4; }
+.pp-flag svg { color: var(--ink); flex: none; }
 .maplibregl-popup-content { padding: 0; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 24px rgba(48,41,75,.35); }
 .maplibregl-popup-close-button { width: 32px; height: 32px; margin: 10px 10px 0 0; border-radius: 50%; background: transparent; font-size: 24px; line-height: 1; color: #fff; }
 .maplibregl-popup-close-button:hover { background: rgba(255,255,255,.18); }
@@ -7,20 +21,21 @@
 .pin-popup { position: fixed !important; transform: none !important; left: auto !important; top: auto !important; right: 16px; bottom: 100px; width: 372px; max-width: calc(100vw - 32px) !important; z-index: 5; }
 .pin-popup .maplibregl-popup-tip { display: none; }
 .pin-popup .maplibregl-popup-content { display: flex; flex-direction: column; max-height: min(600px, calc(100vh - 160px)); }
-.pin-popup .maplibregl-popup-close-button { color: #30294B; }
+.pin-popup .maplibregl-popup-close-button { color: var(--av-ink); }
 .pin-popup .maplibregl-popup-close-button:hover { background: rgba(48,41,75,.1); }
 .pin-popup .pp-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
 
-/* white header: address, parcel ID */
-.pp-head { flex: none; background: #fff; color: #30294B; padding: 16px 48px 8px 16px; font-family: 'Segoe UI', sans-serif; }
+/* white header: address, parcel ID; a thin line separates it from the scrolling body, as in the dialogs */
+.pp-head { flex: none; background: var(--av-card); color: var(--av-ink); padding: 16px 48px 10px 16px; border-bottom: 1px solid var(--av-border); font-family: 'Segoe UI', sans-serif; }
 .pp-title { font-size: 17px; font-weight: 700; line-height: 1.25; word-wrap: break-word; }
-.pp-pid { font-size: 12px; color: #777; margin-top: 2px; }
+.pp-pid { font-size: 12px; color: var(--av-muted); margin-top: 2px; }
 
-/* auction pill on the left, zoom link on the right */
-.pp-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
-.pp-links { margin-left: auto; display: flex; gap: 12px; }
-.pp-zoom { font: 600 12px 'Segoe UI', sans-serif; color: #4F4486; text-decoration: none; white-space: nowrap; }
-.pp-zoom:hover { text-decoration: underline; }
+/* auction pill, then the actions on their own row as outline buttons (the dialogs' office-link look) */
+.pp-top { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.pp-auction { display: inline-block; white-space: nowrap; background: var(--c); color: #fff; border-radius: 10px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+.pp-links { display: flex; flex-wrap: wrap; gap: 6px; }
+.pp-zoom { font: 600 12px 'Segoe UI', sans-serif; color: var(--av-accent); background: var(--av-card); border: 1px solid var(--av-accent); border-radius: 8px; padding: 3px 10px; text-decoration: none; white-space: nowrap; }
+.pp-zoom:hover { background: var(--av-hover); }
 
 /* aerial photo with the parcel outline, inside the scrolling body */
 .pp-aerial { position: relative; aspect-ratio: 340 / 210; margin-bottom: 12px; overflow: hidden; border-radius: 10px; background: #E8E6F1; }
@@ -30,59 +45,64 @@
 .pp-aerial circle { fill: none; stroke: #fff; stroke-width: 3; }
 .pp-acap { position: absolute; left: 8px; bottom: 6px; font: 600 10px 'Segoe UI', sans-serif; color: #fff; background: rgba(48,41,75,.75); border-radius: 6px; padding: 2px 8px; }
 
-.pp-body { padding: 14px 16px 16px; font-family: 'Segoe UI', sans-serif; color: #30294B; }
-.pp-label { font-size: 11px; color: #777; }
+.pp-body { padding: 12px 16px 16px; font-family: 'Segoe UI', sans-serif; color: var(--av-ink); }
+.pp-label { font-size: 11px; color: var(--av-muted); }
 .pp-link { color: inherit; text-decoration: none; }
 .pp-link:hover { text-decoration: underline; }
 
 /* facts: three columns with thin dividers */
 .pp-facts { display: flex; margin-bottom: 12px; }
-.pp-fact { flex: none; min-width: 0; padding: 0 12px; border-left: 1px solid #E2DFEE; }
+.pp-fact { flex: none; min-width: 0; padding: 0 12px; border-left: 1px solid var(--av-border); }
 .pp-fact.pp-grow { flex: 1; } /* the owner takes the room acres and flood zone do not need */
 .pp-fact:first-child { padding-left: 0; border-left: 0; }
-.pp-flabel { white-space: nowrap; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #777; margin-bottom: 4px; }
-.pp-flabel svg { color: #4F4486; flex: none; }
-.pp-fval { font-size: 12px; font-weight: 600; color: #222; word-wrap: break-word; }
+.pp-flabel { white-space: nowrap; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--av-muted); margin-bottom: 4px; }
+.pp-flabel svg { color: var(--av-accent); flex: none; }
+.pp-fval { font-size: 12px; font-weight: 600; color: var(--av-text); word-wrap: break-word; }
 .pp-fbig { font-size: 14px; }
-.pp-pill { display: inline-block; background: #DBD8E9; color: #4F4486; font-size: 11px; font-weight: 700; border-radius: 10px; padding: 1px 10px; }
+.pp-pill { display: inline-block; background: var(--av-pill); color: var(--av-accent); font-size: 11px; font-weight: 700; border-radius: 10px; padding: 1px 10px; }
 a.pp-pill:hover { background: #cfcae3; text-decoration: none; }
 
 /* slope line, coloured by steepness */
-.pp-slope { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--c); background: color-mix(in srgb, var(--c) 12%, white); border-radius: 8px; padding: 5px 10px; margin-bottom: 12px; }
+.pp-slope { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
 .pp-slope b { font-weight: 700; }
 
 /* value box (app's light purple) and the bid / assessed bar below it */
-.pp-money { display: flex; background: #DBD8E9; border-radius: 10px; padding: 12px 14px; }
+.pp-money { display: flex; background: var(--av-pill); border-radius: 10px; padding: 12px 14px; }
 .pp-mcell { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
 .pp-mcell + .pp-mcell { border-left: 1px solid rgba(79,68,134,.25); padding-left: 14px; margin-left: 14px; }
-.pp-badge { flex: none; width: 28px; height: 28px; border-radius: 50%; background: #4F4486; color: #fff; display: flex; align-items: center; justify-content: center; }
+.pp-badge { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--av-accent); color: #fff; display: flex; align-items: center; justify-content: center; }
 .pp-badge svg { width: 16px; height: 16px; }
-.pp-big { font-size: 14px; font-weight: 700; color: #30294B; }
+.pp-big { font-size: 14px; font-weight: 700; color: var(--av-ink); }
 .pp-eq { margin-top: 8px; }
 .pp-eqtext { display: flex; align-items: center; gap: 6px; font-size: 12px; }
 
 /* research status + notes */
-.pp-sec { margin-top: 12px; padding-top: 12px; border-top: 1px solid #E2DFEE; }
+.pp-sec { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--av-border); }
 .pp-sts { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
-.pp-st { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--c); background: #fff; color: var(--c); border-radius: 16px; padding: 4px 12px; font: 600 12px 'Segoe UI', sans-serif; cursor: pointer; }
-.pp-st.on { background: var(--c); color: #fff; }
+/* a quiet outline until chosen, then filled with the colour of the status dot on the pin */
+.pp-st { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--av-accent); background: var(--av-card); color: var(--av-accent); border-radius: 8px; padding: 4px 12px; font: 600 12px 'Segoe UI', sans-serif; cursor: pointer; }
+.pp-st:hover { background: var(--av-hover); }
+.pp-st.on, .pp-st.on:hover { background: var(--c); border-color: var(--c); color: #fff; }
 .pp-notes-wrap { position: relative; }
 .pp-notes-wrap svg { position: absolute; left: 10px; top: 9px; color: #8a86a3; }
-.pp-notes { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid #DBD8E9; border-radius: 10px; padding: 8px 10px 8px 32px; font: 12px 'Segoe UI', sans-serif; color: #30294B; }
-.pp-notes-ro { font-size: 12px; color: #30294B; white-space: pre-wrap; margin-top: 6px; }
+/* the app's text box (Theme.TextBox): white, rounded, accent border while typing */
+.pp-notes { display: block; width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid var(--av-border); border-radius: 6px; padding: 8px 10px 8px 32px; font: 12px 'Segoe UI', sans-serif; color: var(--av-text); outline: none; }
+.pp-notes:focus { border-color: var(--av-accent); }
+.pp-notes-ro { font-size: 12px; color: var(--av-ink); white-space: pre-wrap; margin-top: 6px; }
 
-/* actions row: landlocked check on the left, property appraiser on the right */
-.pp-actions { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 12px; }
-.pp-btn { margin-left: auto; flex: none; background: #4F4486; color: #fff; border-radius: 18px; padding: 7px 16px; font: 600 12px 'Segoe UI', sans-serif; text-decoration: none; }
-.pp-btn:hover { background: #3f3670; }
-.pp-access { position: relative; font-size: 12px; color: #30294B; }
+/* last rows: road access on its own line, then the property appraiser as the app's primary button */
+.pp-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.pp-btn { align-self: flex-end; background: var(--av-ink); color: #F1EFFF; border-radius: 6px; padding: 7px 16px; font: 600 12px 'Segoe UI', sans-serif; text-decoration: none; }
+.pp-btn:hover { background: #433A68; }
+.pp-access { position: relative; font-size: 12px; color: var(--av-ink); }
 .pp-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
-.pp-check { border: 1.5px solid #4F4486; background: #fff; color: #4F4486; border-radius: 18px; padding: 6px 16px; font: 600 12px 'Segoe UI', sans-serif; cursor: pointer; }
-a.pp-check { border: 0; background: none; padding: 0; text-decoration: underline; font-weight: 400; font-size: 11px; border-radius: 0; }
+.pp-check { border: 1px solid var(--av-accent); background: var(--av-card); color: var(--av-accent); border-radius: 8px; padding: 5px 14px; font: 600 12px 'Segoe UI', sans-serif; cursor: pointer; }
+.pp-check:hover { background: var(--av-hover); }
+a.pp-check, a.pp-check:hover { border: 0; background: none; padding: 0; text-decoration: underline; font-weight: 400; font-size: 11px; border-radius: 0; }
 .pp-err { color: #D64545; }
 /* styled tooltip: dark purple bubble above the access row, fades in on hover or keyboard focus */
 .pp-check[data-tip]::after { content: attr(data-tip); position: absolute; left: 0; bottom: calc(100% + 6px); width: 270px; box-sizing: border-box; padding: 9px 12px;
-    background: #30294B; color: #fff; border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); font: 400 11px/1.45 'Segoe UI', sans-serif;
+    background: var(--av-ink); color: #fff; border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); font: 400 11px/1.45 'Segoe UI', sans-serif;
     text-align: left; text-decoration: none; white-space: normal; opacity: 0; pointer-events: none; transition: opacity .15s ease; z-index: 5; }
 .pp-check[data-tip]:hover::after, .pp-check[data-tip]:focus-visible::after { opacity: 1; }
 
@@ -102,9 +122,16 @@ a.pp-check { border: 0; background: none; padding: 0; text-decoration: underline
     background: #2E9E5B; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.4); z-index: 1; }
 .pin-dq { position: absolute; top: 14px; left: -6px; min-width: 14px; height: 14px; padding: 0 3px; box-sizing: border-box; border-radius: 7px; pointer-events: none;
     color: #fff; font: 700 10px/10px 'Segoe UI', sans-serif; text-align: center; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.4); z-index: 1; }
-.dq-ok { background: #2E9E5B; } .dq-warn { background: #CD7B2E; } .dq-bad { background: #D64545; }
-.pp-house { display: flex; align-items: center; gap: 6px; margin: 6px 0; font-size: 12px; color: #30294B; flex-wrap: wrap; }
-.pp-warn { margin: 6px 0; padding: 5px 10px; border-radius: 8px; background: #FDEFD9; color: #A35A12; font-size: 12px; line-height: 1.4; }
-.pp-risk { margin: 4px 0; padding: 4px 10px; border-radius: 8px; border-left: 4px solid var(--c); background: #F7F6FB; color: #30294B; font-size: 12px; cursor: help; }
-.pp-dq { margin: 6px 0; padding: 4px 10px; border-radius: 8px; font-size: 12px; color: #fff; }
+.pin-dq.dq-ok { background: #2E9E5B; } .pin-dq.dq-warn { background: #CD7B2E; } .pin-dq.dq-bad { background: #D64545; }
+/* the building line: icon beside the text, which wraps under itself */
+.pp-house { display: flex; align-items: flex-start; gap: 6px; margin: 0 0 10px; font-size: 12px; line-height: 1.4; color: var(--av-ink); }
+.pp-house svg { flex: none; margin-top: 2px; color: var(--av-accent); }
+.pp-risk { cursor: help; }
+/* missing-data line in the popup: the pin bubble keeps its solid colours, the line uses the tinted flag look */
+.pp-dq.dq-ok { --bg: var(--av-success); --ink: var(--av-success-ink); }
+.pp-dq.dq-warn { --bg: var(--av-warning); --ink: var(--av-warning-ink); }
+.pp-dq.dq-bad { --bg: var(--av-danger); --ink: var(--av-danger-ink); }
+.pp-dq { margin-bottom: 10px; }
 .pin-skip { filter: grayscale(1) opacity(.45); }
+
+.pp-eqlabel { color: var(--av-ink); }

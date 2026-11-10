@@ -13,23 +13,9 @@
         </Style>
 
         <!-- a record office's website, beside the office name -->
-        <Style x:Key="OfficeLinkButton" TargetType="Button" BasedOn="{StaticResource Theme.Button.Outline}">
-            <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
-            <Setter Property="Padding" Value="10,3"/>
-            <Setter Property="BorderThickness" Value="1"/>
+        <Style x:Key="OfficeLinkButton" TargetType="Button" BasedOn="{StaticResource Theme.Button.Outline.Small}">
             <Setter Property="Margin" Value="10,0,0,0"/>
             <Setter Property="Tag" Value="{StaticResource Icon.Web}"/>
-            <Setter Property="ContentTemplate" Value="{StaticResource Theme.Button.Content.Icon}"/>
-        </Style>
-
-        <!-- the app's drop-down items have light text for its dark drop-downs; the status list opens on white -->
-        <Style x:Key="StatusItem" TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
-            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Tertiary}"/>
-            <Setter Property="Padding" Value="10,5"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="{DynamicResource Brush.Control.Primary.Foreground}"/></Trigger>
-                <Trigger Property="IsSelected" Value="True"><Setter Property="Foreground" Value="{DynamicResource Brush.Control.Primary.Foreground}"/></Trigger>
-            </Style.Triggers>
         </Style>
 
         <!-- one risk flag: tinted by how serious it is, with the theme's status colours -->
@@ -94,9 +80,9 @@
                     <TextBlock Text="{Binding Title}" Style="{StaticResource Theme.Dialog.Text}"/>
                     <TextBlock Text="{Binding Hint}" Style="{StaticResource Text.Hint}"/>
                 </StackPanel>
-                <ComboBox Grid.Column="1" VerticalAlignment="Center" FontSize="{StaticResource FontSize.Small}" Padding="8,5"
+                <ComboBox Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource Theme.ComboBox.Light}"
                           ItemsSource="{Binding DataContext.Statuses, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                          SelectedItem="{Binding Status}" ItemContainerStyle="{StaticResource StatusItem}"
+                          SelectedItem="{Binding Status}"
                           SelectionChanged="OnStatusChanged"/>
                 <TextBox Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center"
                          Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}" ToolTip="Note: book / page, amount, case number, who you spoke to..."/>

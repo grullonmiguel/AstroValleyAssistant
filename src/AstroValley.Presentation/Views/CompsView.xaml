@@ -5,127 +5,93 @@
              xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
     <UserControl.Resources>
+        <!-- Buttons, text boxes, the drop-down, icons and every colour come from the theme; the styles here only size and arrange
+             them for this view. -->
+        <!-- right margin of the parts that do not scroll: the room the scroll bar and the list's gap take, so every card lines up -->
+        <Thickness x:Key="ScrollGutter">0,0,24,0</Thickness>
         <Style x:Key="Label" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
             <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <!-- a card's title, and the quieter lines under it -->
+        <Style x:Key="Title" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSize.Normal}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Tertiary}"/>
+        </Style>
+        <Style x:Key="Sub" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+            <Setter Property="Opacity" Value="0.8"/>
         </Style>
         <!-- the app's text box, a little tighter: the Beds / Baths boxes are narrow -->
         <Style x:Key="Field" TargetType="TextBox" BasedOn="{StaticResource Theme.TextBox}">
             <Setter Property="Margin" Value="2"/>
             <Setter Property="Padding" Value="5,4"/>
         </Style>
-        <Style x:Key="Site" TargetType="Button" BasedOn="{StaticResource Theme.Button.Outline}">
-            <Setter Property="Padding" Value="10,4"/>
-            <Setter Property="Margin" Value="0,0,6,0"/>
-            <Setter Property="FontSize" Value="12"/>
+        <!-- a filter box: the app's text box with "0.00" as its helper text while empty -->
+        <Style x:Key="FilterBox" TargetType="TextBox" BasedOn="{StaticResource Theme.TextBox}">
+            <Setter Property="Tag" Value="0.00"/>
         </Style>
-        <!-- hyperlink-looking button with an icon: Content = text, Tag = the icon's StreamGeometry; underlines on hover -->
-        <Style x:Key="IconLink" TargetType="Button">
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Foreground" Value="#534B80"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="Transparent" Padding="4,2">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{TemplateBinding Tag}" Fill="{TemplateBinding Foreground}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,6,0"/>
-                                <TextBlock x:Name="Text" Text="{TemplateBinding Content}" FontSize="13" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}"/>
-                            </StackPanel>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Text" Property="TextDecorations" Value="Underline"/></Trigger>
-                            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <!-- same look as the site switcher: Pill = a site that is not selected, PillOn = the selected one -->
-        <Style x:Key="Pill" TargetType="Button">
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Pill" CornerRadius="14" Padding="16,6" Background="Transparent">
-                            <TextBlock x:Name="Text" Text="{TemplateBinding Content}" FontSize="13" FontWeight="SemiBold" Foreground="#534B80"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Pill" Property="Background" Value="#CFCBE2"/></Trigger>
-                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Text" Property="Opacity" Value="0.5"/></Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="PillOn" TargetType="Button" BasedOn="{StaticResource Pill}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Pill" CornerRadius="14" Padding="16,6" Background="#534B80">
-                            <TextBlock x:Name="Text" Text="{TemplateBinding Content}" FontSize="13" FontWeight="SemiBold" Foreground="White"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Pill" Property="Background" Value="#665C9E"/></Trigger>
-                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Pill" Property="Opacity" Value="0.5"/></Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="FilterBox" TargetType="TextBox">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#333333"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Background="White" BorderBrush="#D6D6D6" BorderThickness="1" CornerRadius="10" Padding="10,6">
-                            <Grid>
-                                <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="Hint" Text="0.00" Foreground="#9AA3B8" IsHitTestVisible="False" VerticalAlignment="Center" Visibility="Collapsed"/>
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="Text" Value="">
-                                <Setter TargetName="Hint" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="Hint" Property="Foreground" Value="#C5CAD8"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="FilterHead" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="14"/>
+        <Style x:Key="FilterHead" TargetType="TextBlock" BasedOn="{StaticResource Sub}">
+            <Setter Property="FontSize" Value="{StaticResource FontSize.Normal}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#444444"/>
             <Setter Property="Margin" Value="0,0,0,6"/>
         </Style>
-        <Style x:Key="FilterSub" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"/>
+        <Style x:Key="FilterSub" TargetType="TextBlock" BasedOn="{StaticResource Sub}">
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#8791A8"/>
+            <Setter Property="Opacity" Value="0.6"/>
             <Setter Property="Margin" Value="0,6,0,3"/>
         </Style>
-        <!-- sidebar (redesign): white cards, outline / filled action buttons with an icon (Tag = path data) -->
+        <!-- the 2 x 2 figures in the value card -->
         <Style x:Key="Stat" TargetType="StackPanel">
             <Setter Property="Margin" Value="6,6"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
         </Style>
-        <Style x:Key="StatValue" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="15"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="#2D2654"/>
+        <Style x:Key="StatValue" TargetType="TextBlock" BasedOn="{StaticResource Title}">
             <Setter Property="HorizontalAlignment" Value="Center"/>
         </Style>
         <Style x:Key="StatLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Foreground" Value="#4F4486"/>
-            <Setter Property="TextAlignment" Value="Center"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="Divider" TargetType="Rectangle">
+            <Setter Property="Fill" Value="{DynamicResource Brush.Accent.Secondary.Hover}"/>
+        </Style>
+        <!-- small "i" that explains something on hover -->
+        <Style x:Key="InfoIcon" TargetType="Path">
+            <Setter Property="Data" Value="{StaticResource Icon.Info}"/>
+            <Setter Property="Fill" Value="{DynamicResource Brush.Accent}"/>
+            <Setter Property="Opacity" Value="0.6"/>
+            <Setter Property="Width" Value="13"/>
+            <Setter Property="Height" Value="13"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <!-- icon beside a title or a line of text -->
+        <Style x:Key="Glyph" TargetType="Path">
+            <Setter Property="Fill" Value="{DynamicResource Brush.Accent}"/>
+            <Setter Property="Width" Value="16"/>
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <!-- a text link with an icon (Open on Zillow, Restore removed): the dialogs' link button -->
+        <Style x:Key="IconLink" TargetType="Button" BasedOn="{StaticResource Theme.Dialog.Button.Link}">
+            <Setter Property="ContentTemplate" Value="{StaticResource Theme.Button.Content.Icon}"/>
+            <Setter Property="Margin" Value="-6,2,0,0"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
+        <!-- a site in the switcher: a pill, filled while it is the current site -->
+        <Style x:Key="SitePill" TargetType="Button" BasedOn="{StaticResource Theme.Button.Pill}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Light}"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
         <!-- slides open / closed (height and fade, 0.2 s) when Tag turns true / false; starts closed, so nothing flickers on load -->
         <Style x:Key="Collapsible" TargetType="Border">
@@ -154,57 +120,52 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <!-- white card with a soft shadow -->
         <Style x:Key="Card" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource Brush.Background.Secondary}"/>
             <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="Margin" Value="0,0,0,10"/>
             <Setter Property="Effect">
-                <Setter.Value><DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.10" Color="#30294B"/></Setter.Value>
+                <Setter.Value><DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.10" Color="{StaticResource Color.Tertiary}"/></Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="Action" TargetType="Button">
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#4F4486"/>
-            <Setter Property="BorderBrush" Value="#CFCBE2"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="B" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="{TemplateBinding Padding}">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Fill="{TemplateBinding Foreground}" Width="15" Height="15" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{TemplateBinding Content}" FontSize="13" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Background" Value="#F3F0FC"/></Trigger>
-                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="B" Property="Opacity" Value="0.5"/></Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <!-- where a photo goes: a tinted tile with a house icon, which the photo covers when there is one -->
+        <Style x:Key="PhotoTile" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="{DynamicResource Brush.Background.Hover}"/>
         </Style>
-        <Style x:Key="ActionPrimary" TargetType="Button" BasedOn="{StaticResource Action}">
-            <Setter Property="Background" Value="#4F4486"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#4F4486"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="B" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="{TemplateBinding Padding}">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Fill="{TemplateBinding Foreground}" Width="15" Height="15" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{TemplateBinding Content}" FontSize="13" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Background" Value="#665C9E"/></Trigger>
-                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="B" Property="Opacity" Value="0.5"/></Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <Style x:Key="PhotoTile.Icon" TargetType="Path" BasedOn="{StaticResource Glyph}">
+            <Setter Property="Data" Value="{StaticResource Icon.Home}"/>
+            <Setter Property="Fill" Value="{DynamicResource Brush.Accent.Secondary}"/>
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+        </Style>
+        <!-- small rounded tag (match quality, VERIFY, OUTLIER, confidence), in the theme's status colours; text and icon inside follow it -->
+        <Style x:Key="Tag" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="7,2"/>
+            <Setter Property="Margin" Value="0,2,4,0"/>
+            <Setter Property="Background" Value="{DynamicResource Brush.Background.Hover}"/>
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+            <Setter Property="TextElement.FontSize" Value="10"/>
+            <Setter Property="TextElement.FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style x:Key="Tag.Warning" TargetType="Border" BasedOn="{StaticResource Tag}">
+            <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning}"/>
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource Brush.Status.Warning.Foreground}"/>
+        </Style>
+        <Style x:Key="Tag.Danger" TargetType="Border" BasedOn="{StaticResource Tag}">
+            <Setter Property="Background" Value="{DynamicResource Brush.Status.Danger}"/>
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource Brush.Status.Danger.Foreground}"/>
+        </Style>
+        <Style x:Key="Tag.Icon" TargetType="Path">
+            <Setter Property="Data" Value="{StaticResource Icon.Check}"/>
+            <Setter Property="Fill" Value="{Binding (TextElement.Foreground), RelativeSource={RelativeSource AncestorType=Border}}"/>
+            <Setter Property="Width" Value="10"/>
+            <Setter Property="Height" Value="10"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
     </UserControl.Resources>
 
@@ -233,10 +194,10 @@
                     </Style>
                 </StackPanel.Style>
                 <!-- same pill group as Clear / New property / Analyze -->
-                <Border Background="#DBD8E9" CornerRadius="18" Padding="4" Margin="0,0,14,0">
+                <Border Style="{StaticResource Theme.Border.PillGroup}" Margin="0,0,14,0">
                     <StackPanel Orientation="Horizontal">
-                        <Button Content="← Back to browser" Padding="18,6" Margin="2,0,2,0" Style="{StaticResource PillOn}" Command="{Binding BackToBrowserCommand}"/>
-                        <Button Content="Export HTML" Padding="18,6" Margin="2,0,2,0" Style="{StaticResource Pill}" Command="{Binding ExportHtmlCommand}"/>
+                        <Button Content="Back to browser" Tag="{StaticResource Icon.ArrowLeft}" Style="{StaticResource Theme.Button.Pill.On}" Command="{Binding BackToBrowserCommand}"/>
+                        <Button Content="Export HTML" Tag="{StaticResource Icon.Html}" Style="{StaticResource Theme.Button.Pill}" Command="{Binding ExportHtmlCommand}"/>
                     </StackPanel>
                 </Border>
                 <!-- WPF can't draw over a WebView2, so loading progress sits in this bar -->
@@ -254,28 +215,15 @@
                         </Style.Triggers>
                     </Style>
                 </DockPanel.Style>
-                <Button DockPanel.Dock="Left" Content="← Back" Command="{Binding GoBackCommand}" Style="{StaticResource Site}" Margin="0,0,10,0"/>
+                <Button DockPanel.Dock="Left" Content="Back" Tag="{StaticResource Icon.ArrowLeft}" Command="{Binding GoBackCommand}" Style="{StaticResource Theme.Button.Outline.Small}" Margin="0,0,10,0"/>
                 <!-- site switcher: light pill, the current site in dark purple -->
-                <Border HorizontalAlignment="Left" Background="#DBD8E9" CornerRadius="18" Padding="4">
+                <Border HorizontalAlignment="Left" Style="{StaticResource Theme.Border.PillGroup}">
                     <ItemsControl ItemsSource="{Binding SiteOptions}">
                         <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Command="{Binding DataContext.GoSiteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding Name}" Cursor="Hand">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border x:Name="Pill" CornerRadius="14" Padding="16,6" Background="Transparent">
-                                                <TextBlock x:Name="Text" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#534B80"/>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                    <Setter TargetName="Pill" Property="Background" Value="#534B80"/>
-                                                    <Setter TargetName="Text" Property="Foreground" Value="White"/>
-                                                </DataTrigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
+                                <Button Content="{Binding Name}" Style="{StaticResource SitePill}" CommandParameter="{Binding Name}"
+                                        Command="{Binding DataContext.GoSiteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -299,7 +247,7 @@
                         </wv2:WebView2.Style>
                     </wv2:WebView2>
                     <!-- in the browser's place while it visits the property's own page (WPF cannot draw over a visible WebView2) -->
-                    <Grid Background="#F4F3F9" Visibility="{Binding HideBrowser, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid Background="{DynamicResource Brush.Background.Primary}" Visibility="{Binding HideBrowser, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <local:ScrapeOverlay/>
                     </Grid>
                     <wv2:WebView2 x:Name="MapWebView">
@@ -327,21 +275,15 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <StackPanel>
-                <!-- actions -->
-                <Grid Margin="0,0,0,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                    </Grid.ColumnDefinitions>
-                    <Button Content="Clear" Style="{StaticResource Action}" Margin="0,0,6,0" Command="{Binding ClearCommand}"
-                            Tag="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
-                    <Button Grid.Column="1" Content="New Property" Style="{StaticResource Action}" Margin="3,0,3,0" Command="{Binding NewPropertyCommand}"
-                            Tag="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M17,13H13V17H11V13H7V11H11V7H13V11H17V13Z"/>
-                    <Button Grid.Column="2" Content="Analyze" Style="{StaticResource ActionPrimary}" Margin="6,0,0,0" Command="{Binding AnalyzeCommand}"
-                            Tag="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
-                </Grid>
+            <StackPanel Margin="{StaticResource ScrollGutter}">
+                <!-- actions: one strip, the main one filled -->
+                <Border Style="{StaticResource Theme.Border.PillGroup}" Margin="0,0,0,10">
+                    <UniformGrid Columns="3">
+                        <Button Content="Clear" Padding="8,6" Tag="{StaticResource Icon.Refresh}" Style="{StaticResource Theme.Button.Pill}" Command="{Binding ClearCommand}"/>
+                        <Button Content="New Property" Padding="8,6" Tag="{StaticResource Icon.PlusBox}" Style="{StaticResource Theme.Button.Pill}" Command="{Binding NewPropertyCommand}"/>
+                        <Button Content="Analyze" Padding="8,6" Tag="{StaticResource Icon.Magnify}" Style="{StaticResource Theme.Button.Pill.On}" Command="{Binding AnalyzeCommand}"/>
+                    </UniformGrid>
+                </Border>
 
                 <!-- the property being valued: a summary; Edit shows the boxes (open by default for a typed-in property) -->
                 <Border Style="{StaticResource Card}" Padding="14,12">
@@ -353,41 +295,27 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Grid Width="64" Height="64" VerticalAlignment="Top">
-                                <Border CornerRadius="10" Background="#F3F0FC">
-                                    <Path Data="{StaticResource Icon.Home}" Fill="#4F4486" Width="28" Height="28" Stretch="Uniform"/>
+                                <Border Style="{StaticResource PhotoTile}">
+                                    <Path Style="{StaticResource PhotoTile.Icon}"/>
                                 </Border>
                                 <!-- the property's photo from the current site, when it has one (covers the icon) -->
-                                <Border CornerRadius="10">
+                                <Border CornerRadius="8">
                                     <Border.Background>
                                         <ImageBrush ImageSource="{Binding SubjectPhoto, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
                                     </Border.Background>
                                 </Border>
                             </Grid>
                             <StackPanel Grid.Column="1" Margin="12,0,8,0">
-                                <TextBlock Text="{Binding SubjectTitle}" FontSize="15" FontWeight="Bold" Foreground="#171528" TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{Binding SubjectLine2}" FontSize="12" Foreground="#555555" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{Binding SubjectLine3}" FontSize="12" Foreground="#555555" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding SubjectTitle}" Style="{StaticResource Title}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding SubjectLine2}" Style="{StaticResource Sub}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SubjectLine3}" Style="{StaticResource Sub}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                 <!-- its listing on the site of the last Analyze (each site's link is kept; this swaps with the site) -->
-                                <Button Content="{Binding SubjectLinkText}" Style="{StaticResource IconLink}" Tag="{StaticResource Icon.Web}" Margin="-4,2,0,0" HorizontalAlignment="Left"
+                                <Button Content="{Binding SubjectLinkText}" Style="{StaticResource IconLink}" Tag="{StaticResource Icon.Web}"
                                         Command="{Binding OpenSubjectListingCommand}" ToolTip="{Binding SubjectUrl}"
                                         Visibility="{Binding SubjectUrl, Converter={StaticResource NullToVisibilityConverter}}"/>
                             </StackPanel>
-                            <ToggleButton Grid.Column="2" IsChecked="{Binding IsEditingSubject}" VerticalAlignment="Top" Cursor="Hand" ToolTip="Edit the property's details">
-                                <ToggleButton.Template>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Border x:Name="B" BorderBrush="#CFCBE2" BorderThickness="1" CornerRadius="14" Padding="10,4" Background="White">
-                                            <StackPanel Orientation="Horizontal">
-                                                <Path Data="{StaticResource Icon.Edit}" Fill="#4F4486" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0"/>
-                                                <TextBlock Text="Edit" FontSize="12" FontWeight="SemiBold" Foreground="#4F4486"/>
-                                            </StackPanel>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Background" Value="#F3F0FC"/></Trigger>
-                                            <Trigger Property="IsChecked" Value="True"><Setter TargetName="B" Property="Background" Value="#E6E1F6"/></Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </ToggleButton.Template>
-                            </ToggleButton>
+                            <ToggleButton Grid.Column="2" Content="Edit" Tag="{StaticResource Icon.Edit}" Style="{StaticResource Theme.ToggleButton.Outline.Small}"
+                                          IsChecked="{Binding IsEditingSubject}" VerticalAlignment="Top" ToolTip="Edit the property's details"/>
                         </Grid>
 
                         <!-- the boxes -->
@@ -434,14 +362,25 @@
                     </StackPanel>
                 </Border>
 
-                <!-- status -->
-                <TextBlock Margin="2,0,2,8" TextWrapping="Wrap" Text="{Binding Message}" Style="{StaticResource Label}"/>
+                <!-- what the last search did: a quiet note, hidden while there is nothing to say -->
+                <DockPanel Margin="2,0,2,8">
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Message}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                                <DataTrigger Binding="{Binding Message}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <Path Style="{StaticResource InfoIcon}" VerticalAlignment="Top" Margin="0,2,6,0"/>
+                    <TextBlock Text="{Binding Message}" Style="{StaticResource Sub}" TextWrapping="Wrap"/>
+                </DockPanel>
             </StackPanel>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Visible" Padding="0,0,4,0">
                 <StackPanel>
                     <!-- the value and the figures behind it; the rate box and View on Map underneath -->
-                    <Border Style="{StaticResource Card}" Background="#DBD8E9" Padding="14,12"
+                    <Border Style="{StaticResource Card}" Background="{DynamicResource Brush.Pill.Background}" Padding="14,12"
                             Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel>
                             <Grid>
@@ -452,15 +391,15 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Estimated Market Value" FontSize="13" FontWeight="SemiBold" Foreground="#4F4486"/>
+                                        <TextBlock Text="Estimated Market Value" Style="{StaticResource Label}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}"/>
                                         <Border Background="Transparent" ToolTip="{Binding ValueHow}" Margin="6,0,0,0" VerticalAlignment="Center">
-                                            <Path Data="{StaticResource Icon.Info}" Fill="#8A7FCB" Width="13" Height="13" Stretch="Uniform"/>
+                                            <Path Style="{StaticResource InfoIcon}"/>
                                         </Border>
                                     </StackPanel>
-                                    <TextBlock Text="{Binding EstimateText}" FontSize="27" FontWeight="Bold" Foreground="#4F4486" Margin="0,2,0,0"/>
-                                    <TextBlock Text="{Binding RangeText}" FontSize="11" Foreground="#555555" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding EstimateText}" FontSize="27" FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}" Margin="0,2,0,0"/>
+                                    <TextBlock Text="{Binding RangeText}" Style="{StaticResource Sub}" TextWrapping="Wrap"/>
                                 </StackPanel>
-                                <Rectangle Grid.Column="1" Width="1" Fill="#CFC8EC" Margin="10,2"/>
+                                <Rectangle Grid.Column="1" Width="1" Style="{StaticResource Divider}" Margin="10,2"/>
                                 <!-- 2 x 2: averages, median, and how many comps were read -->
                                 <Grid Grid.Column="2" VerticalAlignment="Center">
                                     <Grid.ColumnDefinitions>
@@ -473,8 +412,8 @@
                                         <RowDefinition Height="1"/>
                                         <RowDefinition/>
                                     </Grid.RowDefinitions>
-                                    <Rectangle Grid.Column="1" Grid.RowSpan="3" Fill="#CFC8EC"/>
-                                    <Rectangle Grid.Row="1" Grid.ColumnSpan="3" Fill="#CFC8EC"/>
+                                    <Rectangle Grid.Column="1" Grid.RowSpan="3" Style="{StaticResource Divider}"/>
+                                    <Rectangle Grid.Row="1" Grid.ColumnSpan="3" Style="{StaticResource Divider}"/>
                                     <StackPanel Style="{StaticResource Stat}">
                                         <TextBlock Text="{Binding AvgPrice, StringFormat={}{0:C0}}" Style="{StaticResource StatValue}"/>
                                         <TextBlock Text="Avg Price" Style="{StaticResource StatLabel}"/>
@@ -489,7 +428,7 @@
                                     </StackPanel>
                                     <StackPanel Grid.Row="2" Grid.Column="2" Style="{StaticResource Stat}">
                                         <TextBlock Text="{Binding Visible.Count}" Style="{StaticResource StatValue}"/>
-                                        <TextBlock Text="Comparable Sales" Style="{StaticResource StatLabel}"/>
+                                        <TextBlock Text="Comps" Style="{StaticResource StatLabel}"/>
                                     </StackPanel>
                                 </Grid>
                             </Grid>
@@ -503,21 +442,8 @@
                                     <TextBlock Text="{Binding RateLabel}" Style="{StaticResource Label}" Margin="0,0,6,0"/>
                                     <TextBox Text="{Binding PpaText, UpdateSourceTrigger=PropertyChanged}" Width="90" Style="{StaticResource Field}" ToolTip="{Binding ValueHow}"/>
                                 </StackPanel>
-                                <Button Grid.Column="1" Command="{Binding ReviewOnMapCommand}" Cursor="Hand" ToolTip="Show the comps on a map">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border x:Name="B" Background="#DDD8F0" CornerRadius="10" Padding="12,6">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Path Data="{StaticResource Icon.MapMarker}" Fill="#4F4486" Width="16" Height="16" Stretch="Uniform" Margin="0,0,6,0"/>
-                                                    <TextBlock Text="View on Map" FontSize="12" FontWeight="SemiBold" Foreground="#4F4486" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Background" Value="#CFC8EC"/></Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
+                                <Button Grid.Column="1" Content="View on Map" Tag="{StaticResource Icon.MapMarker}" Style="{StaticResource Theme.Button.Outline.Small}"
+                                        VerticalAlignment="Center" Command="{Binding ReviewOnMapCommand}" ToolTip="Show the comps on a map"/>
                             </Grid>
                         </StackPanel>
                     </Border>
@@ -535,12 +461,12 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Orientation="Horizontal">
-                                                <Path Stretch="None" Stroke="#4F4486" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                                      VerticalAlignment="Center" Data="M2,4 H18 M2,10 H18 M2,16 H18 M6,1 V7 M14,7 V13 M9,13 V19"/>
-                                                <TextBlock Text="Filters" FontSize="14" FontWeight="SemiBold" Foreground="#171528" VerticalAlignment="Center" Margin="12,0,8,0"/>
-                                                <TextBlock Text="{Binding FiltersSummary}" FontSize="14" FontWeight="SemiBold" Foreground="#8A7FCB" VerticalAlignment="Center"/>
+                                                <Path Stretch="None" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                      VerticalAlignment="Center" Data="{StaticResource Icon.Line.Sliders}"/>
+                                                <TextBlock Text="Filters" Style="{StaticResource Title}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,8,0"/>
+                                                <TextBlock Text="{Binding FiltersSummary}" Style="{StaticResource Title}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" Opacity="0.7" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <Path Grid.Column="2" x:Name="Chevron" Data="M1,7 L7,1 L13,7" Stroke="#8791A8" StrokeThickness="2"
+                                            <Path Grid.Column="2" x:Name="Chevron" Data="{StaticResource Icon.Line.ChevronUp}" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="2"
                                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
                                                 <Path.RenderTransform><RotateTransform Angle="180"/></Path.RenderTransform>
                                             </Path>
@@ -615,14 +541,14 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <CheckBox Content="Median" IsChecked="{Binding UseMedian}" VerticalAlignment="Center"/>
-                                        <Path Data="{StaticResource Icon.Info}" Fill="#8A7FCB" Width="13" Height="13" Stretch="Uniform" Margin="5,0,14,0"
+                                        <Path Style="{StaticResource InfoIcon}" Margin="5,0,14,0"
                                               ToolTip="Value from the weighted median (close, recent, similar comps count more). Untick for the plain average."/>
                                         <CheckBox Content="Top 5" IsChecked="{Binding UseTopFive}" IsEnabled="{Binding HasSubject}" VerticalAlignment="Center"/>
-                                        <Path Data="{StaticResource Icon.Info}" Fill="#8A7FCB" Width="13" Height="13" Stretch="Uniform" Margin="5,0,0,0"
+                                        <Path Style="{StaticResource InfoIcon}" Margin="5,0,0,0"
                                               ToolTip="Value from the 5 best matches only (highest weight). The rest stay listed and on the map, faded; remove one and the next best moves up, or Include anyway to add one."/>
                                     </StackPanel>
-                                    <Button Grid.Column="1" Content="Clear Filters" Style="{StaticResource Action}" Padding="10,5" Command="{Binding ClearFiltersCommand}"
-                                            Tag="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+                                    <Button Grid.Column="1" Content="Clear Filters" Tag="{StaticResource Icon.Refresh}" Style="{StaticResource Theme.Button.Outline.Small}"
+                                            Command="{Binding ClearFiltersCommand}"/>
                                 </Grid>
                             </StackPanel>
                             </Border>
@@ -630,7 +556,7 @@
                     </Border>
 
                     <!-- comparable properties: count, restore, sort -->
-                    <Border Background="#ECE9F7" CornerRadius="10" Padding="12,8" Margin="0,0,0,10"
+                    <Border Padding="2,2,0,0" Margin="0,0,0,10"
                             Visibility="{Binding HasComps, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -639,31 +565,19 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource Icon.Home}" Fill="#4F4486" Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0"/>
-                                    <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#171528">
+                                    <Path Data="{StaticResource Icon.Home}" Style="{StaticResource Glyph}" Margin="0,0,8,0"/>
+                                    <TextBlock Style="{StaticResource Title}" FontWeight="SemiBold">
                                         <Run Text="Comparables"/>
-                                        <Run Text="{Binding Visible.Count, Mode=OneWay, StringFormat=({0})}" Foreground="#4F4486"/>
+                                        <Run Text="{Binding Visible.Count, Mode=OneWay, StringFormat=({0})}" Foreground="{DynamicResource Brush.Accent}"/>
                                     </TextBlock>
                                 </StackPanel>
-                                <Button Content="Restore removed" Style="{StaticResource IconLink}" Margin="-4,2,0,0" HorizontalAlignment="Left" Tag="{StaticResource Icon.ArrowLeft}"
+                                <Button Content="Restore removed" Style="{StaticResource IconLink}" Tag="{StaticResource Icon.Refresh}"
                                         ToolTip="Bring back every comp removed by hand, on the map, or left out as an outlier"
                                         Command="{Binding ShowRemovedCommand}" Visibility="{Binding HasRemoved, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Text="Sort by:" Style="{StaticResource Label}" Margin="0,0,6,0"/>
-                                <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding Sort}" MinWidth="130" FontSize="12">
-                                    <!-- the app's item style has light text for dark drop-downs; this one opens on white -->
-                                    <ComboBox.ItemContainerStyle>
-                                        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
-                                            <Setter Property="Foreground" Value="#30294B"/>
-                                            <Setter Property="Padding" Value="10,6"/>
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="White"/></Trigger>
-                                                <Trigger Property="IsSelected" Value="True"><Setter Property="Foreground" Value="White"/></Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ComboBox.ItemContainerStyle>
-                                </ComboBox>
+                                <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding Sort}" MinWidth="130" Style="{StaticResource Theme.ComboBox.Light}"/>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -672,18 +586,15 @@
                     <ItemsControl ItemsSource="{Binding Visible}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="White" BorderBrush="#E2DFEE" BorderThickness="1" CornerRadius="12" Padding="10" Margin="0,0,0,10">
+                                <Border Padding="10">
                                     <Border.Style>
-                                        <Style TargetType="Border">
+                                        <Style TargetType="Border" BasedOn="{StaticResource Card}">
                                             <Style.Triggers>
                                                 <!-- left out of the value (outlier, removed, outside the top 5) -->
                                                 <DataTrigger Binding="{Binding IsExcluded}" Value="True"><Setter Property="Opacity" Value="0.6"/></DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <Border.Effect>
-                                        <DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.10" Color="#30294B"/>
-                                    </Border.Effect>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="104"/>
@@ -691,8 +602,8 @@
                                         </Grid.ColumnDefinitions>
                                         <!-- the listing's photo (loaded from the site when shown); a house icon when there is none -->
                                         <Grid Height="84" VerticalAlignment="Top">
-                                            <Border CornerRadius="8" Background="#EEECF6">
-                                                <Path Data="{StaticResource Icon.Home}" Fill="#C9C3E3" Width="28" Height="28" Stretch="Uniform"/>
+                                            <Border Style="{StaticResource PhotoTile}">
+                                                <Path Style="{StaticResource PhotoTile.Icon}"/>
                                             </Border>
                                             <Border CornerRadius="8">
                                                 <Border.Background>
@@ -706,37 +617,51 @@
                                                     <ColumnDefinition/>
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Text="{Binding Headline}" FontSize="14" FontWeight="Bold" Foreground="#171528" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Headline}" Style="{StaticResource Title}" TextWrapping="Wrap" VerticalAlignment="Center"/>
                                                 <Button Grid.Column="1" Content="✕" Style="{StaticResource Theme.Button.IconOnly}" FontSize="11" Padding="4,0" Margin="4,0,0,0" VerticalAlignment="Top" ToolTip="Remove this comp"
                                                         Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"/>
                                             </Grid>
                                             <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                                <TextBlock Text="{Binding Price, StringFormat='{}{0:C0}'}" FontSize="17" FontWeight="Bold" Foreground="#4F4486" VerticalAlignment="Center"/>
-                                                <Path Data="{StaticResource Icon.Calendar}" Fill="#777777" Width="12" Height="12" Stretch="Uniform" Margin="10,0,4,0" VerticalAlignment="Center"/>
-                                                <TextBlock Text="{Binding DateText}" FontSize="12" Foreground="#555555" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Price, StringFormat='{}{0:C0}'}" FontSize="17" FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
+                                                <Path Data="{StaticResource Icon.Calendar}" Style="{StaticResource Glyph}" Width="12" Height="12" Opacity="0.6" Margin="10,0,4,0"/>
+                                                <TextBlock Text="{Binding DateText}" Style="{StaticResource Sub}" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <TextBlock Text="{Binding RateLine}" FontSize="12" Foreground="#555555" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding RateLine}" Style="{StaticResource Sub}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                             <!-- tags: how well it matches (hover for the weight and why), data to check, misleading sales -->
                                             <WrapPanel Margin="0,2,0,0">
-                                                <Border x:Name="Match" CornerRadius="10" Padding="7,2" Margin="0,2,4,0" Background="#EEEEEE" ToolTip="{Binding WeightTip}"
+                                                <Border ToolTip="{Binding WeightTip}"
                                                         Visibility="{Binding DataContext.HasSubject, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Tag}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding MatchLevel}" Value="Strong">
+                                                                    <Setter Property="Background" Value="{DynamicResource Brush.Status.Success}"/>
+                                                                    <Setter Property="TextElement.Foreground" Value="{DynamicResource Brush.Status.Success.Foreground}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding MatchLevel}" Value="Fair">
+                                                                    <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning}"/>
+                                                                    <Setter Property="TextElement.Foreground" Value="{DynamicResource Brush.Status.Warning.Foreground}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
                                                     <StackPanel Orientation="Horizontal">
-                                                        <Path x:Name="MatchIcon" Data="{StaticResource Icon.Check}" Fill="#777777" Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0"/>
-                                                        <TextBlock x:Name="MatchText" Text="{Binding MatchLabel}" FontSize="10" FontWeight="SemiBold" Foreground="#777777"/>
+                                                        <Path Style="{StaticResource Tag.Icon}"/>
+                                                        <TextBlock Text="{Binding MatchLabel}"/>
                                                     </StackPanel>
                                                 </Border>
-                                                <Border Background="#FDEFD9" CornerRadius="6" Padding="6,1" Margin="0,2,4,0" ToolTip="{Binding Verify}">
-                                                    <TextBlock Text="VERIFY" FontSize="9" FontWeight="SemiBold" Foreground="#A35A12"/>
+                                                <Border ToolTip="{Binding Verify}">
+                                                    <TextBlock Text="VERIFY"/>
                                                     <Border.Style>
-                                                        <Style TargetType="Border">
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Tag.Warning}">
                                                             <Style.Triggers><DataTrigger Binding="{Binding Verify}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
                                                 </Border>
-                                                <Border Background="#FBE3E3" CornerRadius="6" Padding="6,1" Margin="0,2,4,0" ToolTip="{Binding OutlierTip}">
-                                                    <TextBlock Text="OUTLIER" FontSize="9" FontWeight="SemiBold" Foreground="#B23A3A"/>
+                                                <Border ToolTip="{Binding OutlierTip}">
+                                                    <TextBlock Text="OUTLIER"/>
                                                     <Border.Style>
-                                                        <Style TargetType="Border">
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Tag.Danger}">
                                                             <Style.Triggers><DataTrigger Binding="{Binding Outlier}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
@@ -749,8 +674,8 @@
                                                         <Style.Triggers><DataTrigger Binding="{Binding LeftOutWhy}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
                                                     </Style>
                                                 </StackPanel.Style>
-                                                <TextBlock Text="{Binding LeftOutWhy}" ToolTip="{Binding OutlierTip}" FontSize="11" Foreground="#B23A3A" TextWrapping="Wrap" MaxWidth="170" VerticalAlignment="Center"/>
-                                                <Button Content="Include anyway" Margin="6,0,0,0" FontSize="11" Padding="6,1" VerticalAlignment="Center"
+                                                <TextBlock Text="{Binding LeftOutWhy}" ToolTip="{Binding OutlierTip}" FontSize="11" Foreground="{DynamicResource Brush.Status.Danger.Foreground}" TextWrapping="Wrap" MaxWidth="140" VerticalAlignment="Center"/>
+                                                <Button Content="Include anyway" Margin="6,0,0,0" Style="{StaticResource Theme.Button.Outline.Small}" VerticalAlignment="Center"
                                                         Command="{Binding DataContext.IncludeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"
                                                         Visibility="{Binding IsExcluded, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                             </StackPanel>
@@ -759,8 +684,8 @@
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <StackPanel Orientation="Horizontal" Background="Transparent">
-                                                            <Path Data="{StaticResource Icon.MapMarker}" Fill="#4F4486" Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                            <TextBlock x:Name="Link" Text="{Binding Address}" FontSize="12" Foreground="#4F4486" TextTrimming="CharacterEllipsis" MaxWidth="230"/>
+                                                            <Path Data="{StaticResource Icon.MapMarker}" Style="{StaticResource Glyph}" Width="12" Height="12" Margin="0,0,4,0"/>
+                                                            <TextBlock x:Name="Link" Text="{Binding Address}" Style="{StaticResource Label}" Foreground="{DynamicResource Brush.Accent}" TextTrimming="CharacterEllipsis" MaxWidth="230"/>
                                                         </StackPanel>
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Link" Property="TextDecorations" Value="Underline"/></Trigger>
@@ -771,18 +696,6 @@
                                         </StackPanel>
                                     </Grid>
                                 </Border>
-                                <DataTemplate.Triggers>
-                                    <DataTrigger Binding="{Binding MatchLevel}" Value="Strong">
-                                        <Setter TargetName="Match" Property="Background" Value="#E3F5EA"/>
-                                        <Setter TargetName="MatchIcon" Property="Fill" Value="#2E9E5B"/>
-                                        <Setter TargetName="MatchText" Property="Foreground" Value="#2E9E5B"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding MatchLevel}" Value="Fair">
-                                        <Setter TargetName="Match" Property="Background" Value="#FDF1E3"/>
-                                        <Setter TargetName="MatchIcon" Property="Fill" Value="#CD7B2E"/>
-                                        <Setter TargetName="MatchText" Property="Foreground" Value="#CD7B2E"/>
-                                    </DataTrigger>
-                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -793,69 +706,59 @@
                 <local:ScrapeOverlay/>
             </Grid>
 
-            <!-- the value, how far to trust it, and sending it back -->
-            <Border Grid.Row="2" Background="#ECE9F7" CornerRadius="12" Padding="14,10" Margin="0,4,0,8">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="ESTIMATED MARKET VALUE" FontSize="10" FontWeight="Bold" Foreground="#4F4486"/>
-                        <TextBlock Text="{Binding EstimateText}" FontSize="24" FontWeight="Bold" Foreground="#171528" ToolTip="{Binding ValueHow}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" ToolTip="{Binding ConfidenceText}"
+            <!-- how far to trust the value (shown in the card above), and sending it back; hidden while it would be empty -->
+            <Border Grid.Row="2" CornerRadius="12" Padding="14,10" Background="{DynamicResource Brush.Background.Secondary}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Margin" Value="0,4,24,8"/> <!-- ScrollGutter, plus the gap above and below -->
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding ShowConfidence}" Value="False"/>
+                                    <Condition Binding="{Binding HasTarget}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" ToolTip="{Binding ConfidenceText}"
                                 Visibility="{Binding ShowConfidence, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Border x:Name="Confidence" HorizontalAlignment="Left" CornerRadius="12" Padding="8,3" Background="#FBE3E3">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource Icon.Check}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center">
-                                    <Path.Style>
-                                        <Style TargetType="Path">
-                                            <Setter Property="Fill" Value="#B23A3A"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ConfidenceLevel}" Value="High"><Setter Property="Fill" Value="#2E9E5B"/></DataTrigger>
-                                                <DataTrigger Binding="{Binding ConfidenceLevel}" Value="Medium"><Setter Property="Fill" Value="#CD7B2E"/></DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Path.Style>
-                                </Path>
-                                <TextBlock FontSize="12" FontWeight="SemiBold">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="#B23A3A"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ConfidenceLevel}" Value="High"><Setter Property="Foreground" Value="#2E9E5B"/></DataTrigger>
-                                                <DataTrigger Binding="{Binding ConfidenceLevel}" Value="Medium"><Setter Property="Foreground" Value="#CD7B2E"/></DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                    <Run Text="{Binding ConfidenceLevel, Mode=OneWay}"/><Run Text=" Confidence"/>
-                                </TextBlock>
-                            </StackPanel>
+                        <Border Margin="0,0,10,0" Padding="8,3">
                             <Border.Style>
-                                <Style TargetType="Border">
+                                <Style TargetType="Border" BasedOn="{StaticResource Tag.Danger}">
+                                    <Setter Property="TextElement.FontSize" Value="{StaticResource FontSize.Small}"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding ConfidenceLevel}" Value="High"><Setter Property="Background" Value="#E3F5EA"/></DataTrigger>
-                                        <DataTrigger Binding="{Binding ConfidenceLevel}" Value="Medium"><Setter Property="Background" Value="#FDF1E3"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding ConfidenceLevel}" Value="High">
+                                            <Setter Property="Background" Value="{DynamicResource Brush.Status.Success}"/>
+                                            <Setter Property="TextElement.Foreground" Value="{DynamicResource Brush.Status.Success.Foreground}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ConfidenceLevel}" Value="Medium">
+                                            <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning}"/>
+                                            <Setter Property="TextElement.Foreground" Value="{DynamicResource Brush.Status.Warning.Foreground}"/>
+                                        </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </Border.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <Path Style="{StaticResource Tag.Icon}"/>
+                                <TextBlock><Run Text="{Binding ConfidenceLevel, Mode=OneWay}"/><Run Text=" confidence"/></TextBlock>
+                            </StackPanel>
                         </Border>
-                        <TextBlock FontSize="11" Foreground="#555555" Margin="0,3,0,0">
+                        <TextBlock Style="{StaticResource Sub}" VerticalAlignment="Center">
                             <Run Text="Based on"/> <Run Text="{Binding Count, Mode=OneWay}"/> <Run Text="selected properties"/>
                         </TextBlock>
                     </StackPanel>
                     <!-- only when opened from a pin or a grid row -->
-                    <UniformGrid Grid.Row="1" Grid.ColumnSpan="2" Columns="2" Margin="0,10,0,0"
-                                 Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Button Content="Return" Command="{Binding BackWithoutSavingCommand}" Style="{StaticResource Theme.Button.Outline}" Margin="0,0,6,0"/>
-                        <Button Content="Apply Value" Command="{Binding UseCompsCommand}" Style="{StaticResource Theme.Button.Primary}" Margin="6,0,0,0"/>
-                    </UniformGrid>
-                </Grid>
+                    <Border Style="{StaticResource Theme.Border.PillGroup}" Margin="0,10,0,0"
+                            Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <UniformGrid Columns="2">
+                            <Button Content="Return" Tag="{StaticResource Icon.ArrowLeft}" Style="{StaticResource Theme.Button.Pill}" Command="{Binding BackWithoutSavingCommand}"/>
+                            <Button Content="Apply Value" Tag="{StaticResource Icon.Check}" Style="{StaticResource Theme.Button.Pill.On}" Command="{Binding UseCompsCommand}"/>
+                        </UniformGrid>
+                    </Border>
+                </StackPanel>
             </Border>
         </Grid>
     </Grid>

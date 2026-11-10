@@ -50,18 +50,19 @@ function popupHtml(loc, message) {
         n('Year Built') ? 'built ' + n('Year Built') : null,
         n('Buildings') > 1 ? n('Buildings') + ' buildings' : null].filter(Boolean);
     var house = (houseParts.length ? '<div class="pp-house" title="' + esc(d['Land Use'] || '').replace(/"/g, '&quot;') + '">' + ico('home') + '<span>' + houseParts.join(' &middot; ') + '</span></div>' : '') +
-        (d['House Check'] ? '<div class="pp-warn">&#9888; ' + esc(d['House Check']) + '</div>' : '') +
+        (d['House Check'] ? '<div class="pp-flag pp-warning">' + esc(d['House Check']) + '</div>' : '') +
+        // tinted by severity, the same colours as the risk flags in the due-diligence dialog
         (loc.Risks || []).map(function (f) {
-            return '<div class="pp-risk" style="--c:' + ({ High: '#D64545', Caution: '#CD7B2E' }[f.Severity] || '#2F80ED') + '" title="' + esc(f.Detail).replace(/"/g, '&quot;') + '">&#9888; ' + esc(f.Title) + '</div>';
+            return '<div class="pp-flag pp-risk ' + ({ High: 'pp-danger', Caution: 'pp-warning' }[f.Severity] || 'pp-info') + '" title="' + esc(f.Detail).replace(/"/g, '&quot;') + '">' + esc(f.Title) + '</div>';
         }).join('') +
-        (loc.EstateOwner && !loc.Risks ? '<div class="pp-warn">&#9888; Estate / heirs owner: probate and title risk. Check who can convey before bidding.</div>' : '');
+        (loc.EstateOwner && !loc.Risks ? '<div class="pp-flag pp-warning">Estate / heirs owner: probate and title risk. Check who can convey before bidding.</div>' : '');
 
     // slope across the parcel (Regrid high minus low elevation over the longest side): flat is quiet, steep is loud
     var slope = '';
     if (loc.SlopePercent != null) {
         var sp = loc.SlopePercent;
-        var tier = sp < 2 ? ['Flat', '#2E9E5B'] : sp < 5 ? ['Gentle', '#2E9E5B'] : sp < 10 ? ['Moderate', '#CD7B2E'] : sp < 15 ? ['Steep', '#D64545'] : ['Very steep', '#D64545'];
-        slope = '<div class="pp-slope" style="--c:' + tier[1] + '">' + ico('trend') + 'Slope <b>' + sp + '%</b> &middot; ' + tier[0] + '</div>';
+        var tier = sp < 2 ? ['Flat', 'pp-success'] : sp < 5 ? ['Gentle', 'pp-success'] : sp < 10 ? ['Moderate', 'pp-warning'] : sp < 15 ? ['Steep', 'pp-danger'] : ['Very steep', 'pp-danger'];
+        slope = '<div class="pp-flag pp-slope ' + tier[1] + '">' + ico('trend') + 'Slope <b>' + sp + '%</b> &middot; ' + tier[0] + '</div>';
     }
 
     // value box: collapsed when both are missing or 0; one missing shows --
@@ -76,7 +77,7 @@ function popupHtml(loc, message) {
         var label = pct < 1 ? '&lt;1' : pct < 10 ? pct.toFixed(1) : String(Math.round(pct));
         var color = pct <= 25 ? '#2E9E5B' : pct <= 60 ? '#CD7B2E' : '#9A9A9A';
         equity = '<div class="pp-eq">' +
-            '<div class="pp-eqtext" style="color:' + color + '">' + ico('trend') + '<span style="color:#30294B">Bid is <b>' + label + '%</b> of assessed value</span></div></div>';
+            '<div class="pp-eqtext" style="color:' + color + '">' + ico('trend') + '<span class="pp-eqlabel">Bid is <b>' + label + '%</b> of assessed value</span></div></div>';
     }
 
     // actions: landlocked check (left) and the property appraiser, when the record has a link (right)
@@ -115,8 +116,8 @@ function popupHtml(loc, message) {
     }
     if (loc.IsSubject) compRows = '<div style="margin:8px 0;font-weight:700;color:#2E9E5B">&#127968; Subject property</div>' + compRows;
 
-    return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<span class="pp-links">' + dueDiligence + findComps +
-        '<a href="#" class="pp-zoom">Zoom</a></span></div>' + dataQualityHtml(loc) + '<div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' + compRows +
+    return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<div class="pp-links">' + dueDiligence + findComps +
+        '<a href="#" class="pp-zoom">Zoom</a></div></div>' + dataQualityHtml(loc) + '<div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' + compRows +
         (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + house + slope + box + equity + comps + statusSection(loc) + actions + '</div>';
 }
 
@@ -209,7 +210,7 @@ function dqTier(n) { return n === 0 ? 'dq-ok' : n <= 3 ? 'dq-warn' : 'dq-bad'; }
 function dataQualityHtml(loc) {
     var miss = missingData(loc);
     if (!miss) return '';
-    return '<div class="pp-dq ' + dqTier(miss.length) + '">' + (miss.length ? '<b>' + miss.length + ' missing:</b> ' + esc(miss.join(', ')) : '<b>&#10003; Data complete</b>') + '</div>';
+    return '<div class="pp-flag pp-dq ' + dqTier(miss.length) + '">' + (miss.length ? '<b>' + miss.length + ' missing:</b> ' + esc(miss.join(', ')) : '<b>&#10003; Data complete</b>') + '</div>';
 }
 
 function statusSection(loc) {
@@ -278,8 +279,8 @@ function accessHtml(loc, message) {
     var editable = typeof onPinEdit === 'function';
     if (!loc.AccessStatus)
         return editable ? '<div class="pp-access">' + (message ? '<span class="pp-err">' + esc(message) + '</span> ' : '') + '<button type="button" class="pp-check" data-tip="' + ACCESS_TIP + '">Check if landlocked</button></div>' : '';
-    return '<div class="pp-access"><span class="pp-dot" style="background:' + ACCESS_COLORS[loc.AccessStatus] + '"></span>' + esc(accessText(loc)) +
-        '<div class="pp-label">Checked ' + esc(loc.AccessChecked || '') + (editable ? ' &middot; <a href="#" class="pp-check" data-tip="' + ACCESS_TIP + '">Check again</a>' : '') + '</div></div>';
+    return '<div class="pp-access"><span class="pp-dot" style="background:' + ACCESS_COLORS[loc.AccessStatus] + '"></span><b>' + esc(accessText(loc)) +
+        '</b><div class="pp-label">Checked ' + esc(loc.AccessChecked || '') + (editable ? ' &middot; <a href="#" class="pp-check" data-tip="' + ACCESS_TIP + '">Check again</a>' : '') + '</div></div>';
 }
 
 function geomRings(g, out) {
@@ -407,7 +408,7 @@ function auctionBadge(loc) {
     if (info.days == null) return '';
     var date = new Date(loc.AuctionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     var rel = info.days === 0 ? 'today' : info.days === 1 ? 'tomorrow' : info.days > 0 ? 'in ' + info.days + ' days' : -info.days + ' days ago';
-    var pill = '<span style="background:' + info.color + ';color:#fff;border-radius:10px;padding:2px 10px;font-size:11px;font-weight:600">Auction &middot; ' + date + ' &middot; ' + rel + '</span>';
+    var pill = '<span class="pp-auction" style="--c:' + info.color + '">Auction &middot; ' + date + ' &middot; ' + rel + '</span>';
     // same pill; it opens the auction page when the pin knows its URL
     if (loc.AuctionUrl) pill = '<a class="pp-link" style="text-decoration:none" href="' + esc(loc.AuctionUrl).replace(/"/g, '&quot;') + '" target="_blank">' + pill + '</a>';
     return pill;

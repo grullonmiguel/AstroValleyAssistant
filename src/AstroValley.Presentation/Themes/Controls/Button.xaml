@@ -228,18 +228,108 @@
         </Setter>
     </Style>
 
-    <!-- Icon + text for any button style that shows its content: set Tag to an Icon.* geometry and ContentTemplate to this.
-         The icon takes the button's text colour and size. -->
+    <!-- Icon + text for any button (or toggle button) style that shows its content: set ContentTemplate to this and Tag to an
+         Icon.* geometry. The icon takes the button's text colour and size; with no Tag only the text shows. -->
     <DataTemplate x:Key="Theme.Button.Content.Icon">
         <StackPanel Orientation="Horizontal">
-            <Path Data="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}}"
-                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                  Width="{Binding FontSize, RelativeSource={RelativeSource AncestorType=Button}}"
-                  Height="{Binding FontSize, RelativeSource={RelativeSource AncestorType=Button}}"
+            <Path x:Name="Icon" Data="{Binding Tag, RelativeSource={RelativeSource AncestorType=ButtonBase}}"
+                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ButtonBase}}"
+                  Width="{Binding FontSize, RelativeSource={RelativeSource AncestorType=ButtonBase}}"
+                  Height="{Binding FontSize, RelativeSource={RelativeSource AncestorType=ButtonBase}}"
                   Stretch="Uniform" VerticalAlignment="Center" Margin="{StaticResource Margin.Icon.Right}"/>
             <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
         </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType=ButtonBase}}" Value="{x:Null}">
+                <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
+            </DataTrigger>
+        </DataTemplate.Triggers>
     </DataTemplate>
+
+    <!--#region Pill buttons -->
+    <!-- A strip of choices or actions: put the buttons in a Border with Theme.Border.PillGroup.
+         Pill = a quiet choice / secondary action; Pill.On = the selected choice / the main action. Tag = optional Icon.* geometry. -->
+    <Style x:Key="Theme.Border.PillGroup" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.Pill.Background}"/>
+        <Setter Property="CornerRadius" Value="18"/>
+        <Setter Property="Padding" Value="4"/>
+    </Style>
+    <Style x:Key="Theme.Button.Pill" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="16,6"/>
+        <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="ContentTemplate" Value="{StaticResource Theme.Button.Content.Icon}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="14" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Brush.Accent.Secondary.Hover}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.5"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="Theme.Button.Pill.On" TargetType="Button" BasedOn="{StaticResource Theme.Button.Pill}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Light}"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Brush.Accent.Hover}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    <!--#endregion-->
+
+    <!--#region Small outline buttons -->
+    <!-- A compact secondary action inside a card (View on Map, an office's website, Clear Filters). Tag = optional Icon.* geometry. -->
+    <Style x:Key="Theme.Button.Outline.Small" TargetType="Button" BasedOn="{StaticResource Theme.Button.Outline}">
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
+        <Setter Property="Padding" Value="10,3"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="ContentTemplate" Value="{StaticResource Theme.Button.Content.Icon}"/>
+    </Style>
+    <!-- the same look for an on / off switch (Edit): tinted while on -->
+    <Style x:Key="Theme.ToggleButton.Outline.Small" TargetType="ToggleButton">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="{DynamicResource Brush.Background.Secondary}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="10,3"/>
+        <Setter Property="ContentTemplate" Value="{StaticResource Theme.Button.Content.Icon}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                            CornerRadius="8" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Brush.Background.Hover}"/>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Brush.Accent.Secondary}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    <!--#endregion-->
 
     <!-- Hyperlink-like Button style -->
     <Style x:Key="Theme.Button.Hyperlink" TargetType="Button">
