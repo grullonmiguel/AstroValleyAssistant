@@ -84,34 +84,6 @@
             <Setter Property="ContentTemplate" Value="{StaticResource Theme.Button.Content.Icon}"/>
         </Style>
 
-        <!-- rounded text box; Tag is the placeholder shown while it is empty -->
-        <Style x:Key="Input" TargetType="TextBox">
-            <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
-            <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
-            <Setter Property="Background" Value="{DynamicResource Brush.Background.Secondary}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
-            <Setter Property="Padding" Value="8,5"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="Box" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="6">
-                            <!-- the text box applies its Padding to the content host itself, so only the placeholder needs it here -->
-                            <Grid>
-                                <TextBlock x:Name="Placeholder" Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
-                                           Margin="{TemplateBinding Padding}" Padding="2,0" Opacity="0.5" Visibility="Collapsed"/>
-                                <ScrollViewer x:Name="PART_ContentHost"/>
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="Text" Value=""><Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/></Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/></Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <!-- the app's drop-down items have light text for its dark drop-downs; the status list opens on white -->
         <Style x:Key="StatusItem" TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
             <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Tertiary}"/>
@@ -188,7 +160,7 @@
                           ItemsSource="{Binding DataContext.Statuses, RelativeSource={RelativeSource AncestorType=UserControl}}"
                           SelectedItem="{Binding Status}" ItemContainerStyle="{StaticResource StatusItem}"
                           SelectionChanged="OnStatusChanged"/>
-                <TextBox Grid.Column="2" Margin="8,0,0,0" Style="{StaticResource Input}"
+                <TextBox Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center"
                          Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}" ToolTip="Note: book / page, amount, case number, who you spoke to..."/>
             </Grid>
         </DataTemplate>
@@ -240,7 +212,7 @@
                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                         </ItemsControl>
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                            <TextBox Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}" Width="320"
+                            <TextBox Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}" Width="320" VerticalAlignment="Center"
                                      Tag="Add another name..." ToolTip="A name to add, e.g. the trust, its trustee, a lender">
                                 <TextBox.InputBindings><KeyBinding Key="Enter" Command="{Binding AddNameCommand}"/></TextBox.InputBindings>
                             </TextBox>

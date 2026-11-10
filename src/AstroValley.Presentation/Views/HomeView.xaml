@@ -553,7 +553,7 @@
         <!-- Tools dialog: filters with from / to boxes. The count follows every edit; Show applies them to the map and list. -->
         <Grid Background="#80000000" Visibility="{Binding IsToolsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Grid.Resources>
-                <Style TargetType="TextBox">
+                <Style TargetType="TextBox" BasedOn="{StaticResource Theme.TextBox}">
                     <Setter Property="Padding" Value="6 4"/>
                     <Setter Property="FontSize" Value="13"/>
                 </Style>
