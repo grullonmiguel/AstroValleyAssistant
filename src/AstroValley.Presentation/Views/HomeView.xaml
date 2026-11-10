@@ -448,6 +448,7 @@
                 </Border>
                 <ListBox ItemsSource="{Binding Counties}"
                          SelectedItem="{Binding SelectedCounty, Mode=TwoWay}"
+                         SelectionChanged="OnCountySelectionChanged"
                          DisplayMemberPath="Name"
                          ItemContainerStyle="{StaticResource HomeCountyItem}"
                          Background="Transparent" BorderThickness="0"

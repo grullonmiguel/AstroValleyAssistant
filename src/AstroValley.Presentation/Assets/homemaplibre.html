@@ -5,11 +5,16 @@
     <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
     <link href="pinpopup.css" rel="stylesheet" />
-    <style>html, body, #map { height: 100%; margin: 0; background: #000; }</style>
+    <style>
+        html, body, #map { height: 100%; margin: 0; background: #000; }
+        #countyTip { position: absolute; display: none; pointer-events: none; z-index: 5; padding: 3px 8px; border-radius: 6px;
+            background: #4F4486; color: #fff; font: 600 12px 'Segoe UI', sans-serif; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+    </style>
     <script src="pinpopup.js"></script>
 </head>
 <body>
     <div id="map"></div>
+    <div id="countyTip"></div>
     <script>
         // Same page contract as homemap.html (Leaflet) and homeglobe.html (Cesium): WPF calls highlightState /
         // highlightCounty / setImagery and receives {type:'counties'} messages, so HomeView doesn't care which page loads.
@@ -47,6 +52,9 @@
                     { id: 'imagery', type: 'raster', source: 'imagery', layout: { visibility: 'none' } },
                     overlayLayer('flood'), overlayLayer('wetlands'), // toggled from WPF; under our lines
                     // our lines sit under the labels so place names stay readable
+                    // invisible fill: only there so the mouse can hit a county; county-hover shows the one under the mouse
+                    { id: 'county-hit', type: 'fill', source: 'counties', paint: { 'fill-opacity': 0 } },
+                    { id: 'county-hover', type: 'fill', source: 'counties', filter: ['==', ['get', 'COUNTY'], ''], paint: { 'fill-color': PURPLE, 'fill-opacity': 0.2 } },
                     { id: 'county-lines', type: 'line', source: 'counties', paint: { 'line-color': PURPLE, 'line-width': 1, 'line-opacity': 0.7 } },
                     { id: 'highlight-fill', type: 'fill', source: 'highlight', paint: {
                         'fill-color': PURPLE,
@@ -103,6 +111,7 @@
             var c = lineColor(); // purple on the street map, white on satellite
             ['county-lines', 'highlight-line', 'outline-line'].forEach(function (id) { map.setPaintProperty(id, 'line-color', c); });
             map.setPaintProperty('highlight-fill', 'fill-color', c);
+            map.setPaintProperty('county-hover', 'fill-color', c);
         }
 
         // ---- selected state outline + counties -----------------------------------------------------------------
@@ -119,7 +128,39 @@
             map.getSource('counties').setData(emptyFc());
             map.getSource('highlight').setData(emptyFc());
             countyFeatures = [];
+            hoverCounty(null);
         }
+
+        // ---- county under the mouse: hover fill + name tooltip; a click selects it in the WPF county list ----------
+        var countyTip = document.getElementById('countyTip'), hoveredId = '';
+        function hoverCounty(f, point) {
+            var id = f ? f.properties.COUNTY : '';
+            if (id !== hoveredId) {
+                hoveredId = id;
+                map.setFilter('county-hover', ['==', ['get', 'COUNTY'], id]);
+                map.getCanvas().style.cursor = f ? 'pointer' : '';
+                countyTip.style.display = f ? 'block' : 'none';
+                if (f) countyTip.textContent = countyLabel(f.properties);
+            }
+            if (f) { countyTip.style.left = (point.x + 14) + 'px'; countyTip.style.top = (point.y + 14) + 'px'; }
+        }
+        // Only when the mouse is on the map itself, not on a pin or an open popup.
+        // And only while zoomed out: once streets show, the fill, pointer and tooltip get in the way.
+        var COUNTY_HOVER_MAX_ZOOM = 9;
+        function countyAt(e) {
+            return map.getZoom() < COUNTY_HOVER_MAX_ZOOM && e.originalEvent.target === map.getCanvas()
+                ? map.queryRenderedFeatures(e.point, { layers: ['county-hit'] })[0] : null;
+        }
+        // zooming in with the mouse still: drop the hover without waiting for the next move
+        map.on('zoom', function () { if (map.getZoom() >= COUNTY_HOVER_MAX_ZOOM) hoverCounty(null); });
+        map.on('mousemove', function (e) { hoverCounty(countyAt(e), e.point); });
+        map.on('mouseout', function () { hoverCounty(null); });
+        map.on('click', function (e) {
+            // those clicks already mean something else: stop the tour / identify the flood zone or wetland at that spot
+            if (TOUR.on || overlayOn.flood || overlayOn.wetlands) return;
+            var f = countyAt(e);
+            if (f && window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'countyClick', id: f.properties.COUNTY });
+        });
 
         // "Bay" for counties; "Acadia Parish", "Richmond city" etc. otherwise (keeps same-named entries apart).
         function countyLabel(p) { return p.LSAD === 'County' ? p.NAME : p.NAME + ' ' + p.LSAD; }

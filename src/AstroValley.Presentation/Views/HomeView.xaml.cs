@@ -126,6 +126,12 @@ public partial class HomeView : UserControl
             vm.IsEpa = root.GetProperty("epa").GetBoolean();
             return;
         }
+        if (type == "countyClick") // a county was clicked on the map: select it in the list (which highlights it and scrolls to it)
+        {
+            var id = root.GetProperty("id").GetString();
+            vm.SelectedCounty = vm.Counties.FirstOrDefault(c => c.Id == id) ?? vm.SelectedCounty;
+            return;
+        }
         if (type != "counties") return;
         // Ignore a late reply for a state that is no longer selected.
         if (root.GetProperty("state").GetString() != vm.SelectedState?.Name) return;
@@ -133,6 +139,12 @@ public partial class HomeView : UserControl
         vm.Counties.Clear();
         foreach (var item in root.GetProperty("items").EnumerateArray())
             vm.Counties.Add(new CountyItem(item.GetProperty("id").GetString()!, item.GetProperty("name").GetString()!));
+    }
+
+    // A county picked on the map may be out of view in the list.
+    private void OnCountySelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ListBox { SelectedItem: { } county } list) list.ScrollIntoView(county);
     }
 
     private void OnMenuClicked(object sender, System.Windows.RoutedEventArgs e)
