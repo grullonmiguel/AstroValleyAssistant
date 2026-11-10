@@ -9,7 +9,7 @@ public enum DueDiligenceStatus { Pending, Clear, Found, Investigate }
 public class DueDiligenceItem
 {
     public string Key { get; init; } = "";     // stable id, so a state can replace a common item and saved pins keep their answers
-    public string Office { get; init; } = "";  // where to search: "Recorder / Clerk", "Tax Collector", "Court", "City / County", "Other"
+    public string Office { get; init; } = "";  // where to search: one of Offices
     public string Title { get; init; } = "";
     public string? Hint { get; init; }
     public DueDiligenceStatus Status { get; set; }
@@ -18,10 +18,16 @@ public class DueDiligenceItem
     public DueDiligenceItem Copy() => new() { Key = Key, Office = Office, Title = Title, Hint = Hint };
 }
 
+/// <summary>The record offices a checklist line or a website link belongs to; the due-diligence dialog groups by these names.</summary>
+public static class Offices
+{
+    public const string Appraiser = "Property Appraiser", Recorder = "Recorder / Clerk", Tax = "Tax Collector", Court = "Court", City = "City / County", Other = "Other";
+}
+
 /// <summary>The checklist every jurisdiction starts from: the "three offices" (recorder, tax collector, appraiser) plus court and city.</summary>
 public static class CommonChecklist
 {
-    private const string Recorder = "Recorder / Clerk", Tax = "Tax Collector", Court = "Court", City = "City / County", Other = "Other";
+    private const string Recorder = Offices.Recorder, Tax = Offices.Tax, Court = Offices.Court, City = Offices.City, Other = Offices.Other;
     private const string NameHint = "Search every owner's name, not only the parcel number: older documents may not carry it.";
 
     public static IReadOnlyList<DueDiligenceItem> Items { get; } =

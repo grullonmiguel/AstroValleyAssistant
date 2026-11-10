@@ -101,6 +101,7 @@ public static class PropertyRecordMerger
             BuildingCount = original.BuildingCount ?? regrid.BuildingCount,
             OtherOwners = string.IsNullOrWhiteSpace(original.OtherOwners) ? regrid.OtherOwners : original.OtherOwners,
             State = string.IsNullOrWhiteSpace(original.State) ? regrid.State : original.State,
+            County = string.IsNullOrWhiteSpace(original.County) ? regrid.County : original.County,
             LastTransferDate = original.LastTransferDate ?? regrid.LastTransferDate,
             LastSalePrice = original.LastSalePrice ?? regrid.LastSalePrice,
             OwnerCount = original.OwnerCount ?? regrid.OwnerCount,

@@ -327,6 +327,7 @@ public class RegridScraper : IRegridScraper
         var parcel = new PropertyRecord
         {
             State = f.GetJsonString("state2").ToUpperInvariant(),
+            County = f.GetJsonString("county"),
             LastTransferDate = DateTime.TryParse(f.GetJsonString("last_ownership_transfer_date", "saledate"), System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.None, out var transferred) ? transferred : null,
             LastSalePrice = f.GetJsonDecimal("saleprice"),

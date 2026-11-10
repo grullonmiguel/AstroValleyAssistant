@@ -228,6 +228,19 @@
         </Setter>
     </Style>
 
+    <!-- Icon + text for any button style that shows its content: set Tag to an Icon.* geometry and ContentTemplate to this.
+         The icon takes the button's text colour and size. -->
+    <DataTemplate x:Key="Theme.Button.Content.Icon">
+        <StackPanel Orientation="Horizontal">
+            <Path Data="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}}"
+                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                  Width="{Binding FontSize, RelativeSource={RelativeSource AncestorType=Button}}"
+                  Height="{Binding FontSize, RelativeSource={RelativeSource AncestorType=Button}}"
+                  Stretch="Uniform" VerticalAlignment="Center" Margin="{StaticResource Margin.Icon.Right}"/>
+            <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+        </StackPanel>
+    </DataTemplate>
+
     <!-- Hyperlink-like Button style -->
     <Style x:Key="Theme.Button.Hyperlink" TargetType="Button">
         <Setter Property="Cursor" Value="Hand"/>

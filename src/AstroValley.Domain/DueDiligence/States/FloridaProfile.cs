@@ -6,7 +6,7 @@ namespace AstroValley.Domain.DueDiligence;
 /// Florida: only what differs from the common profile. A new state is a new class like this one, registered in <see cref="Jurisdictions"/>.
 /// shortcut: rules written from one Miami-Dade case and general Florida tax-deed practice; confirm with a Florida attorney or title company.
 /// </summary>
-public sealed class FloridaProfile : JurisdictionProfile
+public class FloridaProfile : JurisdictionProfile
 {
     public override string Name => "Florida";
 
@@ -14,7 +14,7 @@ public sealed class FloridaProfile : JurisdictionProfile
 
     protected override IEnumerable<DueDiligenceItem> LocalChecklist =>
     [
-        new() { Key = "fl-municipal-lien-letter", Office = "City / County", Title = "Municipal lien search letter from the city",
+        new() { Key = "fl-municipal-lien-letter", Office = Offices.City, Title = "Municipal lien search letter from the city",
             Hint = "Florida cities sell a lien search by folio (the City of Miami charges about $200); it lists code liens and violations not always in the official records." },
     ];
 }

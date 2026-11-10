@@ -41,11 +41,13 @@ public partial class HomeViewModel : ObservableObject
     public ObservableCollection<MarkerLocation> Markers { get; } = [];
 
     private readonly IPinSheetExporter _sheetExporter;
+    private readonly Services.IBrowserService _browser;
     private readonly IServiceProvider _serviceProvider; // IDialogService is resolved when needed: it depends on MainViewModel, which holds this view model
 
-    public HomeViewModel(IPinSheetExporter sheetExporter, IServiceProvider serviceProvider)
+    public HomeViewModel(IPinSheetExporter sheetExporter, Services.IBrowserService browser, IServiceProvider serviceProvider)
     {
         _sheetExporter = sheetExporter;
+        _browser = browser;
         _serviceProvider = serviceProvider;
         Markers.CollectionChanged += (_, _) =>
         {
@@ -169,7 +171,7 @@ public partial class HomeViewModel : ObservableObject
         pin.Checklist = pin.Checklist is null ? [.. template] : [.. pin.Checklist, .. template.Where(t => pin.Checklist.All(i => i.Key != t.Key))];
         pin.SearchNames ??= AstroValley.Domain.DueDiligence.Jurisdictions.SearchNames(
             pin.ExtraDetails?.GetValueOrDefault("Owner"), pin.ExtraDetails?.GetValueOrDefault("Other Owners")); // pins saved before names existed
-        var dialog = new ViewModels.Dialogs.DueDiligenceViewModel(pin);
+        var dialog = new ViewModels.Dialogs.DueDiligenceViewModel(pin, _browser, SavePinsCommand);
         Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Services.IDialogService>(_serviceProvider).ShowDialog(dialog);
         try { await dialog.Result; }
         catch (TaskCanceledException) { } // closed with X: the answers were already written to the pin

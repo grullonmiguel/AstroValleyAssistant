@@ -1,13 +1,17 @@
 using System.Collections.ObjectModel;
 using AstroValley.Domain.DueDiligence;
 using AstroValley.Domain.Models;
+using AstroValley.Presentation.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace AstroValley.Presentation.ViewModels.Dialogs;
 
-/// <summary>One record office and its checklist lines.</summary>
-public record ChecklistGroup(string Office, List<DueDiligenceItem> Items);
+/// <summary>A record office's website, with this pin's parcel number already in the address.</summary>
+public record OfficeLink(string Title, string Url, string? Hint);
+
+/// <summary>One record office: its websites and its checklist lines.</summary>
+public record ChecklistGroup(string Office, List<OfficeLink> Links, List<DueDiligenceItem> Items);
 
 /// <summary>
 /// The due-diligence checklist for one pin: risk flags, names to search and the encumbrance checklist from its jurisdiction profile.
@@ -16,19 +20,32 @@ public record ChecklistGroup(string Office, List<DueDiligenceItem> Items);
 public partial class DueDiligenceViewModel : DialogViewModelBase<bool>
 {
     private readonly MarkerLocation _pin;
+    private readonly IBrowserService _browser;
+    private readonly IJurisdictionProfile _profile;
 
-    public DueDiligenceViewModel(MarkerLocation pin)
+    /// <summary>Writes every pin (and so these answers) to a file; the map page owns the pins, so it supplies the command.</summary>
+    public System.Windows.Input.ICommand SavePinsCommand { get; }
+
+    public DueDiligenceViewModel(MarkerLocation pin, IBrowserService browser, System.Windows.Input.ICommand savePinsCommand)
     {
         _pin = pin;
+        _browser = browser;
+        SavePinsCommand = savePinsCommand;
+        _profile = Jurisdictions.For(pin.State, pin.County);
         Risks = pin.Risks ?? [];
-        Groups = [.. (pin.Checklist ?? []).GroupBy(i => i.Office).Select(g => new ChecklistGroup(g.Key, [.. g]))];
+        // links are read from the profile each time, not saved on the pin, so a corrected address reaches every pin
+        var links = _profile.Links.ToLookup(l => l.Office, l => l.Url(pin.ParcelID) is { } url ? new OfficeLink(l.Title, url, l.Hint) : null);
+        var items = (pin.Checklist ?? []).ToLookup(i => i.Office);
+        // offices with a website first (the appraiser has no checklist lines), then the rest in checklist order
+        Groups = [.. links.Select(l => l.Key).Concat(items.Select(i => i.Key)).Distinct()
+            .Select(office => new ChecklistGroup(office, [.. links[office].OfType<OfficeLink>()], [.. items[office]]))];
         Names = [.. pin.SearchNames ?? []];
         UpdateProgress();
     }
 
     public override string Title => "Due diligence";
     public string Address => _pin.Address;
-    public string Subtitle => string.Join(" · ", new[] { _pin.ParcelID, _pin.County, Jurisdictions.For(_pin.State, _pin.County).Name + " checklist" }.Where(s => !string.IsNullOrWhiteSpace(s)));
+    public string Subtitle => string.Join(" · ", new[] { _pin.ParcelID, _pin.County, _profile.Name + " checklist" }.Where(s => !string.IsNullOrWhiteSpace(s)));
     public List<RiskFlag> Risks { get; }
     public bool HasRisks => Risks.Count > 0;
     public List<ChecklistGroup> Groups { get; }
@@ -70,6 +87,9 @@ public partial class DueDiligenceViewModel : DialogViewModelBase<bool>
     {
         if (!string.IsNullOrWhiteSpace(text)) System.Windows.Clipboard.SetText(text);
     }
+
+    [RelayCommand]
+    private void OpenLink(OfficeLink link) => _browser.Launch(link.Url);
 
     [RelayCommand]
     private void Done() => CompleteDialog(true);
