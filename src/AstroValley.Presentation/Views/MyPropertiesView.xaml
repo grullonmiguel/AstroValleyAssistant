@@ -72,6 +72,8 @@
                         ToolTip="Show the saved files, one per property; back this folder up"/>
                 <Button Content="Add property" Tag="{StaticResource Icon.Plus}" Command="{Binding AddCommand}" Style="{StaticResource Theme.Dialog.Button.Primary}" Padding="16,7"/>
             </StackPanel>
+            <ComboBox DockPanel.Dock="Left" ItemsSource="{x:Static vm:MyPropertiesViewModel.StatusFilters}" SelectedItem="{Binding StatusFilter}" Style="{StaticResource Theme.ComboBox.Light}"
+                      Width="140" Margin="0,0,14,0" VerticalAlignment="Center" ToolTip="Show only the properties at this stage"/>
             <TextBlock Text="{Binding Totals}" Style="{StaticResource Theme.Dialog.Text}" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
         </DockPanel>
 
@@ -196,7 +198,7 @@
                         </StackPanel>
                     </HeaderedContentControl>
 
-                    <HeaderedContentControl Header="Value" Tag="{StaticResource Icon.Building}" Style="{StaticResource Card}">
+                    <HeaderedContentControl Header="Value and pricing" Tag="{StaticResource Icon.Building}" Style="{StaticResource Card}">
                         <StackPanel>
                             <DockPanel Style="{StaticResource Field}"><TextBlock Text="Total spent" Style="{StaticResource Label}"/><TextBlock Text="{Binding Model.TotalSpent, StringFormat={}{0:C}}" Style="{StaticResource Computed}"
                                 ToolTip="Purchase total plus every expense line"/></DockPanel>
@@ -211,7 +213,10 @@
                             <DockPanel Style="{StaticResource Field}"><TextBlock Text="Comps" Style="{StaticResource Label}"/><TextBlock Text="{Binding CompsSummary}" Style="{StaticResource Computed}" FontWeight="Normal"/></DockPanel>
                             <DockPanel Style="{StaticResource Field}"><TextBlock Text="Asking price" Style="{StaticResource Label}"/><TextBox Text="{Binding AskingPrice, StringFormat=N2, TargetNullValue=''}"/></DockPanel>
                             <DockPanel Style="{StaticResource Field}"><TextBlock Text="Quick-sale price" Style="{StaticResource Label}"/><TextBox Text="{Binding QuickSalePrice, StringFormat=N2, TargetNullValue=''}"/></DockPanel>
-                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Status" Style="{StaticResource Label}"/><TextBox Text="{Binding Status}" Tag="Acquired / Listed / Sold"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Negotiation target" Style="{StaticResource Label}"/><TextBox Text="{Binding NegotiationTarget, StringFormat=N2, TargetNullValue=''}" ToolTip="What you expect to settle at"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Conservative value" Style="{StaticResource Label}"/><TextBox Text="{Binding ConservativeValue, StringFormat=N2, TargetNullValue=''}" ToolTip="The low end of what the comps support; the market value is the base case"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Optimistic value" Style="{StaticResource Label}"/><TextBox Text="{Binding OptimisticValue, StringFormat=N2, TargetNullValue=''}" ToolTip="The high end of what the comps support"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Status" Style="{StaticResource Label}"/><ComboBox ItemsSource="{x:Static vm:MyPropertiesViewModel.StatusOptions}" SelectedItem="{Binding Status}" Style="{StaticResource Theme.ComboBox.Light}"/></DockPanel>
                         </StackPanel>
                     </HeaderedContentControl>
 
@@ -277,6 +282,155 @@
                                 <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <HeaderedContentControl Header="Profit at each price" Tag="{StaticResource Icon.Scale}" Style="{StaticResource WideCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,0,0,6"
+                                   Text="What a sale at each price you have set would leave over everything spent, before closing costs. Set the prices in the Value card."/>
+                        <DataGrid ItemsSource="{Binding Model.PriceScenarios}" FontSize="13" MinRowHeight="30" IsHitTestVisible="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Price" Binding="{Binding Label}" Width="*"/>
+                                <DataGridTextColumn Header="Amount" Binding="{Binding Price, StringFormat={}{0:C}}" Width="130" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="Profit" Binding="{Binding Profit, StringFormat={}{0:C}}" Width="130" ElementStyle="{StaticResource NumericCellStyle}" FontWeight="SemiBold"/>
+                                <DataGridTextColumn Header="Return" Binding="{Binding RoiPercent, StringFormat={}{0:N0}%, TargetNullValue=''}" Width="100" ElementStyle="{StaticResource NumericCellStyle}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <HeaderedContentControl Header="Owner financing" Tag="{StaticResource Icon.Calendar}" Style="{StaticResource WideCard}">
+                    <StackPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Financing price" Style="{StaticResource Label}"/>
+                            <TextBox Text="{Binding FinancingPrice, StringFormat=N2, TargetNullValue=''}" Width="140" DockPanel.Dock="Left" Margin="0,0,12,0" Tag="asking price"
+                                     ToolTip="Leave empty to use the asking price, or the market value when there is no asking price"/>
+                            <TextBlock Text="{Binding FinancingBasisText}" Style="{StaticResource Theme.Dialog.Text.Small}" VerticalAlignment="Center"/></DockPanel>
+                        <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,2,0,6" Text="The offers. Change any number; the payments below follow when you leave the row."/>
+                        <DataGrid x:Name="TiersGrid" ItemsSource="{Binding Model.FinancingTiers}" Style="{StaticResource EditGrid}" RowEditEnding="OnRowEditEnding">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Offer" Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="Down %" Binding="{Binding DownPercent, StringFormat=0.##}" Width="110" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="APR %" Binding="{Binding Apr, StringFormat=0.00}" Width="110" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="Months" Binding="{Binding Months}" Width="110" ElementStyle="{StaticResource NumericCellStyle}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DataGrid ItemsSource="{Binding Model.FinancingQuotes}" FontSize="13" MinRowHeight="30" IsHitTestVisible="False" Margin="0,10,0,0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Offer" Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="Down payment" Binding="{Binding DownPayment, StringFormat={}{0:C}}" Width="120" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="Financed" Binding="{Binding Financed, StringFormat={}{0:C}}" Width="110" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="Monthly" Binding="{Binding Monthly, StringFormat={}{0:C}}" Width="110" ElementStyle="{StaticResource NumericCellStyle}" FontWeight="SemiBold"/>
+                                <DataGridTextColumn Header="Total received" Binding="{Binding TotalReceived, StringFormat={}{0:C}}" Width="130" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="Interest" Binding="{Binding TotalInterest, StringFormat={}{0:C}}" Width="110" ElementStyle="{StaticResource NumericCellStyle}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,8,0,4" Text="Cash option: 0% interest for a buyer who pays the full price at closing. No prepayment penalty on any offer."/>
+                        <DockPanel Margin="0,8,0,0">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button Content="Use as my defaults" Style="{StaticResource Theme.Dialog.Button.Link}" Command="{Binding DataContext.SaveTiersAsDefaultCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ToolTip="New properties will start with these offers"/>
+                                <Button Content="Term sheet" Tag="{StaticResource Icon.Html}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="12,5" Command="{Binding DataContext.ExportTermSheetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ToolTip="Save the term sheet as a web page and open it; print it to PDF from the browser"/>
+                            </StackPanel>
+                            <TextBox Text="{Binding DataContext.ContactLine, RelativeSource={RelativeSource AncestorType=UserControl}}" Tag="Line under the logo on the term sheet: city, e-mail, phone"
+                                     ToolTip="Shown under the logo on every term sheet. Saved in the app's settings, not with this property."/>
+                        </DockPanel>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <HeaderedContentControl Header="Sale readiness" Tag="{StaticResource Icon.Check}" Style="{StaticResource WideCard}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding ChecklistProgress}" Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,0,0,6"/>
+                        <DataGrid x:Name="ChecklistGrid" ItemsSource="{Binding Model.SaleChecklist}" Style="{StaticResource EditGrid}" CanUserAddRows="False" CanUserDeleteRows="False"
+                                  MaxHeight="520" RowEditEnding="OnRowEditEnding">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Done" Width="56">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate><CheckBox IsChecked="{Binding Done, UpdateSourceTrigger=PropertyChanged}" Click="OnChecklistClick" HorizontalAlignment="Center" VerticalAlignment="Center"/></DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Step" Binding="{Binding Title}" Width="2*" IsReadOnly="True">
+                                    <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <HeaderedContentControl Header="Offices and contacts" Tag="{StaticResource Icon.City}" Style="{StaticResource WideCard}">
+                    <StackPanel>
+                        <ItemsControl ItemsSource="{Binding OfficeLinks}" Focusable="False">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Key}" Style="{StaticResource Theme.Dialog.Button.Link}" Margin="0,0,10,6" CommandParameter="{Binding Value}"
+                                            Command="{Binding DataContext.OpenLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,0,0,6" Text="Who to call: Register of Deeds, Treasurer, Planning and Zoning, title companies."/>
+                        <DataGrid x:Name="ContactsGrid" ItemsSource="{Binding Model.Contacts}" Style="{StaticResource EditGrid}" RowEditEnding="OnRowEditEnding">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Office or company" Binding="{Binding Office}" Width="*"/>
+                                <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="150"/>
+                                <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="2*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <HeaderedContentControl Header="Listings" Tag="{StaticResource Icon.Web}" Style="{StaticResource WideCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,0,0,6" Text="Where it is advertised. Add a new line for a price change, so the history stays."/>
+                        <DataGrid x:Name="ListingsGrid" ItemsSource="{Binding Model.Listings}" Style="{StaticResource EditGrid}" RowEditEnding="OnRowEditEnding">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=d}" Width="100"/>
+                                <DataGridTextColumn Header="Site" Binding="{Binding Site}" Width="160"/>
+                                <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat=N2, TargetNullValue=''}" Width="110" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="Link" Binding="{Binding Url}" Width="*"/>
+                                <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <HeaderedContentControl Header="Buyers" Tag="{StaticResource Icon.Person}" Style="{StaticResource WideCard}">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,6">
+                            <Button DockPanel.Dock="Right" Content="Add the neighbors" Style="{StaticResource Theme.Dialog.Button.Link}" Command="{Binding DataContext.NeighborsToLeadsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    ToolTip="Every neighbor not already listed here becomes a lead to contact"/>
+                            <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" VerticalAlignment="Center" Text="Everyone who asked or made an offer. Contact is a phone, e-mail or address; Fin. means they want owner financing."/>
+                        </DockPanel>
+                        <DataGrid x:Name="BuyersGrid" ItemsSource="{Binding Model.Buyers}" Style="{StaticResource EditGrid}" RowEditEnding="OnRowEditEnding">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=d}" Width="80"/>
+                                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="1.3*"/>
+                                <DataGridTextColumn Header="Contact" Binding="{Binding Contact}" Width="1.3*"/>
+                                <DataGridComboBoxColumn Header="Type" SelectedItemBinding="{Binding Type}" ItemsSource="{x:Static vm:MyPropertiesViewModel.BuyerTypes}" Width="90"/>
+                                <DataGridTextColumn Header="Offer" Binding="{Binding Offer, StringFormat=N2, TargetNullValue=''}" Width="80" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridCheckBoxColumn Header="Fin." Binding="{Binding Financed}" Width="46"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="90"/>
+                                <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <HeaderedContentControl Header="The sale" Tag="{StaticResource Icon.Save}" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Sale date" Style="{StaticResource Label}"/><TextBox Text="{Binding SaleDate, StringFormat=d, TargetNullValue=''}" Tag="m/d/yyyy"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Sale price" Style="{StaticResource Label}"/><TextBox Text="{Binding SalePrice, StringFormat=N2, TargetNullValue=''}"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Closing costs" Style="{StaticResource Label}"/><TextBox Text="{Binding SaleClosingCosts, StringFormat=N2}" ToolTip="Title, transfer tax, commission: everything taken out of the price"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Net proceeds" Style="{StaticResource Label}"/><TextBlock Text="{Binding Model.NetProceeds, StringFormat={}{0:C}, TargetNullValue='–'}" Style="{StaticResource Computed}" FontWeight="Normal"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Net profit" Style="{StaticResource Label}"/><TextBlock Text="{Binding Model.NetProfit, StringFormat={}{0:C}, TargetNullValue='–'}" Style="{StaticResource Computed}"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Return" Style="{StaticResource Label}"/>
+                            <TextBlock Style="{StaticResource Computed}" FontWeight="Normal">
+                                <Run Text="{Binding Model.NetRoiPercent, StringFormat={}{0:N0}%, TargetNullValue='–', Mode=OneWay}"/><Run Text="{Binding Model.AnnualizedRoiPercent, StringFormat='  ·  {0:N0}% a year', TargetNullValue='', Mode=OneWay}"/>
+                            </TextBlock></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Held" Style="{StaticResource Label}"/><TextBlock Text="{Binding HeldText}" Style="{StaticResource Computed}" FontWeight="Normal"/></DockPanel>
+                        <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" Text="Set the status in the Value and pricing card to Sold (cash) or Sold (financed) when it closes."/>
                     </StackPanel>
                 </HeaderedContentControl>
 

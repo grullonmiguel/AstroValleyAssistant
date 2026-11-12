@@ -24,7 +24,7 @@ public sealed class JsonOwnedPropertyStore(string folder) : IOwnedPropertyStore
             try
             {
                 if (JsonSerializer.Deserialize<OwnedProperty>(File.ReadAllText(file), Json) is { } p)
-                    properties.Add(p with { Id = Path.GetFileNameWithoutExtension(file), Record = p.Record ?? new(), Expenses = p.Expenses ?? [], Neighbors = p.Neighbors ?? [] }); // the file name is the identity, also for a file dropped in by hand
+                    properties.Add(Whole(p) with { Id = Path.GetFileNameWithoutExtension(file) }); // the file name is the identity, also for a file dropped in by hand
             }
             catch (JsonException ex)
             {
@@ -48,10 +48,18 @@ public sealed class JsonOwnedPropertyStore(string folder) : IOwnedPropertyStore
     {
         var read = JsonSerializer.Deserialize<OwnedProperty>(File.ReadAllText(path), Json) ?? throw new JsonException("The file is empty.");
         // lists and the record may be absent or null in a hand-written file; a fresh Id keeps an import from replacing a property already here
-        var property = read with { Id = Guid.NewGuid().ToString("N"), Record = read.Record ?? new(), Expenses = read.Expenses ?? [], Neighbors = read.Neighbors ?? [] };
+        var property = Whole(read) with { Id = Guid.NewGuid().ToString("N") };
         Save(property);
         return property;
     }
+
+    // a hand-written file may say null where the app expects a list or the record
+    private static OwnedProperty Whole(OwnedProperty p) => p with
+    {
+        Record = p.Record ?? new(), Expenses = p.Expenses ?? [], Neighbors = p.Neighbors ?? [],
+        SaleChecklist = p.SaleChecklist ?? OwnedProperty.NewSaleChecklist(), Contacts = p.Contacts ?? [], Listings = p.Listings ?? [],
+        Buyers = p.Buyers ?? [], FinancingTiers = p.FinancingTiers ?? FinancingTier.Defaults(), Status = p.Status ?? OwnedProperty.Statuses[0],
+    };
 
     public void Export(OwnedProperty property, string path) => File.WriteAllText(path, JsonSerializer.Serialize(property, Json));
 

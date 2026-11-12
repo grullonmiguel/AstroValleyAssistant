@@ -12,7 +12,7 @@ public partial class MyPropertiesView : UserControl
         InitializeComponent();
         // the expense and neighbor grids change the property's lists in place, so the view says when to save: after a row is
         // committed (OnRowEditEnding) and after one is deleted
-        foreach (var grid in new[] { ExpensesGrid, NeighborsGrid })
+        foreach (var grid in new[] { ExpensesGrid, NeighborsGrid, TiersGrid, ContactsGrid, ListingsGrid, BuyersGrid })
             ((INotifyCollectionChanged)grid.Items).CollectionChanged += (_, e) =>
             {
                 if (e.Action == NotifyCollectionChangedAction.Remove) SaveSelected();
@@ -24,6 +24,9 @@ public partial class MyPropertiesView : UserControl
         // the row's values land after this event, so save once they have
         if (e.EditAction == DataGridEditAction.Commit) Dispatcher.BeginInvoke(SaveSelected, DispatcherPriority.Background);
     }
+
+    // a tick on the sale-readiness checklist is saved at once, not when the row loses focus
+    private void OnChecklistClick(object sender, System.Windows.RoutedEventArgs e) => SaveSelected();
 
     private void SaveSelected() => (Detail.DataContext as OwnedPropertyViewModel)?.Touch();
 }

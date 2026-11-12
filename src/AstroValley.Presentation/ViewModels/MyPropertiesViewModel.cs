@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Data;
 using AstroValley.Application.Interfaces.Data;
 using AstroValley.Application.Interfaces.Scraping;
 using AstroValley.Domain.Entities;
@@ -25,10 +26,18 @@ public partial class MyPropertiesViewModel : ObservableObject
     private readonly IBrowserService _browser;
     private readonly HomeViewModel _home;
     private readonly IRegridService _regrid;
+    private readonly SettingsService _settings;
     private readonly IServiceProvider _services; // MainViewModel, the dialogs and Comps are resolved when needed: they are built after this view model
 
-    public MyPropertiesViewModel(IOwnedPropertyStore store, IBrowserService browser, HomeViewModel home, IRegridService regrid, IServiceProvider services)
+    public MyPropertiesViewModel(IOwnedPropertyStore store, IBrowserService browser, HomeViewModel home, IRegridService regrid, SettingsService settings, IServiceProvider services)
     {
+        _settings = settings;
+        CollectionViewSource.GetDefaultView(Properties).Filter = o => StatusFilter switch
+        {
+            "All" => true,
+            "Not sold" => !((OwnedPropertyViewModel)o).Model.IsSold,
+            var status => ((OwnedPropertyViewModel)o).Model.Status == status,
+        };
         _store = store;
         _browser = browser;
         _home = home;
@@ -56,7 +65,8 @@ public partial class MyPropertiesViewModel : ObservableObject
     public ObservableCollection<OwnedPropertyViewModel> Properties { get; } = [];
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(DeleteCommand), nameof(ExportCommand), nameof(ScrapeCommand), nameof(FindCompsCommand), nameof(ShowOnMapCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteCommand), nameof(ExportCommand), nameof(ScrapeCommand), nameof(FindCompsCommand), nameof(ShowOnMapCommand),
+        nameof(SaveTiersAsDefaultCommand), nameof(ExportTermSheetCommand), nameof(NeighborsToLeadsCommand))]
     private OwnedPropertyViewModel? _selected;
 
     [ObservableProperty]
@@ -66,16 +76,105 @@ public partial class MyPropertiesViewModel : ObservableObject
     [ObservableProperty]
     private string _status = "Every change is saved as you make it.";
 
+    // --- status pipeline: a column in the list and this filter above it ---
+    public static string[] StatusOptions => OwnedProperty.Statuses;
+    public static string[] StatusFilters { get; } = ["All", "Not sold", .. OwnedProperty.Statuses];
+
+    [ObservableProperty]
+    private string _statusFilter = "All";
+
+    partial void OnStatusFilterChanged(string value)
+    {
+        CollectionViewSource.GetDefaultView(Properties).Refresh();
+        if (Selected is null || !CollectionViewSource.GetDefaultView(Properties).Contains(Selected))
+            Selected = CollectionViewSource.GetDefaultView(Properties).Cast<OwnedPropertyViewModel>().FirstOrDefault();
+    }
+
+    public static BuyerType[] BuyerTypes { get; } = Enum.GetValues<BuyerType>();
+
+    /// <summary>The line under the logo on every term sheet (city, e-mail, phone); kept in the app's settings, not per property.</summary>
+    public string ContactLine
+    {
+        get => _settings.Seller.ContactLine;
+        set
+        {
+            if (value == _settings.Seller.ContactLine) return;
+            _settings.Seller.ContactLine = value ?? "";
+            SaveSettings();
+            OnPropertyChanged();
+        }
+    }
+
+    private void SaveSettings()
+    {
+        try { _settings.Save(); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Status = $"Could not save the settings: {ex.Message}"; }
+    }
+
+    private List<FinancingTier> StartingTiers() => [.. (_settings.Seller.FinancingTiers is { Count: > 0 } mine ? mine : FinancingTier.Defaults()).Select(t => t with { })];
+
+    /// <summary>Makes the selected property's financing offers the ones every new property starts with.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void SaveTiersAsDefault()
+    {
+        if (Selected is not { } item) return;
+        _settings.Seller.FinancingTiers = [.. item.Model.FinancingTiers.Select(t => t with { })];
+        SaveSettings();
+        Status = "New properties will start with these financing offers.";
+    }
+
+    /// <summary>Writes the term sheet as a web page and opens it; print it to PDF from the browser.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void ExportTermSheet()
+    {
+        if (Selected is not { } item) return;
+        if (item.Model.FinancingQuotes.Count == 0) { Status = "Set a market value, an asking price or a financing price first; the term sheet needs a price."; return; }
+        var name = string.Concat(item.Title.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '-' : c));
+        var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "Web page (*.html)|*.html", FileName = $"Term sheet - {name}.html" };
+        if (dialog.ShowDialog() != true) return;
+        try
+        {
+            File.WriteAllText(dialog.FileName, TermSheetHtml.Build(item.Model, ContactLine, TermSheetHtml.LogoSvg()));
+            _browser.Launch(dialog.FileName);
+            Status = $"Term sheet saved to {dialog.FileName}. Print it to PDF from the browser.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Status = $"Could not save the term sheet: {ex.Message}";
+        }
+    }
+
+    /// <summary>Every neighbor not already in the buyers log becomes a lead there.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void NeighborsToLeads()
+    {
+        if (Selected is not { } item) return;
+        var added = item.AddNeighborsAsLeads();
+        Status = added == 0 ? "Every neighbor is already in the buyers log (or there are none yet)." : $"Added {added} neighbor(s) to the buyers log.";
+    }
+
     public static UtilityStatus[] UtilityOptions { get; } = Enum.GetValues<UtilityStatus>();
     public static ExpenseCategory[] ExpenseCategories { get; } = Enum.GetValues<ExpenseCategory>();
 
     // --- totals above the list ---
     public bool IsEmpty => Properties.Count == 0;
-    public string Totals => Properties.Count == 0 ? "" : string.Join("   ·   ",
-        Properties.Count == 1 ? "1 property" : $"{Properties.Count} properties",
-        $"Spent {Properties.Sum(p => p.Model.TotalSpent):C}",
-        $"Market value {Properties.Sum(p => p.Model.MarketValue ?? 0):C}",
-        $"Minimum sale {Properties.Sum(p => p.Model.MinimumSale ?? 0):C}");
+    public string Totals
+    {
+        get
+        {
+            if (Properties.Count == 0) return "";
+            var held = Properties.Where(p => !p.Model.IsSold).Select(p => p.Model).ToList();
+            var sold = Properties.Where(p => p.Model.IsSold).Select(p => p.Model).ToList();
+            return string.Join("   ·   ", new[]
+            {
+                $"{held.Count} held",
+                $"Spent {held.Sum(p => p.TotalSpent):C0}",
+                $"Market value {held.Sum(p => p.MarketValue ?? 0):C0}",
+                $"Minimum sale {held.Sum(p => p.MinimumSale ?? 0):C0}",
+                sold.Count > 0 ? $"{sold.Count} sold, net profit {sold.Sum(p => p.NetProfit ?? 0):C0}" : null,
+            }.Where(s => s is not null));
+        }
+    }
 
     private void Save(OwnedPropertyViewModel item)
     {
@@ -134,7 +233,7 @@ public partial class MyPropertiesViewModel : ObservableObject
             Status = $"{existing.Title} is already in My Properties.";
             return;
         }
-        var item = new OwnedPropertyViewModel(property, Save);
+        var item = new OwnedPropertyViewModel(property with { FinancingTiers = StartingTiers() }, Save);
         Properties.Insert(0, item);
         Save(item);
         ListChanged();
@@ -226,7 +325,7 @@ public partial class MyPropertiesViewModel : ObservableObject
     [RelayCommand]
     private void Add()
     {
-        var item = new OwnedPropertyViewModel(new OwnedProperty { PurchaseDate = DateTime.Today }, Save);
+        var item = new OwnedPropertyViewModel(new OwnedProperty { PurchaseDate = DateTime.Today, FinancingTiers = StartingTiers() }, Save);
         Properties.Insert(0, item);
         Selected = item;
         Save(item);
@@ -326,7 +425,46 @@ public partial class MyPropertiesViewModel : ObservableObject
 /// </summary>
 public class OwnedPropertyViewModel(OwnedProperty model, Action<OwnedPropertyViewModel> changed) : ObservableObject
 {
-    public OwnedProperty Model { get; private set; } = model;
+    public OwnedProperty Model { get; private set; } = WithCurrentChecklist(model);
+
+    // steps added to the checklist after this property was saved appear at the end of its list; nothing is saved until an edit
+    private static OwnedProperty WithCurrentChecklist(OwnedProperty p)
+    {
+        p.SaleChecklist.AddRange(OwnedProperty.NewSaleChecklist().Where(step => p.SaleChecklist.All(s => s.Key != step.Key)));
+        return p;
+    }
+
+    // --- selling ---
+    public decimal? ConservativeValue { get => Model.ConservativeValue; set => Set(Model with { ConservativeValue = value }); }
+    public decimal? OptimisticValue { get => Model.OptimisticValue; set => Set(Model with { OptimisticValue = value }); }
+    public decimal? NegotiationTarget { get => Model.NegotiationTarget; set => Set(Model with { NegotiationTarget = value }); }
+    public decimal? FinancingPrice { get => Model.FinancingPrice; set => Set(Model with { FinancingPrice = value }); }
+    public DateTime? SaleDate { get => Model.SaleDate; set => Set(Model with { SaleDate = value }); }
+    public decimal? SalePrice { get => Model.SalePrice; set => Set(Model with { SalePrice = value }); }
+    public decimal SaleClosingCosts { get => Model.SaleClosingCosts; set => Set(Model with { SaleClosingCosts = value }); }
+
+    public string ChecklistProgress => $"{Model.SaleChecklist.Count(s => s.Done)} of {Model.SaleChecklist.Count} done";
+    public string FinancingBasisText => Model.FinancingBasis is { } price ? $"Worked out on {price:C}" : "Set a market value or an asking price to see the payments";
+    public string HeldText => Model.DaysHeld(DateTime.Today) is { } days ? $"{days:N0} days" + (Model.CostPerMonthHeld(DateTime.Today) is { } m ? $" · {m:C} a month in upkeep" : "") : "";
+
+    /// <summary>The county's record offices, where the app knows their websites (see the jurisdiction profiles).</summary>
+    public IReadOnlyList<KeyValuePair<string, string>> OfficeLinks =>
+        [.. AstroValley.Domain.DueDiligence.Jurisdictions.For(Model.Record.State, Model.Record.County).Links
+            .Select(l => KeyValuePair.Create(l.Title, l.Url(Model.Record.ParcelId) ?? "")).Where(l => l.Value.Length > 0)];
+
+    public int AddNeighborsAsLeads()
+    {
+        var fresh = Model.Neighbors.Where(n => n.Name.Trim().Length > 0
+            && Model.Buyers.All(b => !string.Equals(b.Name.Trim(), n.Name.Trim(), StringComparison.OrdinalIgnoreCase))).ToList();
+        if (fresh.Count == 0) return 0;
+        // a new list, not an addition to the old one: the buyers grid only notices its own edits
+        Set(Model with { Buyers = [.. Model.Buyers, .. fresh.Select(n => new BuyerLead
+        {
+            Name = n.Name.Trim(), Type = BuyerType.Neighbor, Status = "To contact",
+            Contact = n.MailingAddress.Length > 0 ? n.MailingAddress : n.PropertyAddress,
+        })] });
+        return fresh.Count;
+    }
 
     private void Set(OwnedProperty next)
     {

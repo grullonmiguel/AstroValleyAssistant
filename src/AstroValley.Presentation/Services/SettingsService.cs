@@ -56,6 +56,9 @@ public class SettingsService : IRegridSettings, IRealAuctionSettings
         set => _settings.Theme.Name = value;
     }
 
+    // ── Seller (used by My Properties) ───────────────────────────────────
+    public SellerSettings Seller => _settings.Seller ??= new();
+
     // ── Persistence ──────────────────────────────────────────────────────
     public void Save()
     {
