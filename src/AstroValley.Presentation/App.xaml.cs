@@ -99,6 +99,8 @@ namespace AstroValley.Presentation
             // per-user and writable without admin rights (unlike ProgramData); beside the app's logs
             services.AddSingleton<IPinStore>(new JsonPinStore(System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AstroValleyAssistant", "SavedPins")));
+            services.AddSingleton<IOwnedPropertyStore>(new JsonOwnedPropertyStore(System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AstroValleyAssistant", "MyProperties")));
 
             // ── Infrastructure: Exporters ────────────────────────────────────
             services.AddTransient<IClipboardExporter, ClipboardExporter>();
