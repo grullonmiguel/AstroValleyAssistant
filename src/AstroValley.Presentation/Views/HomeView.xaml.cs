@@ -29,6 +29,7 @@ public partial class HomeView : UserControl
                     _ = RunScript($"setComps({Inv(pin.Latitude)}, {Inv(pin.Longitude)}, {JsonSerializer.Serialize(pin.Comps, new JsonSerializerOptions { PropertyNamingPolicy = null })});");
                 vm.ChecklistChanged += pin =>
                     _ = RunScript($"setChecklist({Inv(pin.Latitude)}, {Inv(pin.Longitude)}, {JsonSerializer.Serialize(pin.Checklist, new JsonSerializerOptions { PropertyNamingPolicy = null })});");
+                vm.FlyToRequested += pin => _ = RunScript($"flyToMarker({Inv(pin.Latitude)}, {Inv(pin.Longitude)});");
                 vm.TerrainToggleRequested += () => _ = RunScript("toggle3d();");
                 vm.OverlayToggleRequested += key => _ = RunScript($"toggleOverlay('{key}');");
                 vm.TourToggleRequested += () => _ = RunScript("toggleTour();");
@@ -115,6 +116,16 @@ public partial class HomeView : UserControl
         if (type == "findComps")
         {
             vm.FindComps(root.GetProperty("lat").GetDouble(), root.GetProperty("lon").GetDouble());
+            return;
+        }
+        if (type == "openOwned")
+        {
+            if (root.GetProperty("id").GetString() is { } id) vm.OpenOwned(id);
+            return;
+        }
+        if (type == "bought")
+        {
+            vm.Bought(root.GetProperty("lat").GetDouble(), root.GetProperty("lon").GetDouble());
             return;
         }
         if (type == "mode")

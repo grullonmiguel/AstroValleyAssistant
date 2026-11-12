@@ -249,6 +249,10 @@ public partial class HomeViewModel : ObservableObject
     /// </summary>
     private void AutoSave(IReadOnlyCollection<MarkerLocation> pins, bool restoreWork = false)
     {
+        // an owned property's pin is saved with the property (My Properties), never in an auction's pin set
+        foreach (var owned in pins.Where(p => p.OwnedId is not null)) OwnedPinEdited?.Invoke(owned);
+        pins = [.. pins.Where(p => p.OwnedId is null)];
+        if (pins.Count == 0) return;
         try { _pinStore.Save(pins, restoreWork); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
@@ -261,6 +265,30 @@ public partial class HomeViewModel : ObservableObject
     private void OpenSavedPins() =>
         Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Services.IDialogService>(_serviceProvider)
             .ShowDialog(new ViewModels.Dialogs.SavedPinsViewModel(_pinStore, _browser, AddMarkers));
+
+    // --- Owned properties: Home draws their pins; MyPropertiesViewModel keeps them and listens to these ---
+
+    /// <summary>Notes or comps changed in an owned pin's popup.</summary>
+    public event Action<MarkerLocation>? OwnedPinEdited;
+
+    /// <summary>The popup's "My Properties" link, with the property's Id.</summary>
+    public event Action<string>? OwnedPropertyRequested;
+
+    /// <summary>The popup's "I bought this" on an auction pin.</summary>
+    public event Action<MarkerLocation>? BoughtRequested;
+
+    /// <summary>Asks the map to move to a pin.</summary>
+    public event Action<MarkerLocation>? FlyToRequested;
+
+    public void OpenOwned(string id) => OwnedPropertyRequested?.Invoke(id);
+
+    public void Bought(double lat, double lon)
+    {
+        var pin = Markers.FirstOrDefault(m => Math.Abs(m.Latitude - lat) < 1e-9 && Math.Abs(m.Longitude - lon) < 1e-9);
+        if (pin is { OwnedId: null }) BoughtRequested?.Invoke(pin);
+    }
+
+    public void FlyTo(MarkerLocation pin) => FlyToRequested?.Invoke(pin);
 
     /// <summary>Raised with only the pins that were new, so the map never draws a pin twice.</summary>
     public event Action<IReadOnlyList<MarkerLocation>>? MarkersAdded;
@@ -375,10 +403,11 @@ public partial class HomeViewModel : ObservableObject
             .ToList();
         if (added.Count == 0) return 0;
 
-        AutoSave(added, restoreWork: true); // before they are drawn, so a parcel scraped again shows the research already done on it
+        var fromAuctions = added.Where(l => l.OwnedId is null).ToList(); // owned pins arrive from My Properties, already saved there
+        if (fromAuctions.Count > 0) AutoSave(fromAuctions, restoreWork: true); // before they are drawn, so a parcel scraped again shows the research already done on it
 
         foreach (var m in added) Markers.Add(m);
-        IsSidebarOpen = false; // make room for the map and the parcel list
+        if (fromAuctions.Count > 0) IsSidebarOpen = false; // make room for the map and the parcel list
         MarkersAdded?.Invoke(added);
         return added.Count;
     }

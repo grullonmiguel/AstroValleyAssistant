@@ -72,6 +72,7 @@ public partial class MainViewModel : ObservableObject
         _serviceProvider = serviceProvider;
         Home = serviceProvider.GetRequiredService<HomeViewModel>();
         Comps = serviceProvider.GetRequiredService<CompsViewModel>();
+        serviceProvider.GetRequiredService<MyPropertiesViewModel>(); // made at start-up so the owned properties' pins are on the Home map
         //CurrentViewModel = _serviceProvider.GetRequiredService<MapViewModel>();
     }
 

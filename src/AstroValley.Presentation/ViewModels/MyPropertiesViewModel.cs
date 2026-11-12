@@ -3,7 +3,12 @@ using System.IO;
 using System.Text.Json;
 using System.Windows;
 using AstroValley.Application.Interfaces.Data;
+using AstroValley.Application.Interfaces.Scraping;
 using AstroValley.Domain.Entities;
+using AstroValley.Domain.Models;
+using AstroValley.Domain.Utilities;
+using AstroValley.Presentation.ViewModels.Dialogs;
+using Microsoft.Extensions.DependencyInjection;
 using AstroValley.Presentation.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -18,11 +23,24 @@ public partial class MyPropertiesViewModel : ObservableObject
 {
     private readonly IOwnedPropertyStore _store;
     private readonly IBrowserService _browser;
+    private readonly HomeViewModel _home;
+    private readonly IRegridService _regrid;
+    private readonly IServiceProvider _services; // MainViewModel, the dialogs and Comps are resolved when needed: they are built after this view model
 
-    public MyPropertiesViewModel(IOwnedPropertyStore store, IBrowserService browser)
+    public MyPropertiesViewModel(IOwnedPropertyStore store, IBrowserService browser, HomeViewModel home, IRegridService regrid, IServiceProvider services)
     {
         _store = store;
         _browser = browser;
+        _home = home;
+        _regrid = regrid;
+        _services = services;
+        home.OwnedPinEdited += OnPinEdited;
+        home.OwnedPropertyRequested += id => { if (Properties.FirstOrDefault(p => p.Model.Id == id) is { } item) Show(item); };
+        home.BoughtRequested += pin =>
+        {
+            home.RemoveMarkerCommand.Execute(pin); // the gold pin takes its place
+            AddBought(OwnedProperty.FromPin(pin, DateTime.Today));
+        };
         try
         {
             foreach (var p in store.List()) Properties.Add(new OwnedPropertyViewModel(p, Save));
@@ -31,14 +49,19 @@ public partial class MyPropertiesViewModel : ObservableObject
         {
             Status = $"Could not read the saved properties: {ex.Message}";
         }
+        foreach (var item in Properties) SyncPin(item);
         Selected = Properties.FirstOrDefault();
     }
 
     public ObservableCollection<OwnedPropertyViewModel> Properties { get; } = [];
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(DeleteCommand), nameof(ExportCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteCommand), nameof(ExportCommand), nameof(ScrapeCommand), nameof(FindCompsCommand), nameof(ShowOnMapCommand))]
     private OwnedPropertyViewModel? _selected;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ScrapeCommand))]
+    private bool _isScraping;
 
     [ObservableProperty]
     private string _status = "Every change is saved as you make it.";
@@ -66,6 +89,132 @@ public partial class MyPropertiesViewModel : ObservableObject
             Status = $"NOT saved, {item.Title}: {ex.Message}";
         }
         OnPropertyChanged(nameof(Totals));
+        SyncPin(item);
+    }
+
+    // --- Home map: each property with coordinates has a gold pin there, redrawn when the property changes ---
+    private readonly Dictionary<string, MarkerLocation> _pins = [];
+    private bool _editFromPin;
+
+    private void SyncPin(OwnedPropertyViewModel item)
+    {
+        if (_editFromPin) return; // the pin already shows the edit; redrawing it would close its popup
+        if (_pins.Remove(item.Model.Id, out var old)) _home.RemoveMarkerCommand.Execute(old);
+        if (item.Model.ToPin() is not { } pin) return;
+        _home.AddMarkers([pin]);
+        _pins[item.Model.Id] = pin;
+    }
+
+    // notes typed or comps accepted in the pin's popup on the Home map
+    private void OnPinEdited(MarkerLocation pin)
+    {
+        if (Properties.FirstOrDefault(p => p.Model.Id == pin.OwnedId) is not { } item) return;
+        _editFromPin = true;
+        try { item.ApplyPin(pin.Notes, pin.Comps); }
+        finally { _editFromPin = false; }
+    }
+
+    private void Show(OwnedPropertyViewModel item)
+    {
+        Selected = item;
+        _services.GetRequiredService<MainViewModel>().CurrentViewModel = this;
+    }
+
+    /// <summary>"Bought" on an auction row or "I bought this" on a Home pin: the property arrives with its research; only the purchase is left to type.</summary>
+    public void AddBought(OwnedProperty property)
+    {
+        var parcel = property.Record.ParcelId;
+        var existing = parcel.Length == 0 ? null : Properties.FirstOrDefault(p =>
+            string.Equals(p.Model.Record.ParcelId, parcel, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(p.Model.Record.State, property.Record.State, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            SyncPin(existing);
+            Show(existing);
+            Status = $"{existing.Title} is already in My Properties.";
+            return;
+        }
+        var item = new OwnedPropertyViewModel(property, Save);
+        Properties.Insert(0, item);
+        Save(item);
+        ListChanged();
+        Show(item);
+        Status = $"Added {item.Title}. Type the purchase price and the fees under Purchase Info.";
+    }
+
+    private bool CanScrape => Selected is not null && !IsScraping;
+
+    /// <summary>Looks the property up on Regrid and fills the fields that are still empty; anything typed is kept.</summary>
+    [RelayCommand(CanExecute = nameof(CanScrape))]
+    private async Task Scrape()
+    {
+        if (Selected is not { } item) return;
+        var r = item.Model.Record;
+        // the full address finds one parcel far more often than a parcel number, which repeats across counties
+        var query = r.Address.Length == 0 ? r.ParcelId
+            : r.Address.Contains(',') ? r.Address
+            : string.Join(", ", new[] { r.Address, r.City, $"{r.State} {r.Zip}".Trim() }.Where(s => s.Length > 0));
+        if (query.Length == 0) { Status = "Type an address or a parcel ID first."; return; }
+
+        IsScraping = true;
+        Status = $"Looking up {query} on Regrid...";
+        try
+        {
+            var result = await _regrid.ScrapeSingleAsync(query, CancellationToken.None);
+            if (result.IsMultiple)
+            {
+                var dialog = new ResolveMatchesViewModel(r.ParcelId, r.Address, r.Owner, result.Matches);
+                _services.GetRequiredService<IDialogService>().ShowDialog(dialog);
+                RegridMatch? match = null;
+                try { match = await dialog.Result; }
+                catch (TaskCanceledException) { } // closed without choosing
+                if (match is null) { Status = $"Regrid found {result.Matches.Count} parcels for {query}; none was chosen."; return; }
+                Status = $"Reading {match.Address} from Regrid...";
+                result = await _regrid.ScrapeSingleAsync(match.FullUrl, CancellationToken.None);
+            }
+
+            if (result.IsRateLimited) Status = "Regrid is limiting requests right now. Try again in a few minutes.";
+            else if (result.Error is not null) Status = $"Regrid lookup failed: {result.Error.Message} (the Regrid sign-in is under the menu, Regrid)";
+            else if (result.NotFound || result.Record is null) Status = $"Regrid found nothing for {query}. Try the parcel ID, or the address with city and state.";
+            else
+            {
+                item.MergeScraped(result.Record);
+                Status = $"Regrid data added to {item.Title}. Fields you had typed were kept."
+                    + (item.Model.ToPin() is null ? " No coordinates came back, so there is no map pin yet." : "");
+            }
+        }
+        finally { IsScraping = false; }
+    }
+
+    /// <summary>Opens the Comps tab for the property; the accepted result is saved on it and becomes the market value when none was typed.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void FindComps()
+    {
+        if (Selected is not { } item) return;
+        var r = item.Model.Record;
+        var subject = new CompsSubject(r.Address.Length > 0 ? r.Address : r.ParcelId, item.Model.Acres, r.PropertyType,
+            r.Latitude.TryParseDouble(), r.Longitude.TryParseDouble(), r.Zip, r.LivingSqft, r.Beds, r.Baths, r.HomeType);
+        _services.GetRequiredService<CompsViewModel>().Open(subject, result =>
+        {
+            var hadValue = item.Model.MarketValue is not null;
+            item.ApplyPin(item.Model.Notes, result);
+            Status = result.EstimatedValue is { } v
+                ? $"Comps saved on {item.Title}: {v:C0}." + (hadValue ? $" Market value left at {item.Model.MarketValue:C0}; change it by hand if you agree with the comps." : " Used as the market value.")
+                : $"Comps saved on {item.Title}.";
+        });
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void ShowOnMap()
+    {
+        if (Selected is not { } item) return;
+        if (!_pins.TryGetValue(item.Model.Id, out var pin))
+        {
+            Status = $"{item.Title} has no coordinates yet. Press Scrape, or type the latitude and longitude.";
+            return;
+        }
+        _services.GetRequiredService<MainViewModel>().CurrentViewModel = _home;
+        _home.FlyTo(pin);
     }
 
     private void ListChanged()
@@ -96,6 +245,7 @@ public partial class MyPropertiesViewModel : ObservableObject
         try
         {
             _store.Delete(item.Model.Id);
+            if (_pins.Remove(item.Model.Id, out var pin)) _home.RemoveMarkerCommand.Execute(pin);
             Properties.Remove(item);
             Selected = Properties.FirstOrDefault();
             ListChanged();
@@ -166,7 +316,7 @@ public partial class MyPropertiesViewModel : ObservableObject
         if (Uri.TryCreate(url?.Trim(), UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
             _browser.Launch(uri.AbsoluteUri);
         else
-            Status = "That is not a web address (it should start with https://).";
+            Status = string.IsNullOrWhiteSpace(url) ? "There is no link for this yet. Scrape the property, or type the address." : "That is not a web address (it should start with https://).";
     }
 }
 
@@ -193,6 +343,44 @@ public class OwnedPropertyViewModel(OwnedProperty model, Action<OwnedPropertyVie
         OnPropertyChanged(string.Empty); // every binding on this row: the computed figures depend on most fields
         changed(this);
     }
+
+    /// <summary>Regrid's record fills what is still empty; nothing typed is overwritten (see PropertyRecordMerger).</summary>
+    public void MergeScraped(PropertyRecord scraped) => Set(Model with { Record = PropertyRecordMerger.Merge(Model.Record, scraped) });
+
+    /// <summary>Notes and comps as edited on the Home map pin or accepted in the Comps tab. The comps' value becomes the market value only when none was typed.</summary>
+    public void ApplyPin(string? notes, CompsResult? comps) => Set(Model with
+    {
+        Notes = notes ?? "",
+        Record = Model.Record with { Comps = comps },
+        MarketValue = Model.MarketValue ?? comps?.EstimatedValue,
+    });
+
+    public string CompsSummary => Model.Record.Comps is { EstimatedValue: { } v } c ? $"{v:C0} from {c.Count} comps" : "none yet";
+
+    // --- aerial photo and map links; the photo is kept until the place changes, so other edits do not reload it ---
+    private string? _aerialFor;
+    private AerialImage.Result? _aerial;
+    private System.Windows.Media.ImageSource? _aerialPhoto;
+
+    public AerialImage.Result? Aerial
+    {
+        get
+        {
+            var r = Model.Record;
+            var key = $"{r.Latitude}|{r.Longitude}|{r.ParcelLines?.Length}";
+            if (key == _aerialFor) return _aerial;
+            _aerialFor = key;
+            // built at half the card's size and stretched: the imagery service refuses a lot-sized picture any sharper than about 0.3 m per pixel
+            _aerial = AerialImage.Build(r.Latitude, r.Longitude, r.ParcelLines, 179, 95);
+            _aerialPhoto = _aerial is null ? null : new System.Windows.Media.Imaging.BitmapImage(new Uri(_aerial.Url));
+            return _aerial;
+        }
+    }
+    public System.Windows.Media.ImageSource? AerialPhoto => Aerial is null ? null : _aerialPhoto;
+
+    public string? StreetViewUrl => Aerial is null ? null : $"https://www.google.com/maps/@?api=1&map_action=pano&viewpoint={Model.Record.Latitude},{Model.Record.Longitude}";
+    public string? GoogleMapsUrl => UrlBuilder.BuildGoogleMapsUrl(Model.Record);
+    public string RegridUrl => Model.Record.RegridUrl;
 
     public string Title => Model.Record.Address is { Length: > 0 } a ? a : Model.Record.ParcelId is { Length: > 0 } p ? p : "New property";
 

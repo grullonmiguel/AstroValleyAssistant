@@ -25,11 +25,15 @@ public partial class PinFilter : ObservableObject
     [ObservableProperty] private string _propertyType = Types[0];
     [ObservableProperty] private bool _undividedOnly;
 
+    /// <summary>Properties already bought (My Properties) share the map with the auction pins.</summary>
+    public static readonly string[] OwnedOptions = ["All", "Owned only", "Hide owned"];
+    [ObservableProperty] private string _owned = OwnedOptions[0];
+
     public PinFilter Clone() => new()
     {
         MinBid = MinBid, MaxBid = MaxBid, MinAssessed = MinAssessed, MaxAssessed = MaxAssessed,
         MinBidPercent = MinBidPercent, MaxBidPercent = MaxBidPercent, MinAcres = MinAcres, MaxAcres = MaxAcres,
-        MinSlope = MinSlope, MaxSlope = MaxSlope, PropertyType = PropertyType, UndividedOnly = UndividedOnly
+        MinSlope = MinSlope, MaxSlope = MaxSlope, PropertyType = PropertyType, UndividedOnly = UndividedOnly, Owned = Owned
     };
 
     // Pins missing the number a filled-in range needs (no bid, no assessed value, no acreage...) are hidden by that range.
@@ -40,7 +44,8 @@ public partial class PinFilter : ObservableObject
         && In(double.TryParse(m.Acres, CultureInfo.InvariantCulture, out var acres) ? acres : null, MinAcres, MaxAcres)
         && In(m.SlopePercent, MinSlope, MaxSlope)
         && (PropertyType == Types[0] || m.PropertyType == PropertyType)
-        && (!UndividedOnly || m.UndividedInterest);
+        && (!UndividedOnly || m.UndividedInterest)
+        && (Owned == OwnedOptions[0] || (m.OwnedId is not null) == (Owned == OwnedOptions[1]));
 
     private static bool In(double? value, string min, string max)
     {

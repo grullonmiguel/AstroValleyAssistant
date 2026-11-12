@@ -86,10 +86,10 @@
                 <DataGridTextColumn Header="Purchased" Binding="{Binding PurchasePrice, StringFormat={}{0:C}}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
                 <DataGridTextColumn Header="Total Spent" Binding="{Binding Model.TotalSpent, StringFormat={}{0:C}}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
                 <DataGridTextColumn Header="Market Value" Binding="{Binding MarketValue, StringFormat={}{0:C}}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}" FontWeight="SemiBold"/>
-                <DataGridTextColumn Header="Gain" Binding="{Binding Model.MarketGainPercent, StringFormat={}{0:N0}%}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}" FontWeight="SemiBold"/>
+                <DataGridTextColumn Header="Gain" Binding="{Binding Model.MarketGainPercent, StringFormat={}{0:N0}%, TargetNullValue=''}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}" FontWeight="SemiBold"/>
                 <DataGridTextColumn Header="Min %" Binding="{Binding MinimumSalePercent, StringFormat={}{0:0.##}%}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
                 <DataGridTextColumn Header="Minimum Sale" Binding="{Binding Model.MinimumSale, StringFormat={}{0:C}}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
-                <DataGridTextColumn Header="Min Gain" Binding="{Binding Model.MinimumSaleGainPercent, StringFormat={}{0:N2}%}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
+                <DataGridTextColumn Header="Min Gain" Binding="{Binding Model.MinimumSaleGainPercent, StringFormat={}{0:N2}%, TargetNullValue=''}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
                 <DataGridTextColumn Header="Purchased By" Binding="{Binding PurchasedBy}" Width="Auto"/>
                 <DataGridTextColumn Header="Zoning" Binding="{Binding ZoningCode}" Width="Auto"/>
                 <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="Auto"/>
@@ -159,6 +159,43 @@
                 </StackPanel>
 
                 <StackPanel>
+                    <HeaderedContentControl Header="Map and research" Tag="{StaticResource Icon.MapPin}" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <!-- aerial photo with the parcel outline (Esri World Imagery), once the property has coordinates -->
+                            <Border Height="190" CornerRadius="8" ClipToBounds="True" Margin="0,0,0,8" Background="{DynamicResource Brush.Background.Hover}">
+                                <Grid>
+                                    <TextBlock Text="No aerial photo yet. Press Scrape to get the coordinates from Regrid." Style="{StaticResource Theme.Dialog.Text.Small}" Margin="12" TextAlignment="Center"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <Grid Visibility="{Binding Aerial, Converter={StaticResource NullToVisibilityConverter}}" Background="{DynamicResource Brush.Background.Hover}">
+                                        <Image Source="{Binding AerialPhoto}" Stretch="Fill"/>
+                                        <Viewbox Stretch="Fill"><Canvas Width="179" Height="95">
+                                            <Path Data="{Binding Aerial.OutlinePath}" Stroke="White" StrokeThickness="1.5" Fill="#22FFFFFF" StrokeLineJoin="Round"/>
+                                        </Canvas></Viewbox>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                            <WrapPanel>
+                                <Button Content="Scrape" Tag="{StaticResource Icon.Regrid}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="9,5" Margin="0,0,6,6"
+                                        Command="{Binding DataContext.ScrapeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ToolTip="Look this property up on Regrid and fill the empty fields. Anything you typed is kept."/>
+                                <Button Content="Comps" Tag="{StaticResource Icon.Scale}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="9,5" Margin="0,0,6,6"
+                                        Command="{Binding DataContext.FindCompsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ToolTip="Open the Comps tab for this property; the value you send back is saved here"/>
+                                <Button Content="Show on map" Tag="{StaticResource Icon.MapMarker}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="9,5" Margin="0,0,0,6"
+                                        Command="{Binding DataContext.ShowOnMapCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ToolTip="Go to this property's gold pin on the Home map"/>
+                            </WrapPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Street View" Style="{StaticResource Theme.Dialog.Button.Link}" Margin="0" CommandParameter="{Binding StreetViewUrl}"
+                                        Command="{Binding DataContext.OpenLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Button Content="Google Maps" Style="{StaticResource Theme.Dialog.Button.Link}" CommandParameter="{Binding GoogleMapsUrl}"
+                                        Command="{Binding DataContext.OpenLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Button Content="Regrid" Style="{StaticResource Theme.Dialog.Button.Link}" CommandParameter="{Binding RegridUrl}"
+                                        Command="{Binding DataContext.OpenLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </HeaderedContentControl>
+
                     <HeaderedContentControl Header="Value" Tag="{StaticResource Icon.Building}" Style="{StaticResource Card}">
                         <StackPanel>
                             <DockPanel Style="{StaticResource Field}"><TextBlock Text="Total spent" Style="{StaticResource Label}"/><TextBlock Text="{Binding Model.TotalSpent, StringFormat={}{0:C}}" Style="{StaticResource Computed}"
@@ -171,6 +208,7 @@
                                 <TextBlock Style="{StaticResource Computed}">
                                     <Run Text="{Binding Model.MinimumSale, StringFormat={}{0:C}, Mode=OneWay}"/><Run Text="  ·  "/><Run Text="{Binding Model.MinimumSaleGainPercent, StringFormat={}{0:N0}%, Mode=OneWay}" ToolTip="Gain over total spent at the minimum sale price"/>
                                 </TextBlock></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Comps" Style="{StaticResource Label}"/><TextBlock Text="{Binding CompsSummary}" Style="{StaticResource Computed}" FontWeight="Normal"/></DockPanel>
                             <DockPanel Style="{StaticResource Field}"><TextBlock Text="Asking price" Style="{StaticResource Label}"/><TextBox Text="{Binding AskingPrice, StringFormat=N2, TargetNullValue=''}"/></DockPanel>
                             <DockPanel Style="{StaticResource Field}"><TextBlock Text="Quick-sale price" Style="{StaticResource Label}"/><TextBox Text="{Binding QuickSalePrice, StringFormat=N2, TargetNullValue=''}"/></DockPanel>
                             <DockPanel Style="{StaticResource Field}"><TextBlock Text="Status" Style="{StaticResource Label}"/><TextBox Text="{Binding Status}" Tag="Acquired / Listed / Sold"/></DockPanel>

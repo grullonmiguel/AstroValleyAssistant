@@ -313,8 +313,13 @@
                     <DataGridTemplateColumn Header="" Width="Auto">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
                                 <Button Content="Comps" Padding="10,2" Margin="4,0" FontSize="12" Style="{StaticResource Theme.Button.Outline}"
                                         Command="{Binding DataContext.OpenCompsCommand, Source={x:Reference FrameWorkElementProxy}}" CommandParameter="{Binding}"/>
+                                <Button Content="Bought" Padding="10,2" Margin="0,0,4,0" FontSize="12" Style="{StaticResource Theme.Button.Outline}"
+                                        ToolTip="I bought this one: move it to My Properties with what was scraped"
+                                        Command="{Binding DataContext.BoughtCommand, Source={x:Reference FrameWorkElementProxy}}" CommandParameter="{Binding}"/>
+                                </StackPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

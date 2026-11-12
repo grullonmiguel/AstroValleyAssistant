@@ -644,6 +644,11 @@
                                           ToolTip="Vacant land or Structures hides pins whose type is unknown."/>
                             </StackPanel>
                             <StackPanel Style="{StaticResource ToolsRow}">
+                                <TextBlock Text="My Properties" Style="{StaticResource ToolsLabel}"/>
+                                <ComboBox ItemsSource="{x:Static vm:PinFilter.OwnedOptions}" SelectedItem="{Binding Draft.Owned}"
+                                          ToolTip="The gold pins are properties you already bought."/>
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource ToolsRow}">
                                 <TextBlock Text="Co-ownership" Style="{StaticResource ToolsLabel}"/>
                                 <CheckBox Content="Possible undivided interest only" IsChecked="{Binding Draft.UndividedOnly}"
                                           ToolTip="Legal description mentions undivided / fractional / partial interest or tenants in common."/>

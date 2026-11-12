@@ -20,6 +20,7 @@ public record MarkerLocation : INotifyPropertyChanged
     public DateTime? AuctionDate { get; init; } // drives pin colour and the "This week" filter
     public string? PinColor { get; init; }      // overrides the auction colour (pins with no auction, e.g. comps)
     public string? CompKey { get; init; }       // identifies a comp pin when the map is used to exclude comps
+    public string? OwnedId { get; init; }       // a property already bought (My Properties): its Id there; such pins are saved with the property, not in a pin set
     public bool IsSubject { get; init; }       // the property the comps were searched for (Comps export)
     public Dictionary<string, string>? CompFacts { get; init; } // label -> value rows shown in the popup (Comps export)
     public Dictionary<string, string>? CompTips { get; init; }  // label -> hover explanation for a CompFacts row
@@ -44,6 +45,62 @@ public record MarkerLocation : INotifyPropertyChanged
 
     /// <summary>Comparable sales the user accepted in the comps dialog; null until then.</summary>
     public CompsResult? Comps { get; set; }
+
+    /// <summary>
+    /// The pin for a scraped property, with everything the popup, the filters and the research sheet read; null without coordinates.
+    /// Auction rows and owned properties both come through here, so their pins carry the same details.
+    /// </summary>
+    public static MarkerLocation? FromRecord(AstroValley.Domain.Entities.PropertyRecord r, string? auctionUrl)
+    {
+        if (AstroValley.Domain.Utilities.StringExtensions.TryParseDouble(r.Latitude) is not { } lat
+            || AstroValley.Domain.Utilities.StringExtensions.TryParseDouble(r.Longitude) is not { } lon) return null;
+
+        var details = new Dictionary<string, string>();
+        void Add(string key, object? value) { if (value is not null && $"{value}".Trim().Length > 0) details[key] = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture)!; }
+        Add("Flood Zone", r.FloodZone);
+        Add("Owner", r.Owner);
+        Add("Legal Description", r.LegalDescription);
+        Add("Property Type", r.PropertyType);   // "Vacant land" / "Structures"; absent when unknown
+        Add("City", r.City);
+        Add("Zip", r.Zip);                      // City, Zoning and Type feed the Excel sheet
+        Add("Zoning", r.ZoningCode);
+        Add("Type", r.ZoningType);
+        Add("Elevation Low", r.ElevationLow);   // raw values: the pin computes its slope from these
+        Add("Elevation High", r.ElevationHigh);
+        var elevations = new[] { r.ElevationLow, r.ElevationHigh }.Where(e => !string.IsNullOrWhiteSpace(e)).Distinct().ToList();
+        if (elevations.Count > 0) details["Elevation"] = string.Join(" - ", elevations); // "low - high", or one value when equal
+        if (r.AssessedValue is { } assessed) details["Assessed"] = assessed.ToString();  // current culture: read back by Money()
+        if (r.OpeningBid is { } bid) details["Minimum Bid"] = bid.ToString();
+        // house facts from the county record; each only when the county gave it
+        Add("Home Type", r.HomeType);
+        Add("Land Use", r.UseDescription);
+        Add("Beds", r.Beds); Add("Baths", r.Baths); Add("Living Sqft", r.LivingSqft);
+        Add("Units", r.Units); Add("Year Built", r.YearBuilt); Add("Buildings", r.BuildingCount);
+        Add("Other Owners", r.OtherOwners);
+        Add("House Check", AstroValley.Domain.Entities.HomeKind.VacantConflict(r.PropertyType, r.Beds, r.LivingSqft, r.YearBuilt));
+
+        return new MarkerLocation
+        {
+            ParcelID = r.ParcelId,
+            Address = r.Address,
+            Acres = r.Acres?.ToString(),
+            Latitude = lat,
+            Longitude = lon,
+            ParcelLines = r.ParcelLines,
+            County = string.IsNullOrWhiteSpace(r.County) ? null : r.County,
+            AuctionUrl = string.IsNullOrWhiteSpace(auctionUrl) ? null : auctionUrl,
+            AuctionDate = r.AuctionDate.Year > 1 ? r.AuctionDate : null,
+            RegridUrl = string.IsNullOrWhiteSpace(r.RegridUrl) ? null : r.RegridUrl,
+            GoogleMapsUrl = AstroValley.Domain.Utilities.UrlBuilder.BuildGoogleMapsUrl(r),
+            FemaUrl = AstroValley.Domain.Utilities.UrlBuilder.BuildFemaFloodUrl(r),
+            AppraiserUrl = string.IsNullOrWhiteSpace(r.AppraiserUrl) ? null : r.AppraiserUrl,
+            Comps = r.Comps,
+            State = string.IsNullOrWhiteSpace(r.State) ? null : r.State,
+            Risks = AstroValley.Domain.DueDiligence.Jurisdictions.Review(r, DateTime.Today),
+            SearchNames = AstroValley.Domain.DueDiligence.Jurisdictions.SearchNames(r.Owner, r.OtherOwners, r.PreviousOwner),
+            ExtraDetails = details
+        };
+    }
 
     /// <summary>Identifies a parcel on the map and in the saved files. Parcel IDs can repeat across counties, so the (rounded) position is part of it.</summary>
     [JsonIgnore]

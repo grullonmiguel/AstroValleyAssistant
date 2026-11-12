@@ -267,6 +267,13 @@
         function onFindComps(loc) {
             if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'findComps', lat: loc.Latitude, lon: loc.Longitude });
         }
+        // "My Properties" on an owned (gold) pin, and "I bought this" on an auction pin: WPF opens the property / makes one from the pin.
+        function onOpenOwned(loc) {
+            if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'openOwned', id: loc.OwnedId });
+        }
+        function onBought(loc) {
+            if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'bought', lat: loc.Latitude, lon: loc.Longitude });
+        }
         // "Due diligence" in a popup: WPF opens the checklist; setChecklist puts the answers back into the open popup.
         function onDueDiligence(loc) {
             if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'dueDiligence', lat: loc.Latitude, lon: loc.Longitude });

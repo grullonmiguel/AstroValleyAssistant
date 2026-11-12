@@ -318,60 +318,23 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         _serviceProvider!.GetRequiredService<CompsViewModel>().Open(subject, result => row.Record = row.Record with { Comps = result });
     }
 
+    // rows without a county take it from the auction site's address
+    private PropertyRecord WithCounty(PropertyRecord r) => string.IsNullOrWhiteSpace(r.County) ? r with { County = CountyFrom(AuctionUrl) ?? "" } : r;
+
+    /// <summary>The grid's Bought button: the row becomes a property in My Properties, with what was scraped and its comps.</summary>
+    [RelayCommand]
+    private void Bought(PropertyDataViewModel? row)
+    {
+        if (row is not null)
+            _serviceProvider!.GetRequiredService<MyPropertiesViewModel>().AddBought(OwnedProperty.FromRecord(WithCounty(row.Record), AuctionUrl, DateTime.Today));
+    }
+
     [RelayCommand(CanExecute = nameof(CanMap))]
     protected void ViewInMap()
     {
         var mapLocations = new List<MarkerLocation>();
-        foreach (var record in PropertyRecords)
-        {
-            var details = new Dictionary<string, string>();
-            if (!string.IsNullOrEmpty(record.FloodZone)) details.Add("Flood Zone", record.FloodZone);
-            if (!string.IsNullOrEmpty(record.Owner)) details.Add("Owner", record.Owner);
-            if (!string.IsNullOrWhiteSpace(record.Record.LegalDescription)) details.Add("Legal Description", record.Record.LegalDescription);
-            if (!string.IsNullOrWhiteSpace(record.PropertyType)) details.Add("Property Type", record.PropertyType); // "Vacant land" / "Structures"; absent when unknown
-            if (!string.IsNullOrEmpty(record.City)) details.Add("City", record.City);
-            if (!string.IsNullOrEmpty(record.Zip)) details.Add("Zip", record.Zip);          // City, Zoning and Type feed the Excel sheet
-            if (!string.IsNullOrEmpty(record.ZoningCode)) details.Add("Zoning", record.ZoningCode);
-            if (!string.IsNullOrEmpty(record.ZoningType)) details.Add("Type", record.ZoningType);
-            if (!string.IsNullOrWhiteSpace(record.ElevationLow)) details.Add("Elevation Low", record.ElevationLow);   // raw values: the pin computes its slope from these
-            if (!string.IsNullOrWhiteSpace(record.ElevationHigh)) details.Add("Elevation High", record.ElevationHigh);
-            var elevations = new[] { record.ElevationLow, record.ElevationHigh }.Where(e => !string.IsNullOrWhiteSpace(e)).Distinct().ToList();
-            if (elevations.Count > 0) details.Add("Elevation", string.Join(" - ", elevations)); // "low - high", or one value when equal
-            if (!string.IsNullOrEmpty(record.AssessedValue?.ToString() ?? "")) details.Add("Assessed", record.AssessedValue?.ToString() ?? "");
-            if (!string.IsNullOrEmpty(record.Bid?.ToString() ?? "")) details.Add("Minimum Bid", record.Bid?.ToString() ?? "");
-            // house facts from the county record; each only when the county gave it
-            var r0 = record.Record;
-            void Add(string key, object? value) { if (value is not null && $"{value}".Length > 0) details[key] = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture)!; }
-            Add("Home Type", r0.HomeType);
-            Add("Land Use", r0.UseDescription);
-            Add("Beds", r0.Beds); Add("Baths", r0.Baths); Add("Living Sqft", r0.LivingSqft);
-            Add("Units", r0.Units); Add("Year Built", r0.YearBuilt); Add("Buildings", r0.BuildingCount);
-            Add("Other Owners", r0.OtherOwners);
-            Add("House Check", HomeKind.VacantConflict(r0.PropertyType, r0.Beds, r0.LivingSqft, r0.YearBuilt));
-
-            if (!string.IsNullOrWhiteSpace(record.Latitude) && !string.IsNullOrEmpty(record.Longitude))
-                mapLocations.Add(new MarkerLocation
-                {
-                    ParcelID = record.ParcelId,
-                    Address = record.Address ?? record.Owner,
-                    Acres = record.Acres?.ToString() ?? null,
-                    Latitude = (double)record.Latitude.TryParseDouble(),
-                    Longitude = (double)record.Longitude.TryParseDouble(),
-                    ParcelLines = record.ParcelLines,
-                    County = string.IsNullOrWhiteSpace(record.Record.County) ? CountyFrom(AuctionUrl) : record.Record.County,
-                    AuctionUrl = AuctionUrl,
-                    AuctionDate = record.Record.AuctionDate.Year > 1 ? record.Record.AuctionDate : null,
-                    RegridUrl = string.IsNullOrWhiteSpace(record.RegridUrl) ? null : record.RegridUrl,
-                    GoogleMapsUrl = UrlBuilder.BuildGoogleMapsUrl(record.Record),
-                    FemaUrl = UrlBuilder.BuildFemaFloodUrl(record.Record),
-                    AppraiserUrl = string.IsNullOrWhiteSpace(record.AppraiserUrl) ? null : record.AppraiserUrl,
-                    Comps = record.Record.Comps,
-                    State = string.IsNullOrWhiteSpace(r0.State) ? null : r0.State,
-                    Risks = AstroValley.Domain.DueDiligence.Jurisdictions.Review(r0, DateTime.Today),
-                    SearchNames = AstroValley.Domain.DueDiligence.Jurisdictions.SearchNames(r0.Owner, r0.OtherOwners, r0.PreviousOwner),
-                    ExtraDetails = details
-                });
-        }
+        foreach (var row in PropertyRecords)
+            if (MarkerLocation.FromRecord(WithCounty(row.Record), AuctionUrl) is { } pin) mapLocations.Add(pin);
 
         // Pins go to the persistent Home map; only ones not already there are added.
         var home = _serviceProvider!.GetRequiredService<HomeViewModel>();

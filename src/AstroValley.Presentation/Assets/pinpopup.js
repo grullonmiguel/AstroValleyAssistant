@@ -100,6 +100,11 @@ function popupHtml(loc, message) {
     var cl = loc.Checklist || [], done = cl.filter(function (i) { return i.Status && i.Status !== 'Pending'; }).length;
     var dueDiligence = typeof onDueDiligence === 'function' ? '<a href="#" class="pp-zoom pp-dd">Due diligence' + (cl.length ? ' ' + done + '/' + cl.length : '') + '</a>' : '';
 
+    // owned properties (gold pins) link back to My Properties; an auction pin can be moved there once it is bought (Home map only)
+    var owned = '';
+    if (loc.OwnedId && typeof onOpenOwned === 'function') owned = '<a href="#" class="pp-zoom pp-owned">My Properties</a>';
+    else if (!loc.OwnedId && !loc.CompKey && !loc.IsSubject && typeof onBought === 'function') owned = '<a href="#" class="pp-zoom pp-bought">I bought this</a>';
+
     // sold/active listing details from the Comps export, one label/value row each
     var compRows = '';
     if (loc.CompFacts) {
@@ -116,7 +121,7 @@ function popupHtml(loc, message) {
     }
     if (loc.IsSubject) compRows = '<div style="margin:8px 0;font-weight:700;color:#2E9E5B">&#127968; Subject property</div>' + compRows;
 
-    return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<div class="pp-links">' + dueDiligence + findComps +
+    return head + '<div class="pp-body"><div class="pp-top">' + auctionBadge(loc) + '<div class="pp-links">' + owned + dueDiligence + findComps +
         '<a href="#" class="pp-zoom">Zoom</a></div></div>' + dataQualityHtml(loc) + '<div class="pp-aerial">' + aerialCardHtml(loc) + '</div>' + compRows +
         (facts ? '<div class="pp-facts">' + facts + '</div>' : '') + house + slope + box + equity + comps + statusSection(loc) + actions + '</div>';
 }
@@ -157,6 +162,8 @@ function makePin(loc, map) {
             var comps = e.target.closest('.pp-comps');
             if (comps) { e.preventDefault(); onFindComps(loc); return; }
             if (e.target.closest('.pp-dd')) { e.preventDefault(); onDueDiligence(loc); return; }
+            if (e.target.closest('.pp-owned')) { e.preventDefault(); onOpenOwned(loc); return; }
+            if (e.target.closest('.pp-bought')) { e.preventDefault(); onBought(loc); return; }
             if (!e.target.closest('.pp-zoom[href="#"]')) return; // not the zoom link
             e.preventDefault();
             var pad = typeof pinPad === 'function' ? pinPad() : { left: 40, top: 40, bottom: 40, right: 40 }; // Home: clear the side panels
