@@ -14,6 +14,12 @@ public interface IOwnedPropertyStore
     /// <summary>Writes the property, replacing an earlier save with the same Id.</summary>
     void Save(OwnedProperty property);
 
+    /// <summary>Reads a property file from anywhere and saves it here as a new property. Throws when the file is not a property.</summary>
+    OwnedProperty Import(string path);
+
+    /// <summary>Writes a copy of the property's file to <paramref name="path"/>.</summary>
+    void Export(OwnedProperty property, string path);
+
     /// <summary>Moves the property's file to the Recycle Bin.</summary>
     void Delete(string id);
 }

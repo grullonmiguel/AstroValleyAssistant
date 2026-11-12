@@ -29,6 +29,7 @@ public partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(IsRegridActive));
             OnPropertyChanged(nameof(IsRealAuctionActive));
             OnPropertyChanged(nameof(IsCompsActive));
+            OnPropertyChanged(nameof(IsMyPropertiesActive));
         }
     }
 
@@ -38,6 +39,7 @@ public partial class MainViewModel : ObservableObject
     public bool IsRegridActive { get => CurrentViewModel is RegridViewModel; set { } }
     public bool IsRealAuctionActive { get => CurrentViewModel is RealAuctionViewModel; set { } }
 
+    public bool IsMyPropertiesActive { get => CurrentViewModel is MyPropertiesViewModel; set { } }
     public bool IsCompsActive { get => CurrentViewModel is CompsViewModel; set { } }
 
     // Home's and Comps' views are created once in MainView (not via DataTemplate) so the map / browser persist.
@@ -90,6 +92,7 @@ public partial class MainViewModel : ObservableObject
             "Regrid" => _serviceProvider.GetRequiredService<RegridViewModel>(),
             "RealAuction" => _serviceProvider.GetRequiredService<RealAuctionViewModel>(),
             "Comps" => Comps,
+            "MyProperties" => _serviceProvider.GetRequiredService<MyPropertiesViewModel>(),
             "Map" => _serviceProvider.GetRequiredService<MapViewModel>(),
             _ => CurrentViewModel // Default case, does nothing
         };

@@ -64,6 +64,7 @@ namespace AstroValley.Presentation
             services.AddSingleton<HomeViewModel>();
             services.AddSingleton<CompsViewModel>();
             services.AddSingleton<RegridViewModel>();
+            services.AddSingleton<MyPropertiesViewModel>();
             services.AddSingleton<RealAuctionViewModel>();
             services.AddSingleton<MapViewModel>();
 

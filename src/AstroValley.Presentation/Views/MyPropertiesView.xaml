@@ -1,0 +1,263 @@
+<UserControl x:Class="AstroValley.Presentation.Views.MyPropertiesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:AstroValley.Presentation.ViewModels">
+    <!-- My Properties (MyPropertiesViewModel): the list of owned properties on top, the selected one's editor below. Uses the shared dialog card styles. -->
+    <UserControl.Resources>
+        <Style x:Key="NumericCellStyle" TargetType="TextBlock">
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+        <!-- one field: the label on the left (a TextBlock), the input filling the rest -->
+        <Style x:Key="Field" TargetType="DockPanel">
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+        <Style x:Key="Label" TargetType="TextBlock" BasedOn="{StaticResource Theme.Dialog.Text.Small}">
+            <Setter Property="Width" Value="118"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+        </Style>
+        <!-- a figure the app works out: shown, not typed -->
+        <Style x:Key="Computed" TargetType="TextBlock" BasedOn="{StaticResource Theme.Dialog.Text}">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,5"/>
+        </Style>
+        <Style x:Key="Card" TargetType="HeaderedContentControl" BasedOn="{StaticResource Theme.Dialog.Card}">
+            <Setter Property="Width" Value="390"/>
+            <Setter Property="Margin" Value="0,0,10,10"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+        </Style>
+        <Style x:Key="WideCard" TargetType="HeaderedContentControl" BasedOn="{StaticResource Theme.Dialog.Card}">
+            <Setter Property="Width" Value="790"/>
+            <Setter Property="Margin" Value="0,0,10,10"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+        </Style>
+        <Style x:Key="LongText" TargetType="TextBox" BasedOn="{StaticResource Theme.TextBox}">
+            <Setter Property="AcceptsReturn" Value="True"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="MinHeight" Value="64"/>
+            <Setter Property="MaxHeight" Value="220"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="VerticalContentAlignment" Value="Top"/>
+        </Style>
+        <Style x:Key="EditGrid" TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+            <Setter Property="IsReadOnly" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="True"/>
+            <Setter Property="CanUserDeleteRows" Value="True"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="MinRowHeight" Value="30"/>
+            <Setter Property="MaxHeight" Value="260"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Style="{StaticResource ViewSlideInFromTopStyle}" Margin="0 0 16 16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Row 0: totals and actions -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,10">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="Delete" Tag="{StaticResource Icon.Delete}" Command="{Binding DeleteCommand}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="14,6"
+                        ToolTip="Move the selected property's file to the Recycle Bin"/>
+                <Button Content="Export" Tag="{StaticResource Icon.Save}" Command="{Binding ExportCommand}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="14,6"
+                        ToolTip="Save a copy of the selected property as a JSON file"/>
+                <Button Content="Import" Tag="{StaticResource Icon.TrayDown}" Command="{Binding ImportCommand}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="14,6"
+                        ToolTip="Add properties from one or more JSON files"/>
+                <Button Content="Open folder" Tag="{StaticResource Icon.Web.Search}" Command="{Binding OpenFolderCommand}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="14,6"
+                        ToolTip="Show the saved files, one per property; back this folder up"/>
+                <Button Content="Add property" Tag="{StaticResource Icon.Plus}" Command="{Binding AddCommand}" Style="{StaticResource Theme.Dialog.Button.Primary}" Padding="16,7"/>
+            </StackPanel>
+            <TextBlock Text="{Binding Totals}" Style="{StaticResource Theme.Dialog.Text}" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+        </DockPanel>
+
+        <!-- Row 1: the list -->
+        <DataGrid Grid.Row="1" ItemsSource="{Binding Properties}" SelectedItem="{Binding Selected, Mode=TwoWay}" FontSize="13" MinRowHeight="34" MaxHeight="250">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Lot #" Binding="{Binding LotNumber}" Width="Auto"/>
+                <DataGridTextColumn Header="Address" Binding="{Binding Title}" Width="*" MinWidth="160"/>
+                <DataGridTextColumn Header="Acres" Binding="{Binding Model.Acres, StringFormat={}{0:0.##}}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
+                <DataGridTextColumn Header="Size" Binding="{Binding Size}" Width="Auto"/>
+                <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C}}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
+                <DataGridTextColumn Header="Purchased" Binding="{Binding PurchasePrice, StringFormat={}{0:C}}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
+                <DataGridTextColumn Header="Total Spent" Binding="{Binding Model.TotalSpent, StringFormat={}{0:C}}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
+                <DataGridTextColumn Header="Market Value" Binding="{Binding MarketValue, StringFormat={}{0:C}}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}" FontWeight="SemiBold"/>
+                <DataGridTextColumn Header="Gain" Binding="{Binding Model.MarketGainPercent, StringFormat={}{0:N0}%}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}" FontWeight="SemiBold"/>
+                <DataGridTextColumn Header="Min %" Binding="{Binding MinimumSalePercent, StringFormat={}{0:0.##}%}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
+                <DataGridTextColumn Header="Minimum Sale" Binding="{Binding Model.MinimumSale, StringFormat={}{0:C}}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
+                <DataGridTextColumn Header="Min Gain" Binding="{Binding Model.MinimumSaleGainPercent, StringFormat={}{0:N2}%}" Width="Auto" ElementStyle="{StaticResource NumericCellStyle}"/>
+                <DataGridTextColumn Header="Purchased By" Binding="{Binding PurchasedBy}" Width="Auto"/>
+                <DataGridTextColumn Header="Zoning" Binding="{Binding ZoningCode}" Width="Auto"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="Auto"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBlock Grid.Row="1" Grid.RowSpan="2" Text="No properties yet. Press Add property to enter one, or Import to load JSON files."
+                   Style="{StaticResource Theme.Dialog.Text}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+        <!-- Row 2: the selected property -->
+        <ScrollViewer Grid.Row="2" x:Name="Detail" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto" DataContext="{Binding Selected}"
+                      Visibility="{Binding Converter={StaticResource NullToVisibilityConverter}}">
+            <WrapPanel>
+                <HeaderedContentControl Header="Property Info" Tag="{StaticResource Icon.MapMarker}" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Address" Style="{StaticResource Label}"/><TextBox Text="{Binding Address}" Tag="2916 Mackinaw St"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="City" Style="{StaticResource Label}"/><TextBox Text="{Binding City}"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="County" Style="{StaticResource Label}"/><TextBox Text="{Binding County}" Tag="Saginaw County"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="State / ZIP" Style="{StaticResource Label}"/>
+                            <TextBox Text="{Binding State}" Width="60" Tag="MI" MaxLength="2" DockPanel.Dock="Left" Margin="0,0,6,0"/><TextBox Text="{Binding Zip}"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Parcel ID" Style="{StaticResource Label}"/><TextBox Text="{Binding ParcelId}"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Lot No" Style="{StaticResource Label}"/><TextBox Text="{Binding LotNumber}" Tag="the auction's lot number"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Purchased by" Style="{StaticResource Label}"/><TextBox Text="{Binding PurchasedBy}" Tag="the buying company"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Owner of record" Style="{StaticResource Label}"/><TextBox Text="{Binding Owner}"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Property type" Style="{StaticResource Label}"/><TextBox Text="{Binding PropertyType}" Tag="Vacant land / Structures"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Zoning" Style="{StaticResource Label}"/>
+                            <TextBox Text="{Binding ZoningCode}" Width="70" Tag="R-2" DockPanel.Dock="Left" Margin="0,0,6,0"/><TextBox Text="{Binding ZoningType}" Tag="Medium-Density Residential"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Flood zone" Style="{StaticResource Label}"/><TextBox Text="{Binding FloodZone}"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Assessed" Style="{StaticResource Label}"/><TextBox Text="{Binding AssessedValue, StringFormat=N2, TargetNullValue=''}"/></DockPanel>
+                        <DockPanel Style="{StaticResource Field}"><TextBlock Text="Lat / Long" Style="{StaticResource Label}"/>
+                            <TextBox Text="{Binding Latitude}" Width="110" DockPanel.Dock="Left" Margin="0,0,6,0"/><TextBox Text="{Binding Longitude}"/></DockPanel>
+                        <TextBlock Text="Legal description" Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,2,0,4"/>
+                        <TextBox Text="{Binding LegalDescription}" Style="{StaticResource LongText}"/>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <StackPanel>
+                    <HeaderedContentControl Header="Purchase Info" Tag="{StaticResource Icon.Scale}" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Purchase date" Style="{StaticResource Label}"/><TextBox Text="{Binding PurchaseDate, StringFormat=d, TargetNullValue=''}" Tag="m/d/yyyy"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Starting bid" Style="{StaticResource Label}"/><TextBox Text="{Binding StartingBid, StringFormat=N2, TargetNullValue=''}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Purchase price" Style="{StaticResource Label}"/><TextBox Text="{Binding PurchasePrice, StringFormat=N2}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Buyer's premium %" Style="{StaticResource Label}"/>
+                                <TextBox Text="{Binding BuyerPremiumPercent, StringFormat=0.##}" Width="60" DockPanel.Dock="Left" Margin="0,0,10,0"/>
+                                <TextBlock Text="{Binding Model.BuyerPremium, StringFormat={}{0:C}}" Style="{StaticResource Computed}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Taxes at purchase" Style="{StaticResource Label}"/><TextBox Text="{Binding TaxesAtPurchase, StringFormat=N2}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Deed fee" Style="{StaticResource Label}"/><TextBox Text="{Binding DeedFee, StringFormat=N2}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Purchase total" Style="{StaticResource Label}"/><TextBlock Text="{Binding Model.PurchaseTotal, StringFormat={}{0:C}}" Style="{StaticResource Computed}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Deed type" Style="{StaticResource Label}"/><TextBox Text="{Binding DeedType}" Tag="Treasurer / Quitclaim / Warranty"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Deed recorded" Style="{StaticResource Label}"/><TextBox Text="{Binding DeedRecordedDate, StringFormat=d, TargetNullValue=''}" Tag="m/d/yyyy"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Liber / instrument" Style="{StaticResource Label}"/><TextBox Text="{Binding DeedInstrument}"/></DockPanel>
+                        </StackPanel>
+                    </HeaderedContentControl>
+
+                    <HeaderedContentControl Header="Lot" Tag="{StaticResource Icon.MapOutline}" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Width × depth (ft)" Style="{StaticResource Label}"/>
+                                <TextBox Text="{Binding LotWidthFt, TargetNullValue=''}" Width="80" Tag="88" DockPanel.Dock="Left" Margin="0,0,6,0"/><TextBox Text="{Binding LotDepthFt, TargetNullValue=''}" Tag="120"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Area" Style="{StaticResource Label}"/><TextBlock Text="{Binding LotSummary}" Style="{StaticResource Computed}" FontWeight="Normal"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Acres (county)" Style="{StaticResource Label}"/><TextBox Text="{Binding ScrapedAcres, TargetNullValue=''}" ToolTip="Used until the width and depth are typed"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="" Style="{StaticResource Label}"/>
+                                <CheckBox Content="Corner lot" IsChecked="{Binding CornerLot}" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                                <CheckBox Content="Road frontage" IsChecked="{Binding RoadFrontage}" IsThreeState="True" VerticalAlignment="Center" ToolTip="Filled square = not checked yet"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Easements" Style="{StaticResource Label}"/><TextBox Text="{Binding Easements}" Tag="none known"/></DockPanel>
+                        </StackPanel>
+                    </HeaderedContentControl>
+                </StackPanel>
+
+                <StackPanel>
+                    <HeaderedContentControl Header="Value" Tag="{StaticResource Icon.Building}" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Total spent" Style="{StaticResource Label}"/><TextBlock Text="{Binding Model.TotalSpent, StringFormat={}{0:C}}" Style="{StaticResource Computed}"
+                                ToolTip="Purchase total plus every expense line"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Market value" Style="{StaticResource Label}"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding Model.MarketGainPercent, StringFormat={}{0:N0}% gain}" Style="{StaticResource Computed}" Margin="10,5,0,5"/>
+                                <TextBox Text="{Binding MarketValue, StringFormat=N2, TargetNullValue=''}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Minimum sale %" Style="{StaticResource Label}"/>
+                                <TextBox Text="{Binding MinimumSalePercent, StringFormat=0.##}" Width="60" DockPanel.Dock="Left" Margin="0,0,10,0"/>
+                                <TextBlock Style="{StaticResource Computed}">
+                                    <Run Text="{Binding Model.MinimumSale, StringFormat={}{0:C}, Mode=OneWay}"/><Run Text="  ·  "/><Run Text="{Binding Model.MinimumSaleGainPercent, StringFormat={}{0:N0}%, Mode=OneWay}" ToolTip="Gain over total spent at the minimum sale price"/>
+                                </TextBlock></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Asking price" Style="{StaticResource Label}"/><TextBox Text="{Binding AskingPrice, StringFormat=N2, TargetNullValue=''}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Quick-sale price" Style="{StaticResource Label}"/><TextBox Text="{Binding QuickSalePrice, StringFormat=N2, TargetNullValue=''}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Status" Style="{StaticResource Label}"/><TextBox Text="{Binding Status}" Tag="Acquired / Listed / Sold"/></DockPanel>
+                        </StackPanel>
+                    </HeaderedContentControl>
+
+                    <HeaderedContentControl Header="Utilities" Tag="{StaticResource Icon.Cog}" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Electricity" Style="{StaticResource Label}"/><ComboBox ItemsSource="{x:Static vm:MyPropertiesViewModel.UtilityOptions}" SelectedItem="{Binding Electricity}" Style="{StaticResource Theme.ComboBox.Light}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Water" Style="{StaticResource Label}"/><ComboBox ItemsSource="{x:Static vm:MyPropertiesViewModel.UtilityOptions}" SelectedItem="{Binding Water}" Style="{StaticResource Theme.ComboBox.Light}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Sewer" Style="{StaticResource Label}"/><ComboBox ItemsSource="{x:Static vm:MyPropertiesViewModel.UtilityOptions}" SelectedItem="{Binding Sewer}" Style="{StaticResource Theme.ComboBox.Light}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Gas" Style="{StaticResource Label}"/><ComboBox ItemsSource="{x:Static vm:MyPropertiesViewModel.UtilityOptions}" SelectedItem="{Binding Gas}" Style="{StaticResource Theme.ComboBox.Light}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Phone" Style="{StaticResource Label}"/><ComboBox ItemsSource="{x:Static vm:MyPropertiesViewModel.UtilityOptions}" SelectedItem="{Binding Phone}" Style="{StaticResource Theme.ComboBox.Light}"/></DockPanel>
+                        </StackPanel>
+                    </HeaderedContentControl>
+
+                    <HeaderedContentControl Header="County Info" Tag="{StaticResource Icon.Web}" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Auction page" Style="{StaticResource Label}"/>
+                                <Button DockPanel.Dock="Right" Content="Open" Style="{StaticResource Theme.Dialog.Button.Link}" CommandParameter="{Binding AuctionUrl}"
+                                        Command="{Binding DataContext.OpenLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <TextBox Text="{Binding AuctionUrl}" Tag="https://"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="GIS viewer" Style="{StaticResource Label}"/>
+                                <Button DockPanel.Dock="Right" Content="Open" Style="{StaticResource Theme.Dialog.Button.Link}" CommandParameter="{Binding GisUrl}"
+                                        Command="{Binding DataContext.OpenLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <TextBox Text="{Binding GisUrl}" Tag="https://"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Property detail" Style="{StaticResource Label}"/>
+                                <Button DockPanel.Dock="Right" Content="Open" Style="{StaticResource Theme.Dialog.Button.Link}" CommandParameter="{Binding PropertyDetailUrl}"
+                                        Command="{Binding DataContext.OpenLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <TextBox Text="{Binding PropertyDetailUrl}" Tag="https://"/></DockPanel>
+                        </StackPanel>
+                    </HeaderedContentControl>
+                </StackPanel>
+
+                <HeaderedContentControl Header="Expenses" Tag="{StaticResource Icon.List.Numbered}" Style="{StaticResource WideCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,0,0,6"
+                                   Text="Everything spent after the purchase: tax bills, grass cuts, signs. Type in the empty last row to add a line; select a row and press Delete to remove it."/>
+                        <DataGrid x:Name="ExpensesGrid" ItemsSource="{Binding Model.Expenses}" Style="{StaticResource EditGrid}" RowEditEnding="OnRowEditEnding">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=d}" Width="100"/>
+                                <DataGridComboBoxColumn Header="Category" SelectedItemBinding="{Binding Category}" ItemsSource="{x:Static vm:MyPropertiesViewModel.ExpenseCategories}" Width="150"/>
+                                <DataGridTextColumn Header="Amount" Binding="{Binding Amount, StringFormat=N2}" Width="100" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="Tax year" Binding="{Binding TaxYear, TargetNullValue=''}" Width="80"/>
+                                <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DockPanel Margin="0,8,0,0">
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding Model.ExpensesTotal, StringFormat=Total {0:C}}" Style="{StaticResource Computed}" Margin="12,0,0,0"/>
+                            <StackPanel>
+                                <TextBlock Text="{Binding ExpensesByCategory}" Style="{StaticResource Theme.Dialog.Text.Small}"/>
+                                <TextBlock Text="{Binding ExpensesByYear}" Style="{StaticResource Theme.Dialog.Text.Small}"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <HeaderedContentControl Header="Neighbors" Tag="{StaticResource Icon.Person}" Style="{StaticResource WideCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,0,0,6" Text="The owners next door: often the first buyers to call."/>
+                        <DataGrid x:Name="NeighborsGrid" ItemsSource="{Binding Model.Neighbors}" Style="{StaticResource EditGrid}" RowEditEnding="OnRowEditEnding">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="170"/>
+                                <DataGridTextColumn Header="Property address" Binding="{Binding PropertyAddress}" Width="*"/>
+                                <DataGridTextColumn Header="Mailing address" Binding="{Binding MailingAddress}" Width="*"/>
+                                <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <HeaderedContentControl Header="Marketing and notes" Tag="{StaticResource Icon.Document}" Style="{StaticResource WideCard}">
+                    <StackPanel>
+                        <TextBlock Text="Notes" Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding Notes}" Style="{StaticResource LongText}"/>
+                        <TextBlock Text="Overview" Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,8,0,4"/>
+                        <TextBox Text="{Binding Overview}" Style="{StaticResource LongText}"/>
+                        <TextBlock Text="Location overview" Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,8,0,4"/>
+                        <TextBox Text="{Binding LocationOverview}" Style="{StaticResource LongText}"/>
+                        <TextBlock Text="Listing ad" Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,8,0,4"/>
+                        <TextBox Text="{Binding ListingAd}" Style="{StaticResource LongText}"/>
+                    </StackPanel>
+                </HeaderedContentControl>
+            </WrapPanel>
+        </ScrollViewer>
+
+        <!-- Row 3: what happened last -->
+        <TextBlock Grid.Row="3" Text="{Binding Status}" Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,8,0,0"/>
+    </Grid>
+</UserControl>

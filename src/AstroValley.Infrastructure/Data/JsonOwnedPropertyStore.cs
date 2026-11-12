@@ -24,7 +24,7 @@ public sealed class JsonOwnedPropertyStore(string folder) : IOwnedPropertyStore
             try
             {
                 if (JsonSerializer.Deserialize<OwnedProperty>(File.ReadAllText(file), Json) is { } p)
-                    properties.Add(p with { Id = Path.GetFileNameWithoutExtension(file) }); // the file name is the identity, also for a file dropped in by hand
+                    properties.Add(p with { Id = Path.GetFileNameWithoutExtension(file), Record = p.Record ?? new(), Expenses = p.Expenses ?? [], Neighbors = p.Neighbors ?? [] }); // the file name is the identity, also for a file dropped in by hand
             }
             catch (JsonException ex)
             {
@@ -43,6 +43,17 @@ public sealed class JsonOwnedPropertyStore(string folder) : IOwnedPropertyStore
         File.WriteAllText(path + ".tmp", JsonSerializer.Serialize(property, Json));
         File.Move(path + ".tmp", path, overwrite: true);
     }
+
+    public OwnedProperty Import(string path)
+    {
+        var read = JsonSerializer.Deserialize<OwnedProperty>(File.ReadAllText(path), Json) ?? throw new JsonException("The file is empty.");
+        // lists and the record may be absent or null in a hand-written file; a fresh Id keeps an import from replacing a property already here
+        var property = read with { Id = Guid.NewGuid().ToString("N"), Record = read.Record ?? new(), Expenses = read.Expenses ?? [], Neighbors = read.Neighbors ?? [] };
+        Save(property);
+        return property;
+    }
+
+    public void Export(OwnedProperty property, string path) => File.WriteAllText(path, JsonSerializer.Serialize(property, Json));
 
     public void Delete(string id)
     {
@@ -90,6 +101,19 @@ public sealed class JsonOwnedPropertyStore(string folder) : IOwnedPropertyStore
 
             File.Copy(Path.Combine(dir, mackinaw.Id + ".json"), Path.Combine(dir, "copy.json"));
             Debug.Assert(store.List().Count == 3 && store.List().Select(p => p.Id).Distinct().Count() == 3, "a copied file is its own property");
+
+            var exported = Path.Combine(dir, "export.txt");
+            store.Export(back, exported);
+            var imported = store.Import(exported);
+            Debug.Assert(imported.Id != back.Id && imported.TotalSpent == back.TotalSpent && store.List().Count == 4, "an exported file imports as a new property");
+            store.Delete(imported.Id);
+            File.WriteAllText(exported, "{ \"Record\": null, \"PurchasePrice\": 500 }");
+            var sparse = store.Import(exported);
+            Debug.Assert(sparse.PurchaseTotal == 550m && sparse.Record.Address == "" && sparse.Expenses.Count == 0, "a hand-written file with gaps still imports");
+            store.Delete(sparse.Id);
+            File.WriteAllText(exported, "not a property");
+            try { store.Import(exported); Debug.Fail("a file that is not a property is refused"); } catch (JsonException) { }
+            Debug.Assert(store.List().Count == 3, "a refused import saves nothing");
 
             store.Delete(@"..\..\elsewhere"); // must not throw or leave the folder
             store.Delete("copy");

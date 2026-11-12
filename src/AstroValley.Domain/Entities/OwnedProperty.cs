@@ -8,10 +8,30 @@ public enum ExpenseCategory { PropertyTax, DeedRecording, Title, Survey, GrassCu
 public enum UtilityStatus { Unknown, AtStreet, Connected, No }
 
 /// <summary>Money spent on a property after the purchase: a tax bill, a grass cut, a sign.</summary>
-public record Expense(DateTime Date, ExpenseCategory Category, decimal Amount, string Note = "", int? TaxYear = null);
+public record Expense
+{
+    public Expense() { } // settable and parameterless: the expenses grid adds and edits lines in place
+    public Expense(DateTime date, ExpenseCategory category, decimal amount, string note = "", int? taxYear = null) =>
+        (Date, Category, Amount, Note, TaxYear) = (date, category, amount, note, taxYear);
+
+    public DateTime Date { get; set; } = DateTime.Today;
+    public ExpenseCategory Category { get; set; } = ExpenseCategory.Other;
+    public decimal Amount { get; set; }
+    public string Note { get; set; } = string.Empty;
+    public int? TaxYear { get; set; }
+}
 
 /// <summary>An adjacent owner: a title clue and one of the first buyers to call.</summary>
-public record Neighbor(string Name, string PropertyAddress = "", string MailingAddress = "", string Note = "");
+public record Neighbor
+{
+    public Neighbor() { }
+    public Neighbor(string name, string propertyAddress = "") => (Name, PropertyAddress) = (name, propertyAddress);
+
+    public string Name { get; set; } = string.Empty;
+    public string PropertyAddress { get; set; } = string.Empty;
+    public string MailingAddress { get; set; } = string.Empty;
+    public string Note { get; set; } = string.Empty;
+}
 
 /// <summary>
 /// A property already bought (My Properties): the scraped <see cref="Record"/> plus what it cost, what it keeps costing and how it is priced.
@@ -123,7 +143,7 @@ public record OwnedProperty
         Debug.Assert(p.LotSqft == 10560 && p.Acres == 0.2424, "dimensions give the area");
         Debug.Assert(p.MarketGainPercent == 467.65m && p.MinimumSale == 9760m && p.MinimumSaleGainPercent == 354.12m, "gain percentages match the sheet");
 
-        var later = p with { Expenses = [new(new DateTime(2026, 2, 14), ExpenseCategory.PropertyTax, 150m, TaxYear: 2025), new(new DateTime(2026, 6, 1), ExpenseCategory.GrassCutCleanup, 60.78m)] };
+        var later = p with { Expenses = [new(new DateTime(2026, 2, 14), ExpenseCategory.PropertyTax, 150m, taxYear: 2025), new(new DateTime(2026, 6, 1), ExpenseCategory.GrassCutCleanup, 60.78m)] };
         Debug.Assert(later.ExpensesTotal == 210.78m && later.TotalSpent == 2360m && later.PurchaseTotal == 2149.22m, "expenses add to the total, not to the purchase");
         Debug.Assert(later.CostPerAcre == Math.Round(2360m / 0.2424m, 2), "cost per acre uses everything spent");
         Debug.Assert(later.DaysHeld(new DateTime(2025, 10, 4)) == 30 && later.DaysHeld(new DateTime(2025, 1, 1)) == 0, "days held");
