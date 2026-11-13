@@ -266,6 +266,75 @@ public record OwnedProperty
         }, pin.AuctionUrl, today) with { Notes = pin.Notes ?? "" };
     }
 
+    // --- To Claude (the property-intel skill) ---
+
+    /// <summary>
+    /// What the property-intel skill needs to plan the sale, as text for the clipboard: the facts on file, the money spent, and the
+    /// shape of the JSON the app can paste back (see IOwnedPropertyStore.ApplyResearch). Empty facts are left out, not guessed.
+    /// </summary>
+    public string BriefForClaude()
+    {
+        var us = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+        var r = Record;
+        var lines = new List<string> { "Use the property-intel skill in Exit mode. I own this property and want to sell it.", "" };
+        void Add(string label, string? value) { if (!string.IsNullOrWhiteSpace(value)) lines.Add($"{label}: {value.Trim()}"); }
+        static string Words(UtilityStatus s) => s switch { UtilityStatus.AtStreet => "at the street", UtilityStatus.Connected => "connected", UtilityStatus.No => "not available", _ => "" };
+
+        Add("Address", string.Join(", ", new[] { r.Address, r.City, $"{r.State} {r.Zip}".Trim() }.Where(s => s.Length > 0)));
+        Add("Parcel ID", r.ParcelId);
+        Add("County", r.County);
+        Add("Property type", r.PropertyType);
+        Add("Lot", string.Join(", ", new[]
+        {
+            LotWidthFt is { } w && LotDepthFt is { } d ? string.Create(us, $"{w:0.##} x {d:0.##} ft ({LotSqft:N0} sq ft)") : null,
+            Acres is { } acres ? string.Create(us, $"{acres:0.####} acres") : null,
+            CornerLot ? "corner lot" : null,
+            RoadFrontage switch { true => "road frontage", false => "no road frontage", _ => null },
+        }.Where(s => s is not null)));
+        Add("Zoning", $"{r.ZoningCode} {r.ZoningType}");
+        Add("Flood zone", r.FloodZone);
+        Add("Easements", Easements);
+        Add("Utilities", string.Join(", ", new (string Name, UtilityStatus Status)[] { ("water", Water), ("sewer", Sewer), ("electricity", Electricity), ("gas", Gas), ("phone", Phone) }
+            .Where(u => u.Status != UtilityStatus.Unknown).Select(u => $"{u.Name} {Words(u.Status)}")));
+        if (r.LivingSqft is not null || r.Beds is not null || r.YearBuilt is not null)
+            Add("House", string.Join(", ", new[] { r.HomeType, r.Beds is { } b ? $"{b} beds" : null, r.Baths is { } ba ? $"{ba} baths" : null,
+                r.LivingSqft is { } sq ? string.Create(us, $"{sq:N0} sq ft") : null, r.YearBuilt is { } y ? $"built {y}" : null }.Where(s => !string.IsNullOrWhiteSpace(s))));
+        Add("Deed", string.Join(", ", new[] { DeedType, DeedRecordedDate is { } rec ? string.Create(us, $"recorded {rec:d}") : DeedType.Length > 0 ? "not recorded yet, or not confirmed" : "", DeedInstrument }.Where(s => s.Length > 0)));
+        Add("Bought", string.Join(", ", new[] { PurchaseDate is { } pd ? string.Create(us, $"{pd:d}") : null, LotNumber.Length > 0 ? $"auction lot {LotNumber}" : null, PurchasedBy.Length > 0 ? $"by {PurchasedBy}" : null }.Where(s => s is not null)));
+        if (TotalSpent > 0) Add("Total spent so far", string.Create(us, $"{TotalSpent:C} (purchase {PurchaseTotal:C}, later expenses {ExpensesTotal:C})"));
+        if (r.AssessedValue is { } assessed) Add("Assessed value", assessed.ToString("C0", us));
+        if (MarketValue is { } mv) Add("My market value so far", mv.ToString("C0", us));
+        if (r.Comps is { EstimatedValue: { } cv } comps) Add("My comps", string.Create(us, $"{cv:C0} from {comps.Count} comps"));
+        if (AskingPrice is { } ask) Add("Asking price", ask.ToString("C0", us));
+        Add("Status", Status);
+        if (Neighbors.Count > 0) Add("Neighbors", string.Join("; ", Neighbors.Select(n => string.Join(", ", new[] { n.Name, n.PropertyAddress }.Where(s => s.Length > 0)))));
+        Add("Notes", Notes);
+
+        lines.Add("");
+        lines.Add("Give me the exit strategy. Then, at the end, add one JSON block with what you found so I can paste it into my app.");
+        lines.Add("Include only what you verified or are recommending; leave the rest out. Shape:");
+        lines.Add(ResearchJsonShape);
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    /// <summary>The fields the app accepts back from Claude; also documented in the property-intel skill.</summary>
+    public const string ResearchJsonShape = """
+        {
+          "Overview": "one paragraph about the property",
+          "LocationOverview": "schools, parks, shopping nearby",
+          "ListingAd": "the ready-to-post ad",
+          "ConservativeValue": 5000, "MarketValue": 7500, "OptimisticValue": 10000,
+          "AskingPrice": 9900, "NegotiationTarget": 8000, "QuickSalePrice": 5500,
+          "LotWidthFt": 88, "LotDepthFt": 120, "CornerLot": true, "RoadFrontage": true, "Easements": "none found",
+          "Water": "AtStreet", "Sewer": "AtStreet", "Electricity": "AtStreet", "Gas": "Unknown", "Phone": "Unknown",
+          "GisUrl": "https://...", "PropertyDetailUrl": "https://...",
+          "Record": { "ParcelId": "", "County": "", "ZoningCode": "", "ZoningType": "", "FloodZone": "", "Owner": "", "LegalDescription": "", "AssessedValue": 0 },
+          "Neighbors": [ { "Name": "", "PropertyAddress": "", "MailingAddress": "", "Note": "" } ],
+          "Contacts": [ { "Office": "Register of Deeds", "Phone": "", "Note": "what to ask" } ],
+          "Buyers": [ { "Name": "a local builder", "Contact": "", "Type": "Builder", "Status": "To contact", "Note": "" } ]
+        }
+        """;
+
     // --- Computed; never saved, never typed ---
 
     /// <summary>Square feet from the dimensions; null until both are known.</summary>
@@ -386,6 +455,10 @@ public record OwnedProperty
         Debug.Assert(sold.DaysHeld(new DateTime(2030, 1, 1)) == 365 && sold.AnnualizedRoiPercent == sold.NetRoiPercent, "held exactly a year: the yearly rate is the return, and the clock stops at the sale");
         Debug.Assert((sold with { SaleDate = new DateTime(2025, 9, 10) }).AnnualizedRoiPercent is null && later.NetProfit is null, "no yearly rate for a week, no profit before a sale");
         Debug.Assert(NewSaleChecklist().Select(s => s.Key).Distinct().Count() == NewSaleChecklist().Count, "checklist keys are unique");
+
+        var brief = (p with { Record = p.Record with { City = "Saginaw", State = "MI", Zip = "48602", ZoningCode = "R-2" }, CornerLot = true, Water = UtilityStatus.AtStreet }).BriefForClaude();
+        Debug.Assert(brief.Contains("Address: 2916 Mackinaw St, Saginaw, MI 48602") && brief.Contains("88 x 120 ft (10,560 sq ft), 0.2424 acres, corner lot") && brief.Contains("Utilities: water at the street")
+            && brief.Contains("Total spent so far: $2,149.22") && brief.Contains("\"ListingAd\"") && !brief.Contains("Flood zone") && !brief.Contains("Deed:"), "the brief states what is on file and leaves the rest out");
 
         var blank = new OwnedProperty();
         Debug.Assert(blank.TotalSpent == 0 && blank.MarketGainPercent is null && blank.MinimumSale is null && blank.CostPerAcre is null && blank.Acres is null && blank.DaysHeld(DateTime.Today) is null,

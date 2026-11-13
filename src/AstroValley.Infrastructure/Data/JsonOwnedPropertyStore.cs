@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using AstroValley.Application.Interfaces.Data;
 using AstroValley.Domain.Entities;
@@ -60,6 +61,55 @@ public sealed class JsonOwnedPropertyStore(string folder) : IOwnedPropertyStore
         SaleChecklist = p.SaleChecklist ?? OwnedProperty.NewSaleChecklist(), Contacts = p.Contacts ?? [], Listings = p.Listings ?? [],
         Buyers = p.Buyers ?? [], FinancingTiers = p.FinancingTiers ?? FinancingTier.Defaults(), Status = p.Status ?? OwnedProperty.Statuses[0],
     };
+
+    private static readonly string[] ReplacedTexts = ["Overview", "LocationOverview", "ListingAd"];
+    private static readonly string[] FilledWhenEmpty =
+    [
+        "ConservativeValue", "MarketValue", "OptimisticValue", "AskingPrice", "NegotiationTarget", "QuickSalePrice", "LotWidthFt", "LotDepthFt",
+        "CornerLot", "RoadFrontage", "Easements", "DeedType", "Water", "Sewer", "Electricity", "Gas", "Phone", "GisUrl", "PropertyDetailUrl",
+    ];
+    // the money, the dates and the identity of the purchase are the user's own records: never taken from pasted research
+    private static readonly string[] RecordFields = ["ParcelId", "Address", "City", "County", "State", "Zip", "ZoningCode", "ZoningType", "FloodZone", "Owner", "LegalDescription", "AssessedValue", "PropertyType"];
+    private static readonly (string List, string Key)[] AddedLists = [("Neighbors", "Name"), ("Contacts", "Office"), ("Buyers", "Name")];
+
+    public (OwnedProperty Property, int Changes) ApplyResearch(OwnedProperty property, string text)
+    {
+        // Claude's answer usually has words and a code fence around the JSON
+        int start = text.IndexOf('{'), end = text.LastIndexOf('}');
+        if (start < 0 || end <= start) throw new JsonException("There is no JSON in the copied text.");
+        var found = JsonNode.Parse(text[start..(end + 1)]) as JsonObject ?? throw new JsonException("The copied JSON is not an object.");
+        var mine = JsonSerializer.SerializeToNode(property, Json)!.AsObject();
+        var changes = 0;
+
+        static bool Empty(JsonNode? n) => n is null || n.GetValueKind() is JsonValueKind.Null or JsonValueKind.False
+            || (n.GetValueKind() == JsonValueKind.String && n.GetValue<string>() is "" or "Unknown");
+        void Fill(JsonObject from, JsonObject into, string name, bool replace)
+        {
+            if (!from.TryGetPropertyValue(name, out var value) || Empty(value) || (!replace && !Empty(into[name]))) return;
+            if (JsonNode.DeepEquals(into[name], value)) return;
+            into[name] = value!.DeepClone();
+            changes++;
+        }
+
+        foreach (var name in ReplacedTexts) Fill(found, mine, name, replace: true);
+        foreach (var name in FilledWhenEmpty) Fill(found, mine, name, replace: false);
+        if (found["Record"] is JsonObject record)
+            foreach (var name in RecordFields) Fill(record, mine["Record"]!.AsObject(), name, replace: false);
+        foreach (var (list, key) in AddedLists)
+        {
+            if (found[list] is not JsonArray rows) continue;
+            var have = mine[list]!.AsArray();
+            string Name(JsonNode? row) => (row as JsonObject)?[key] is { } n && n.GetValueKind() == JsonValueKind.String ? n.GetValue<string>().Trim() : "";
+            foreach (var row in rows)
+            {
+                if (Name(row).Length == 0 || have.Any(h => string.Equals(Name(h), Name(row), StringComparison.OrdinalIgnoreCase))) continue;
+                have.Add(row!.DeepClone());
+                changes++;
+            }
+        }
+        // reading it back checks every pasted value has the right type (a price that is text, a utility that is not one of the choices)
+        return (Whole(mine.Deserialize<OwnedProperty>(Json)!) with { Id = property.Id }, changes);
+    }
 
     public void Export(OwnedProperty property, string path) => File.WriteAllText(path, JsonSerializer.Serialize(property, Json));
 
@@ -122,6 +172,29 @@ public sealed class JsonOwnedPropertyStore(string folder) : IOwnedPropertyStore
             File.WriteAllText(exported, "not a property");
             try { store.Import(exported); Debug.Fail("a file that is not a property is refused"); } catch (JsonException) { }
             Debug.Assert(store.List().Count == 3, "a refused import saves nothing");
+
+            // research pasted back from Claude: marketing text replaces, the rest fills blanks, new people are added
+            var before = back with { Overview = "old overview", MarketValue = 12200m, Water = UtilityStatus.AtStreet };
+            var (after, changed) = store.ApplyResearch(before, """
+                Here is the block for your app:
+                ```json
+                { "Overview": "A corner lot in Saginaw.", "MarketValue": 7500, "AskingPrice": 9900, "Water": "Connected", "Sewer": "AtStreet", "CornerLot": true,
+                  "PurchasePrice": 1, "Id": "hijack", "Expenses": [],
+                  "Record": { "ZoningCode": "R-9", "FloodZone": "X", "ParcelId": "other" },
+                  "Neighbors": [ { "Name": "amy l bunker" }, { "Name": "Kelly Troy", "MailingAddress": "Jacksonville, FL" } ],
+                  "Contacts": [ { "Office": "Register of Deeds", "Phone": "(989) 790-5270" } ],
+                  "Buyers": [ { "Name": "Local builder", "Type": "Builder" } ] }
+                ```
+                """);
+            Debug.Assert(after.Overview == "A corner lot in Saginaw." && after.MarketValue == 12200m && after.AskingPrice == 9900m && after.Water == UtilityStatus.AtStreet
+                && after.Sewer == UtilityStatus.AtStreet && after.CornerLot, "marketing text is replaced, typed values are kept, blanks are filled");
+            Debug.Assert(after.Id == back.Id && after.PurchasePrice == 1800m && after.Expenses.Count == 1 && after.Record.ZoningCode == "R-2" && after.Record.FloodZone == "X" && after.Record.ParcelId == "20 1952 00000",
+                "the purchase, the expenses and the identity are never taken from pasted research");
+            Debug.Assert(after.Neighbors.Count == 2 && after.Neighbors[1].MailingAddress == "Jacksonville, FL" && after.Contacts.Single().Phone == "(989) 790-5270"
+                && after.Buyers.Single().Type == BuyerType.Builder && changed == 8 && before.Neighbors.Count == 1, "new people are added once; the original is untouched");
+            Debug.Assert(store.ApplyResearch(after, "{ \"Overview\": \"A corner lot in Saginaw.\" }").Changes == 0, "pasting the same thing twice changes nothing");
+            foreach (var bad in new[] { "no json here", "{ \"AskingPrice\": \"about ten thousand\" }", "{ \"Gas\": \"Nearby\" }", "[1,2]" })
+                try { store.ApplyResearch(back, bad); Debug.Fail("refused: " + bad); } catch (JsonException) { }
 
             store.Delete(@"..\..\elsewhere"); // must not throw or leave the folder
             store.Delete("copy");

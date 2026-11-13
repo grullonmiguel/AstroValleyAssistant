@@ -66,7 +66,7 @@ public partial class MyPropertiesViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeleteCommand), nameof(ExportCommand), nameof(ScrapeCommand), nameof(FindCompsCommand), nameof(ShowOnMapCommand),
-        nameof(SaveTiersAsDefaultCommand), nameof(ExportTermSheetCommand), nameof(NeighborsToLeadsCommand))]
+        nameof(SaveTiersAsDefaultCommand), nameof(ExportTermSheetCommand), nameof(NeighborsToLeadsCommand), nameof(CopyBriefCommand), nameof(PasteResearchCommand))]
     private OwnedPropertyViewModel? _selected;
 
     [ObservableProperty]
@@ -142,6 +142,35 @@ public partial class MyPropertiesViewModel : ObservableObject
         {
             Status = $"Could not save the term sheet: {ex.Message}";
         }
+    }
+
+    /// <summary>Puts the property's facts on the clipboard, worded for Claude's property-intel skill.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void CopyBrief()
+    {
+        if (Selected is not { } item) return;
+        try
+        {
+            Clipboard.SetText(item.Model.BriefForClaude());
+            Status = $"Copied the brief for {item.Title}. Paste it into Claude; copy its JSON block when it is done, then press Paste results.";
+        }
+        catch (System.Runtime.InteropServices.COMException) { Status = "The clipboard is busy. Try again."; } // another program is holding it
+    }
+
+    /// <summary>Takes the JSON block Claude wrote from the clipboard and adds it to the property (see IOwnedPropertyStore.ApplyResearch).</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void PasteResearch()
+    {
+        if (Selected is not { } item) return;
+        try
+        {
+            var (merged, changes) = _store.ApplyResearch(item.Model, Clipboard.ContainsText() ? Clipboard.GetText() : "");
+            if (changes > 0) item.Replace(merged);
+            Status = changes == 0 ? "Nothing new in the copied text: the texts match and every other field already had a value."
+                : $"Added {changes} thing(s) from Claude to {item.Title}. Values you had typed were kept; only the three marketing texts are replaced.";
+        }
+        catch (JsonException ex) { Status = $"The copied text is not usable: {ex.Message}"; }
+        catch (System.Runtime.InteropServices.COMException) { Status = "The clipboard is busy. Try again."; }
     }
 
     /// <summary>Every neighbor not already in the buyers log becomes a lead there.</summary>
@@ -481,6 +510,9 @@ public class OwnedPropertyViewModel(OwnedProperty model, Action<OwnedPropertyVie
         OnPropertyChanged(string.Empty); // every binding on this row: the computed figures depend on most fields
         changed(this);
     }
+
+    /// <summary>The property after research was pasted in: new lists, so the grids redraw.</summary>
+    public void Replace(OwnedProperty next) => Set(next);
 
     /// <summary>Regrid's record fills what is still empty; nothing typed is overwritten (see PropertyRecordMerger).</summary>
     public void MergeScraped(PropertyRecord scraped) => Set(Model with { Record = PropertyRecordMerger.Merge(Model.Record, scraped) });

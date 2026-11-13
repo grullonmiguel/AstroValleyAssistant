@@ -436,6 +436,16 @@
 
                 <HeaderedContentControl Header="Marketing and notes" Tag="{StaticResource Icon.Document}" Style="{StaticResource WideCard}">
                     <StackPanel>
+                        <DockPanel Margin="0,0,0,10">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                                <Button Content="Copy brief" Tag="{StaticResource Icon.Copy}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="12,5" Command="{Binding DataContext.CopyBriefCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ToolTip="Copy this property's facts, worded for Claude's property-intel skill"/>
+                                <Button Content="Paste results" Tag="{StaticResource Icon.Paste}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="12,5" Command="{Binding DataContext.PasteResearchCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ToolTip="Add the JSON block Claude wrote: texts, prices, neighbors, contacts, buyers. Values you typed are kept."/>
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" VerticalAlignment="Center" Margin="0,0,12,0"
+                                       Text="Let Claude write these: Copy brief, paste it into Claude, copy the JSON block it ends with, then Paste results."/>
+                        </DockPanel>
                         <TextBlock Text="Notes" Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding Notes}" Style="{StaticResource LongText}"/>
                         <TextBlock Text="Overview" Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,8,0,4"/>
