@@ -75,6 +75,14 @@ public record BuyerLead
     public string Note { get; set; } = string.Empty;
 }
 
+/// <summary>A payment received from the buyer on an owner-financed sale.</summary>
+public record Payment
+{
+    public DateTime Date { get; set; } = DateTime.Today;
+    public decimal Amount { get; set; }
+    public string Note { get; set; } = string.Empty;
+}
+
 /// <summary>One owner-financing offer: how much down, at what rate, over how many months.</summary>
 public record FinancingTier
 {
@@ -189,6 +197,15 @@ public record OwnedProperty
     public DateTime? SaleDate { get; init; }
     public decimal? SalePrice { get; init; }
     public decimal SaleClosingCosts { get; init; }
+
+    // --- An owner-financed sale: the terms agreed and what has come in. The amount financed is the sale price less the down payment. ---
+    public decimal? NoteDownPayment { get; init; }
+    public decimal? NoteApr { get; init; }
+    public int? NoteMonths { get; init; }
+    public DateTime? NoteFirstPayment { get; init; }
+    public List<Payment> Payments { get; init; } = [];
+
+    public DateTime? NextTaxDue { get; init; }                  // typed from the tax bill; drives a reminder
 
     /// <summary>The steps from deed in hand to listed, in the order to do them. Keys are saved; add new steps at the end of their group with a new key.</summary>
     public static List<SaleStep> NewSaleChecklist() =>
@@ -381,13 +398,79 @@ public record OwnedProperty
     [JsonIgnore] public IReadOnlyList<FinancingQuote> FinancingQuotes =>
         FinancingBasis is > 0 and var price ? [.. FinancingTiers.Where(t => t.Months > 0).Select(t => t.Quote(price))] : [];
 
+    // --- Owner-financed note ---
+
+    [JsonIgnore] public decimal? NotePrincipal => SalePrice - NoteDownPayment is > 0 and var financed ? financed : null;
+
+    /// <summary>True once the terms are in: a price, a down payment and a term.</summary>
+    [JsonIgnore] public bool HasNote => NotePrincipal is not null && NoteMonths is > 0;
+
+    [JsonIgnore] public decimal? NoteMonthly => HasNote ? new FinancingTier("", 0, NoteApr ?? 0, NoteMonths!.Value).Quote(NotePrincipal!.Value).Monthly : null;
+
+    [JsonIgnore] public decimal NotePaid => Payments.Sum(p => p.Amount);
+
+    /// <summary>
+    /// What the buyer still owes: each payment first covers a month's interest on the balance, the rest comes off the balance.
+    /// shortcut: every payment counts as one monthly period whatever its date, so an early, late or double payment is a few cents to a few
+    /// dollars off a servicer's figure; use a servicer's statement for a payoff quote.
+    /// </summary>
+    [JsonIgnore] public decimal? NoteBalance
+    {
+        get
+        {
+            if (!HasNote) return null;
+            var balance = NotePrincipal!.Value;
+            var rate = (NoteApr ?? 0) / 1200;
+            foreach (var p in Payments.OrderBy(p => p.Date))
+                balance = Math.Max(0, balance + Math.Round(balance * rate, 2, MidpointRounding.AwayFromZero) - p.Amount);
+            return balance;
+        }
+    }
+
+    /// <summary>How many monthly payments have come due by <paramref name="today"/> (the first on NoteFirstPayment, then monthly).</summary>
+    public int NotePaymentsDue(DateTime today) =>
+        HasNote && NoteFirstPayment is { } first ? Enumerable.Range(0, NoteMonths!.Value).Count(k => first.AddMonths(k).Date <= today.Date) : 0;
+
+    /// <summary>How far the payments received are behind the schedule; 0 when on time or ahead (a dollar of rounding is not "behind").</summary>
+    public decimal NoteBehind(DateTime today) =>
+        HasNote && NoteBalance > 0 && NotePaymentsDue(today) * NoteMonthly!.Value - NotePaid is > 1 and var behind ? Math.Min(behind, NoteBalance!.Value) : 0;
+
+    public DateTime? NoteNextDue(DateTime today) =>
+        HasNote && NoteBalance > 0 && NoteFirstPayment is { } first && NotePaymentsDue(today) is var due && due < NoteMonths ? first.AddMonths(due) : null;
+
+    // --- Reminders ---
+
+    /// <summary>What needs attention on this property today, most pressing first; empty when nothing does.</summary>
+    public IReadOnlyList<string> Reminders(DateTime today)
+    {
+        var us = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+        var list = new List<string>();
+        if (NoteBehind(today) is > 0 and var behind) list.Add(string.Create(us, $"Buyer's payments are {behind:C} behind"));
+        if (!IsSold && NextTaxDue is { } tax)
+        {
+            var days = (tax.Date - today.Date).Days;
+            if (days < 0) list.Add(string.Create(us, $"Property tax was due {tax:M/d/yyyy} ({-days} days ago)"));
+            else if (days <= 30) list.Add(string.Create(us, $"Property tax due {tax:M/d/yyyy} (in {days} days)"));
+        }
+        if (Status == "Listed")
+        {
+            if (Listings.Count == 0) list.Add("Status is Listed but no listing is logged");
+            else if (Listings.Max(l => l.Date) is var last && (today.Date - last.Date).Days is >= 21 and var listed)
+                list.Add($"Listed {listed} days with no change: review the price");
+        }
+        if (!IsSold && DeedRecordedDate is null && PurchaseDate is { } bought && (today.Date - bought.Date).Days >= 30)
+            list.Add("Deed not marked as recorded");
+        if (NoteNextDue(today) is { } next && (next.Date - today.Date).Days is >= 0 and <= 7) list.Add(string.Create(us, $"Buyer's payment of {NoteMonthly:C} due {next:M/d/yyyy}"));
+        return list;
+    }
+
     [JsonIgnore] public decimal? NetProceeds => SalePrice - SaleClosingCosts;
     [JsonIgnore] public decimal? NetProfit => NetProceeds - TotalSpent;
     [JsonIgnore] public decimal? NetRoiPercent => GainPercent(NetProceeds);
 
-    /// <summary>The net return as a yearly rate; null when sold within a month (a yearly rate from a few days means nothing) or at a total loss.</summary>
+    /// <summary>The net return as a yearly rate; null when held under six months (a quick flip compounds into a meaningless figure) or sold at a total loss.</summary>
     [JsonIgnore] public decimal? AnnualizedRoiPercent =>
-        NetProceeds is > 0 and var net && TotalSpent > 0 && SaleDate is { } sold && DaysHeld(sold) is >= 30 and var days
+        NetProceeds is > 0 and var net && TotalSpent > 0 && SaleDate is { } sold && DaysHeld(sold) is >= 180 and var days
             && Math.Pow((double)(net / TotalSpent), 365.0 / days) - 1 is var rate && rate < 1000
             ? Math.Round((decimal)rate * 100, 2) : null;
 
@@ -454,7 +537,23 @@ public record OwnedProperty
         Debug.Assert(sold.NetProceeds == 8360m && sold.NetProfit == 6000m && sold.NetRoiPercent == Math.Round(6000m / 2360m * 100, 2) && sold.IsSold && !later.IsSold, "net profit after closing costs and every expense");
         Debug.Assert(sold.DaysHeld(new DateTime(2030, 1, 1)) == 365 && sold.AnnualizedRoiPercent == sold.NetRoiPercent, "held exactly a year: the yearly rate is the return, and the clock stops at the sale");
         Debug.Assert((sold with { SaleDate = new DateTime(2025, 9, 10) }).AnnualizedRoiPercent is null && later.NetProfit is null, "no yearly rate for a week, no profit before a sale");
+        Debug.Assert((sold with { SaleDate = new DateTime(2026, 1, 1) }).AnnualizedRoiPercent is null && (sold with { SaleDate = new DateTime(2026, 3, 10) }).AnnualizedRoiPercent is not null, "a yearly rate only after six months");
         Debug.Assert(NewSaleChecklist().Select(s => s.Key).Distinct().Count() == NewSaleChecklist().Count, "checklist keys are unique");
+
+        // an owner-financed sale: $10,500, $2,100 down, 9.9% over 60 months (the example in data/exit-strategy.md)
+        var note = p with { SalePrice = 10500m, NoteDownPayment = 2100m, NoteApr = 9.9m, NoteMonths = 60, NoteFirstPayment = new DateTime(2026, 1, 1), Status = "Sold (financed)", DeedRecordedDate = new DateTime(2025, 9, 20) };
+        Debug.Assert(note.HasNote && note.NotePrincipal == 8400m && note.NoteMonthly == 178.06m && note.NoteBalance == 8400m && !p.HasNote && p.NoteBalance is null, "the note's payment matches the worked example");
+        var march = new DateTime(2026, 3, 15);
+        Debug.Assert(note.NotePaymentsDue(march) == 3 && note.NotePaymentsDue(new DateTime(2025, 12, 31)) == 0 && note.NotePaymentsDue(new DateTime(2040, 1, 1)) == 60, "payments due by a date");
+        var paying = note with { Payments = [new() { Date = new DateTime(2026, 2, 2), Amount = 178.06m }, new() { Date = new DateTime(2026, 1, 3), Amount = 178.06m }] };
+        Debug.Assert(paying.NoteBalance == 8181.58m && paying.NoteBehind(march) == 178.06m && paying.NoteBehind(new DateTime(2026, 2, 15)) == 0 && paying.NoteNextDue(march) == new DateTime(2026, 4, 1), "balance, late amount and next due date");
+        Debug.Assert(paying.Reminders(march).Single() == "Buyer's payments are $178.06 behind" && note.Reminders(new DateTime(2025, 12, 28)).Single() == "Buyer's payment of $178.06 due 1/1/2026", "a late buyer and a payment coming up");
+        Debug.Assert((note with { Payments = [new() { Amount = 9000m }] }) is { NoteBalance: 0m } paidOff && paidOff.NoteBehind(march) == 0 && paidOff.NoteNextDue(march) is null, "a paid-off note asks for nothing");
+
+        var held = p with { NextTaxDue = new DateTime(2026, 2, 14), Status = "Listed", Listings = [new() { Date = new DateTime(2026, 1, 10), Site = "Zillow" }] };
+        Debug.Assert(held.Reminders(new DateTime(2026, 2, 1)).SequenceEqual(["Property tax due 2/14/2026 (in 13 days)", "Listed 22 days with no change: review the price", "Deed not marked as recorded"]), "tax, stale listing and deed reminders");
+        Debug.Assert(held.Reminders(new DateTime(2026, 3, 1))[0] == "Property tax was due 2/14/2026 (15 days ago)" && (p with { Status = "Listed" }).Reminders(new DateTime(2025, 9, 10)).Single() == "Status is Listed but no listing is logged"
+            && new OwnedProperty().Reminders(march).Count == 0 && (held with { Status = "Sold (cash)" }).Reminders(march).Count == 0, "overdue tax, a missing listing, and nothing for a blank or sold property");
 
         var brief = (p with { Record = p.Record with { City = "Saginaw", State = "MI", Zip = "48602", ZoningCode = "R-2" }, CornerLot = true, Water = UtilityStatus.AtStreet }).BriefForClaude();
         Debug.Assert(brief.Contains("Address: 2916 Mackinaw St, Saginaw, MI 48602") && brief.Contains("88 x 120 ft (10,560 sq ft), 0.2424 acres, corner lot") && brief.Contains("Utilities: water at the street")

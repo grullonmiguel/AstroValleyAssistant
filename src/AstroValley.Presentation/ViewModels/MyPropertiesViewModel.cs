@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Data;
 using AstroValley.Application.Interfaces.Data;
+using AstroValley.Application.Interfaces.Export;
 using AstroValley.Application.Interfaces.Scraping;
 using AstroValley.Domain.Entities;
 using AstroValley.Domain.Models;
@@ -27,11 +28,13 @@ public partial class MyPropertiesViewModel : ObservableObject
     private readonly HomeViewModel _home;
     private readonly IRegridService _regrid;
     private readonly SettingsService _settings;
+    private readonly IPortfolioExporter _excel;
     private readonly IServiceProvider _services; // MainViewModel, the dialogs and Comps are resolved when needed: they are built after this view model
 
-    public MyPropertiesViewModel(IOwnedPropertyStore store, IBrowserService browser, HomeViewModel home, IRegridService regrid, SettingsService settings, IServiceProvider services)
+    public MyPropertiesViewModel(IOwnedPropertyStore store, IBrowserService browser, HomeViewModel home, IRegridService regrid, SettingsService settings, IPortfolioExporter excel, IServiceProvider services)
     {
         _settings = settings;
+        _excel = excel;
         CollectionViewSource.GetDefaultView(Properties).Filter = o => StatusFilter switch
         {
             "All" => true,
@@ -66,7 +69,8 @@ public partial class MyPropertiesViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeleteCommand), nameof(ExportCommand), nameof(ScrapeCommand), nameof(FindCompsCommand), nameof(ShowOnMapCommand),
-        nameof(SaveTiersAsDefaultCommand), nameof(ExportTermSheetCommand), nameof(NeighborsToLeadsCommand), nameof(CopyBriefCommand), nameof(PasteResearchCommand))]
+        nameof(SaveTiersAsDefaultCommand), nameof(ExportTermSheetCommand), nameof(NeighborsToLeadsCommand), nameof(CopyBriefCommand), nameof(PasteResearchCommand),
+        nameof(AddFilesCommand), nameof(OpenDocumentsCommand))]
     private OwnedPropertyViewModel? _selected;
 
     [ObservableProperty]
@@ -75,6 +79,105 @@ public partial class MyPropertiesViewModel : ObservableObject
 
     [ObservableProperty]
     private string _status = "Every change is saved as you make it.";
+
+    // --- reminders: what needs attention across every property, shown above the list ---
+    public IReadOnlyList<string> Reminders => [.. Properties.SelectMany(p => p.Model.Reminders(DateTime.Today).Select(r => $"{p.Title}: {r}"))];
+    public bool HasReminders => Reminders.Count > 0;
+
+    // --- documents and photos of the selected property: plain files in its own folder ---
+    public record DocFile(string Name, string Path, System.Windows.Media.ImageSource? Thumbnail);
+
+    [ObservableProperty]
+    private IReadOnlyList<DocFile> _files = [];
+
+    partial void OnSelectedChanged(OwnedPropertyViewModel? value) => RefreshFiles();
+
+    private static readonly string[] ImageTypes = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"];
+
+    private void RefreshFiles()
+    {
+        try
+        {
+            var folder = Selected is null ? null : _store.FolderOf(Selected.Model.Id);
+            Files = folder is null || !Directory.Exists(folder) ? []
+                : [.. Directory.EnumerateFiles(folder).OrderBy(f => f, StringComparer.OrdinalIgnoreCase).Select(f => new DocFile(Path.GetFileName(f), f, Thumbnail(f)))];
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Files = []; }
+    }
+
+    private static System.Windows.Media.ImageSource? Thumbnail(string path)
+    {
+        if (!ImageTypes.Contains(Path.GetExtension(path).ToLowerInvariant())) return null;
+        try
+        {
+            var image = new System.Windows.Media.Imaging.BitmapImage();
+            image.BeginInit();
+            image.UriSource = new Uri(path);
+            image.DecodePixelWidth = 240;                                                  // a thumbnail, not the full photo, in memory
+            image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;     // read now, so the file is not left locked
+            image.EndInit();
+            image.Freeze();
+            return image;
+        }
+        catch (Exception ex) when (ex is IOException or NotSupportedException or UnauthorizedAccessException or ArgumentException or System.Runtime.InteropServices.COMException)
+        {
+            return null; // a damaged picture still shows by name
+        }
+    }
+
+    /// <summary>Copies files (the deed, tax bills, photos) into the property's folder; a name already there gets " (2)".</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void AddFiles()
+    {
+        if (Selected is not { } item) return;
+        var dialog = new Microsoft.Win32.OpenFileDialog { Multiselect = true, Title = $"Add documents and photos to {item.Title}" };
+        if (dialog.ShowDialog() != true) return;
+        try
+        {
+            var folder = _store.FolderOf(item.Model.Id);
+            Directory.CreateDirectory(folder);
+            foreach (var source in dialog.FileNames)
+            {
+                var target = Path.Combine(folder, Path.GetFileName(source));
+                for (var n = 2; File.Exists(target); n++)
+                    target = Path.Combine(folder, $"{Path.GetFileNameWithoutExtension(source)} ({n}){Path.GetExtension(source)}");
+                File.Copy(source, target);
+            }
+            Status = $"Copied {dialog.FileNames.Length} file(s) into {item.Title}'s folder. The originals are untouched.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Status = $"Could not copy the files: {ex.Message}"; }
+        RefreshFiles();
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void OpenDocuments()
+    {
+        if (Selected is not { } item) return;
+        Directory.CreateDirectory(_store.FolderOf(item.Model.Id));
+        _browser.Launch(_store.FolderOf(item.Model.Id));
+    }
+
+    [RelayCommand]
+    private void OpenFile(string? path)
+    {
+        if (path is not null && File.Exists(path)) _browser.Launch(path);
+        else RefreshFiles(); // it was moved or deleted outside the app
+    }
+
+    /// <summary>Every property, every expense line and the spending by year, as one workbook.</summary>
+    [RelayCommand]
+    private async Task ExportExcel()
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "Excel Workbook (*.xlsx)|*.xlsx", FileName = $"My Properties {DateTime.Today:yyyy-MM-dd}.xlsx" };
+        if (dialog.ShowDialog() != true) return;
+        try
+        {
+            await _excel.ExportAsync(Properties.Select(p => p.Model).ToList(), dialog.FileName);
+            _browser.Launch(dialog.FileName);
+            Status = $"Exported {Properties.Count} properties to {dialog.FileName}.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Status = $"Could not export (is the file open in Excel?): {ex.Message}"; }
+    }
 
     // --- status pipeline: a column in the list and this filter above it ---
     public static string[] StatusOptions => OwnedProperty.Statuses;
@@ -201,6 +304,7 @@ public partial class MyPropertiesViewModel : ObservableObject
                 $"Market value {held.Sum(p => p.MarketValue ?? 0):C0}",
                 $"Minimum sale {held.Sum(p => p.MinimumSale ?? 0):C0}",
                 sold.Count > 0 ? $"{sold.Count} sold, net profit {sold.Sum(p => p.NetProfit ?? 0):C0}" : null,
+                Properties.Where(p => p.Model.NoteBalance > 0).Sum(p => p.Model.NoteMonthly ?? 0) is > 0 and var income ? $"Payments coming in {income:C0} a month" : null,
             }.Where(s => s is not null));
         }
     }
@@ -217,6 +321,8 @@ public partial class MyPropertiesViewModel : ObservableObject
             Status = $"NOT saved, {item.Title}: {ex.Message}";
         }
         OnPropertyChanged(nameof(Totals));
+        OnPropertyChanged(nameof(Reminders));
+        OnPropertyChanged(nameof(HasReminders));
         SyncPin(item);
     }
 
@@ -348,6 +454,8 @@ public partial class MyPropertiesViewModel : ObservableObject
     private void ListChanged()
     {
         OnPropertyChanged(nameof(Totals));
+        OnPropertyChanged(nameof(Reminders));
+        OnPropertyChanged(nameof(HasReminders));
         OnPropertyChanged(nameof(IsEmpty));
     }
 
@@ -471,6 +579,31 @@ public class OwnedPropertyViewModel(OwnedProperty model, Action<OwnedPropertyVie
     public DateTime? SaleDate { get => Model.SaleDate; set => Set(Model with { SaleDate = value }); }
     public decimal? SalePrice { get => Model.SalePrice; set => Set(Model with { SalePrice = value }); }
     public decimal SaleClosingCosts { get => Model.SaleClosingCosts; set => Set(Model with { SaleClosingCosts = value }); }
+
+    // --- owner-financed sale and the tax reminder ---
+    public decimal? NoteDownPayment { get => Model.NoteDownPayment; set => Set(Model with { NoteDownPayment = value }); }
+    public decimal? NoteApr { get => Model.NoteApr; set => Set(Model with { NoteApr = value }); }
+    public int? NoteMonths { get => Model.NoteMonths; set => Set(Model with { NoteMonths = value }); }
+    public DateTime? NoteFirstPayment { get => Model.NoteFirstPayment; set => Set(Model with { NoteFirstPayment = value }); }
+    public DateTime? NextTaxDue { get => Model.NextTaxDue; set => Set(Model with { NextTaxDue = value }); }
+
+    public string NoteSummary
+    {
+        get
+        {
+            if (!Model.HasNote) return "Type the sale price in The sale card, then the down payment and the term here.";
+            var today = DateTime.Today;
+            return string.Join("   ·   ", new[]
+            {
+                $"Financed {Model.NotePrincipal:C}",
+                $"{Model.NoteMonthly:C} a month",
+                $"Received {Model.NotePaid:C}",
+                $"Balance {Model.NoteBalance:C}",
+                Model.NoteBalance == 0 ? "Paid off" : Model.NoteNextDue(today) is { } next ? $"Next due {next:d}" : null,
+                Model.NoteBehind(today) is > 0 and var behind ? $"{behind:C} BEHIND" : null,
+            }.Where(s => s is not null));
+        }
+    }
 
     public string ChecklistProgress => $"{Model.SaleChecklist.Count(s => s.Done)} of {Model.SaleChecklist.Count} done";
     public string FinancingBasisText => Model.FinancingBasis is { } price ? $"Worked out on {price:C}" : "Set a market value or an asking price to see the payments";

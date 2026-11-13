@@ -12,7 +12,7 @@ public partial class MyPropertiesView : UserControl
         InitializeComponent();
         // the expense and neighbor grids change the property's lists in place, so the view says when to save: after a row is
         // committed (OnRowEditEnding) and after one is deleted
-        foreach (var grid in new[] { ExpensesGrid, NeighborsGrid, TiersGrid, ContactsGrid, ListingsGrid, BuyersGrid })
+        foreach (var grid in new[] { ExpensesGrid, NeighborsGrid, TiersGrid, ContactsGrid, ListingsGrid, BuyersGrid, PaymentsGrid })
             ((INotifyCollectionChanged)grid.Items).CollectionChanged += (_, e) =>
             {
                 if (e.Action == NotifyCollectionChangedAction.Remove) SaveSelected();

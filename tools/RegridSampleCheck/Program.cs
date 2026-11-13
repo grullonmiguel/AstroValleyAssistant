@@ -43,6 +43,7 @@ Jurisdictions.SelfCheck();
 AstroValley.Infrastructure.Data.JsonPinStore.SelfCheck();
 OwnedProperty.SelfCheck();
 AstroValley.Infrastructure.Data.JsonOwnedPropertyStore.SelfCheck();
+AstroValley.Infrastructure.Export.PortfolioExcelExporter.SelfCheck();
 Console.WriteLine(fails == 0 ? "Self-checks passed." : $"Self-checks FAILED: {fails}");
 return fails == 0 ? 0 : 1;
 

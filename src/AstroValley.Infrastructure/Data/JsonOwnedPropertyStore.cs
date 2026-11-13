@@ -59,7 +59,7 @@ public sealed class JsonOwnedPropertyStore(string folder) : IOwnedPropertyStore
     {
         Record = p.Record ?? new(), Expenses = p.Expenses ?? [], Neighbors = p.Neighbors ?? [],
         SaleChecklist = p.SaleChecklist ?? OwnedProperty.NewSaleChecklist(), Contacts = p.Contacts ?? [], Listings = p.Listings ?? [],
-        Buyers = p.Buyers ?? [], FinancingTiers = p.FinancingTiers ?? FinancingTier.Defaults(), Status = p.Status ?? OwnedProperty.Statuses[0],
+        Buyers = p.Buyers ?? [], Payments = p.Payments ?? [], FinancingTiers = p.FinancingTiers ?? FinancingTier.Defaults(), Status = p.Status ?? OwnedProperty.Statuses[0],
     };
 
     private static readonly string[] ReplacedTexts = ["Overview", "LocationOverview", "ListingAd"];
@@ -117,7 +117,11 @@ public sealed class JsonOwnedPropertyStore(string folder) : IOwnedPropertyStore
     {
         if (File.Exists(PathOf(id)))
             FileSystem.DeleteFile(PathOf(id), UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+        if (Path.GetFileName(id).Length > 0 && Directory.Exists(FolderOf(id)))
+            FileSystem.DeleteDirectory(FolderOf(id), UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
     }
+
+    public string FolderOf(string id) => Path.Combine(folder, Path.GetFileName(id));
 
     // GetFileName: an id can never point outside the folder
     private string PathOf(string id) => Path.Combine(folder, Path.GetFileName(id) + ".json");
@@ -197,7 +201,11 @@ public sealed class JsonOwnedPropertyStore(string folder) : IOwnedPropertyStore
                 try { store.ApplyResearch(back, bad); Debug.Fail("refused: " + bad); } catch (JsonException) { }
 
             store.Delete(@"..\..\elsewhere"); // must not throw or leave the folder
+            Directory.CreateDirectory(store.FolderOf("copy"));
+            File.WriteAllText(Path.Combine(store.FolderOf("copy"), "deed.txt"), "deed");
+            Debug.Assert(store.FolderOf(@"..\..\elsewhere") == Path.Combine(dir, "elsewhere") && store.List().Count == 3, "a property's documents stay inside the folder, and are not mistaken for properties");
             store.Delete("copy");
+            Debug.Assert(!Directory.Exists(store.FolderOf("copy")), "its documents go with it");
             Debug.Assert(store.List().Count == 2 && !File.Exists(Path.Combine(dir, "copy.json")), "delete removes one property");
         }
         finally

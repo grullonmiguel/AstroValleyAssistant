@@ -8,6 +8,9 @@ public interface IOwnedPropertyStore
     /// <summary>Where the files are kept; a property's photos and documents go in a folder named by its Id beside its file.</summary>
     string Folder { get; }
 
+    /// <summary>Where a property's photos and documents are kept (the deed, tax bills, pictures); made on first use by the caller.</summary>
+    string FolderOf(string id);
+
     /// <summary>Every readable property, most recently purchased first.</summary>
     IReadOnlyList<OwnedProperty> List();
 
@@ -27,6 +30,6 @@ public interface IOwnedPropertyStore
     /// <summary>Writes a copy of the property's file to <paramref name="path"/>.</summary>
     void Export(OwnedProperty property, string path);
 
-    /// <summary>Moves the property's file to the Recycle Bin.</summary>
+    /// <summary>Moves the property's file, and its folder of photos and documents, to the Recycle Bin.</summary>
     void Delete(string id);
 }

@@ -59,9 +59,12 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Row 0: totals and actions -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,10">
+        <!-- Row 0: totals and actions, and under them whatever needs attention -->
+        <StackPanel Grid.Row="0">
+        <DockPanel Margin="0,0,0,10">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="Excel" Tag="{StaticResource Icon.Excel}" Command="{Binding ExportExcelCommand}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="14,6"
+                        ToolTip="Every property, every expense line and the spending by year, as one workbook"/>
                 <Button Content="Delete" Tag="{StaticResource Icon.Delete}" Command="{Binding DeleteCommand}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="14,6"
                         ToolTip="Move the selected property's file to the Recycle Bin"/>
                 <Button Content="Export" Tag="{StaticResource Icon.Save}" Command="{Binding ExportCommand}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="14,6"
@@ -73,9 +76,20 @@
                 <Button Content="Add property" Tag="{StaticResource Icon.Plus}" Command="{Binding AddCommand}" Style="{StaticResource Theme.Dialog.Button.Primary}" Padding="16,7"/>
             </StackPanel>
             <ComboBox DockPanel.Dock="Left" ItemsSource="{x:Static vm:MyPropertiesViewModel.StatusFilters}" SelectedItem="{Binding StatusFilter}" Style="{StaticResource Theme.ComboBox.Light}"
-                      Width="140" Margin="0,0,14,0" VerticalAlignment="Center" ToolTip="Show only the properties at this stage"/>
-            <TextBlock Text="{Binding Totals}" Style="{StaticResource Theme.Dialog.Text}" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                      Width="140" HorizontalAlignment="Left" VerticalAlignment="Center" ToolTip="Show only the properties at this stage"/>
         </DockPanel>
+            <TextBlock Text="{Binding Totals}" Style="{StaticResource Theme.Dialog.Text}" FontWeight="SemiBold" Margin="0,0,0,10"/>
+            <Border Background="{DynamicResource Brush.Status.Warning}" CornerRadius="8" Padding="12,6" Margin="0,0,0,10"
+                    Visibility="{Binding HasReminders, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ScrollViewer MaxHeight="64" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Reminders}" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate><TextBlock Text="{Binding}" FontSize="{StaticResource FontSize.Small}" Foreground="{DynamicResource Brush.Status.Warning.Foreground}" FontWeight="SemiBold" Margin="0,1"/></DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+        </StackPanel>
 
         <!-- Row 1: the list -->
         <DataGrid Grid.Row="1" ItemsSource="{Binding Properties}" SelectedItem="{Binding Selected, Mode=TwoWay}" FontSize="13" MinRowHeight="34" MaxHeight="250">
@@ -143,6 +157,8 @@
                             <DockPanel Style="{StaticResource Field}"><TextBlock Text="Deed type" Style="{StaticResource Label}"/><TextBox Text="{Binding DeedType}" Tag="Treasurer / Quitclaim / Warranty"/></DockPanel>
                             <DockPanel Style="{StaticResource Field}"><TextBlock Text="Deed recorded" Style="{StaticResource Label}"/><TextBox Text="{Binding DeedRecordedDate, StringFormat=d, TargetNullValue=''}" Tag="m/d/yyyy"/></DockPanel>
                             <DockPanel Style="{StaticResource Field}"><TextBlock Text="Liber / instrument" Style="{StaticResource Label}"/><TextBox Text="{Binding DeedInstrument}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="Next tax due" Style="{StaticResource Label}"/><TextBox Text="{Binding NextTaxDue, StringFormat=d, TargetNullValue=''}" Tag="m/d/yyyy"
+                                ToolTip="From the tax bill. A reminder shows above the list from 30 days before."/></DockPanel>
                         </StackPanel>
                     </HeaderedContentControl>
 
@@ -405,13 +421,13 @@
                         </DockPanel>
                         <DataGrid x:Name="BuyersGrid" ItemsSource="{Binding Model.Buyers}" Style="{StaticResource EditGrid}" RowEditEnding="OnRowEditEnding">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=d}" Width="80"/>
+                                <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=d}" Width="92"/>
                                 <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="1.3*"/>
                                 <DataGridTextColumn Header="Contact" Binding="{Binding Contact}" Width="1.3*"/>
                                 <DataGridComboBoxColumn Header="Type" SelectedItemBinding="{Binding Type}" ItemsSource="{x:Static vm:MyPropertiesViewModel.BuyerTypes}" Width="90"/>
                                 <DataGridTextColumn Header="Offer" Binding="{Binding Offer, StringFormat=N2, TargetNullValue=''}" Width="80" ElementStyle="{StaticResource NumericCellStyle}"/>
                                 <DataGridCheckBoxColumn Header="Fin." Binding="{Binding Financed}" Width="46"/>
-                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="90"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="84"/>
                                 <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -431,6 +447,59 @@
                             </TextBlock></DockPanel>
                         <DockPanel Style="{StaticResource Field}"><TextBlock Text="Held" Style="{StaticResource Label}"/><TextBlock Text="{Binding HeldText}" Style="{StaticResource Computed}" FontWeight="Normal"/></DockPanel>
                         <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" Text="Set the status in the Value and pricing card to Sold (cash) or Sold (financed) when it closes."/>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <HeaderedContentControl Header="Owner-financed sale" Tag="{StaticResource Icon.Calendar}" Style="{StaticResource WideCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,0,0,8"
+                                   Text="Only for a sale with monthly payments: the terms you agreed, then each payment as it arrives. The balance is an estimate; use the servicer's statement for a payoff figure."/>
+                        <UniformGrid Columns="2">
+                            <DockPanel Style="{StaticResource Field}" Margin="0,0,12,6"><TextBlock Text="Down payment" Style="{StaticResource Label}"/><TextBox Text="{Binding NoteDownPayment, StringFormat=N2, TargetNullValue=''}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="APR %" Style="{StaticResource Label}"/><TextBox Text="{Binding NoteApr, StringFormat=0.00, TargetNullValue=''}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}" Margin="0,0,12,6"><TextBlock Text="Months" Style="{StaticResource Label}"/><TextBox Text="{Binding NoteMonths, TargetNullValue=''}"/></DockPanel>
+                            <DockPanel Style="{StaticResource Field}"><TextBlock Text="First payment due" Style="{StaticResource Label}"/><TextBox Text="{Binding NoteFirstPayment, StringFormat=d, TargetNullValue=''}" Tag="m/d/yyyy"/></DockPanel>
+                        </UniformGrid>
+                        <TextBlock Text="{Binding NoteSummary}" Style="{StaticResource Computed}" TextWrapping="Wrap" Margin="0,4,0,8"/>
+                        <DataGrid x:Name="PaymentsGrid" ItemsSource="{Binding Model.Payments}" Style="{StaticResource EditGrid}" RowEditEnding="OnRowEditEnding">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Date received" Binding="{Binding Date, StringFormat=d}" Width="130"/>
+                                <DataGridTextColumn Header="Amount" Binding="{Binding Amount, StringFormat=N2}" Width="130" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <HeaderedContentControl Header="Documents and photos" Tag="{StaticResource Icon.Document}" Style="{StaticResource WideCard}">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,8">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button Content="Open folder" Style="{StaticResource Theme.Dialog.Button.Link}" Command="{Binding DataContext.OpenDocumentsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Button Content="Add files" Tag="{StaticResource Icon.Plus}" Style="{StaticResource Theme.Dialog.Button.Outline}" Padding="12,5" Command="{Binding DataContext.AddFilesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ToolTip="Copy the deed, tax bills or photos into this property's folder"/>
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource Theme.Dialog.Text.Small}" VerticalAlignment="Center" Text="The deed, tax bills, photos. Click one to open it. To remove one, delete it in the folder."/>
+                        </DockPanel>
+                        <ItemsControl ItemsSource="{Binding DataContext.Files, RelativeSource={RelativeSource AncestorType=UserControl}}" Focusable="False">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource Theme.Dialog.Button.Link}" Margin="0,0,10,10" Padding="0" CommandParameter="{Binding Path}" ToolTip="{Binding Name}"
+                                            Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                        <StackPanel Width="120">
+                                            <Border Height="80" CornerRadius="6" ClipToBounds="True" Background="{DynamicResource Brush.Background.Hover}">
+                                                <Grid>
+                                                    <Path Style="{StaticResource Theme.Dialog.Icon}" Data="{StaticResource Icon.Document}" Width="28" Height="28" Opacity="0.6"/>
+                                                    <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="Normal" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </HeaderedContentControl>
 

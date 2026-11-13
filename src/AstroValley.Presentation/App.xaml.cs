@@ -107,6 +107,7 @@ namespace AstroValley.Presentation
             services.AddTransient<IClipboardExporter, ClipboardExporter>();
             services.AddTransient<IExcelExporter, ExcelPropertyExporter>();
             services.AddTransient<IPinSheetExporter, PinResearchSheetExporter>();
+            services.AddTransient<IPortfolioExporter, PortfolioExcelExporter>();
 
             // ── Infrastructure: HTTP Logging Handler ─────────────────────────
             // ── Infrastructure: HTTP Logging Handler ─────────────────────────
