@@ -35,11 +35,11 @@ public partial class MyPropertiesViewModel : ObservableObject
     {
         _settings = settings;
         _excel = excel;
-        CollectionViewSource.GetDefaultView(Properties).Filter = o => StatusFilter switch
+        CollectionViewSource.GetDefaultView(Properties).Filter = o => o is OwnedPropertyViewModel p && p.Matches(SearchText) && StatusFilter switch
         {
             "All" => true,
-            "Not sold" => !((OwnedPropertyViewModel)o).Model.IsSold,
-            var status => ((OwnedPropertyViewModel)o).Model.Status == status,
+            "Not sold" => !p.Model.IsSold,
+            var status => p.Model.Status == status,
         };
         _store = store;
         _browser = browser;
@@ -186,6 +186,20 @@ public partial class MyPropertiesViewModel : ObservableObject
     [ObservableProperty]
     private string _statusFilter = "All";
 
+    /// <summary>The sidebar's search box: address, city, parcel ID or lot number.</summary>
+    [ObservableProperty]
+    private string _searchText = "";
+
+    partial void OnSearchTextChanged(string value) => OnStatusFilterChanged(StatusFilter);
+
+    /// <summary>A card's Edit button: the small dialog with that section's fields ("Property", "Purchase", "Lot", "Value", "Utilities", "Links").</summary>
+    [RelayCommand]
+    private void EditSection(string? section)
+    {
+        if (Selected is { } item && section is not null && SectionEditViewModel.Sections.ContainsKey(section))
+            _services.GetRequiredService<IDialogService>().ShowDialog(new SectionEditViewModel(item, section, OpenLinkCommand));
+    }
+
     partial void OnStatusFilterChanged(string value)
     {
         CollectionViewSource.GetDefaultView(Properties).Refresh();
@@ -290,6 +304,9 @@ public partial class MyPropertiesViewModel : ObservableObject
 
     // --- totals above the list ---
     public bool IsEmpty => Properties.Count == 0;
+    /// <summary>The totals one per line, for the sidebar.</summary>
+    public string TotalsLines => Totals.Replace("   ·   ", Environment.NewLine);
+
     public string Totals
     {
         get
@@ -321,6 +338,7 @@ public partial class MyPropertiesViewModel : ObservableObject
             Status = $"NOT saved, {item.Title}: {ex.Message}";
         }
         OnPropertyChanged(nameof(Totals));
+        OnPropertyChanged(nameof(TotalsLines));
         OnPropertyChanged(nameof(Reminders));
         OnPropertyChanged(nameof(HasReminders));
         SyncPin(item);
@@ -454,6 +472,7 @@ public partial class MyPropertiesViewModel : ObservableObject
     private void ListChanged()
     {
         OnPropertyChanged(nameof(Totals));
+        OnPropertyChanged(nameof(TotalsLines));
         OnPropertyChanged(nameof(Reminders));
         OnPropertyChanged(nameof(HasReminders));
         OnPropertyChanged(nameof(IsEmpty));
@@ -467,7 +486,8 @@ public partial class MyPropertiesViewModel : ObservableObject
         Selected = item;
         Save(item);
         ListChanged();
-        Status = "New property added. Fill in the address or parcel below.";
+        Status = "New property added.";
+        EditSection("Property"); // straight to the address and parcel
     }
 
     private bool HasSelection => Selected is not null;
@@ -604,6 +624,51 @@ public class OwnedPropertyViewModel(OwnedProperty model, Action<OwnedPropertyVie
             }.Where(s => s is not null));
         }
     }
+
+    // --- read-only text for the cards, the header and the sidebar ---
+    private static string Us(FormattableString text) => text.ToString(System.Globalization.CultureInfo.GetCultureInfo("en-US"));
+    private static string Words(UtilityStatus s) => s switch { UtilityStatus.AtStreet => "At the street", UtilityStatus.Connected => "Connected", UtilityStatus.No => "Not available", _ => "Unknown" };
+
+    public bool Matches(string search) => string.IsNullOrWhiteSpace(search)
+        || new[] { Model.Record.Address, Model.Record.City, Model.Record.ParcelId, Model.LotNumber, Model.Record.Zip }.Any(s => s.Contains(search.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    public string CityLine => string.Join(", ", new[] { Model.Record.City, $"{Model.Record.State} {Model.Record.Zip}".Trim() }.Where(s => s.Length > 0));
+    public string FullAddress => string.Join(", ", new[] { Title, CityLine }.Where(s => s.Length > 0));
+    public string StateZip => $"{Model.Record.State} {Model.Record.Zip}".Trim();
+    public string ZoningText => $"{Model.Record.ZoningCode} {Model.Record.ZoningType}".Trim();
+    public string HeaderFacts => string.Join("   ·   ", new[]
+    {
+        Model.Acres is { } acres ? Us($"{acres:0.##} acres") : null,
+        Size.Length > 0 ? $"{Size} ft" : null,
+        Model.Record.Beds is { } beds ? $"{beds} bed" : null,
+        Model.Record.Baths is { } baths ? $"{baths} bath" : null,
+        Model.Record.LivingSqft is { } sqft ? Us($"{sqft:N0} sq ft") : null,
+        Model.Record.PropertyType.Length > 0 ? Model.Record.PropertyType : null,
+        ZoningText.Length > 0 ? $"Zoning {Model.Record.ZoningCode}" : null,
+        Model.LotNumber.Length > 0 ? $"Lot {Model.LotNumber}" : null,
+    }.Where(s => s is not null));
+
+    // sold: what was made; held: what the market value would leave over everything spent
+    public string ProfitLabel => Model.NetProfit is not null ? "Net Profit" : "Est. Profit";
+    public decimal? ProfitValue => Model.NetProfit ?? Model.MarketValue - Model.TotalSpent;
+    public decimal? ProfitPercent => Model.NetProfit is not null ? Model.NetRoiPercent : Model.MarketGainPercent;
+
+    public string PremiumText => Us($"{Model.BuyerPremium:C} ({Model.BuyerPremiumPercent:0.##}%)");
+    public string MinimumSaleText => Model.MinimumSale is { } min ? Us($"{min:C} ({Model.MinimumSalePercent:0.##}% of market value)") : "–";
+    public string CornerLotText => Model.CornerLot ? "Yes" : "No";
+    public string RoadFrontageText => Model.RoadFrontage switch { true => "Yes", false => "No", _ => "Not checked" };
+    public string ElectricityText => Words(Model.Electricity);
+    public string WaterText => Words(Model.Water);
+    public string SewerText => Words(Model.Sewer);
+    public string GasText => Words(Model.Gas);
+    public string PhoneText => Words(Model.Phone);
+
+    private static string Count(int n, string one, string many) => n == 0 ? $"No {many} yet" : n == 1 ? $"1 {one}" : $"{n} {many}";
+    public string ExpensesSubtitle => Model.Expenses.Count == 0 ? "Track what you spend after the purchase: tax bills, grass cuts, signs" : Us($"{Count(Model.Expenses.Count, "line", "lines")} · {Model.ExpensesTotal:C}");
+    public string NeighborsSubtitle => Model.Neighbors.Count == 0 ? "The owners next door: often the first buyers to call" : Count(Model.Neighbors.Count, "neighbor", "neighbors");
+    public string ListingsSubtitle => Model.Listings.Count == 0 ? "Where it is advertised" : Count(Model.Listings.Count, "listing", "listings");
+    public string BuyersSubtitle => Model.Buyers.Count == 0 ? "Everyone who asked or made an offer" : Count(Model.Buyers.Count, "lead", "leads");
+    public string SaleSubtitle => Model.SalePrice is { } price ? Us($"Sold for {price:C}") + (Model.HasNote ? Us($" · balance {Model.NoteBalance:C}") : "") : "Record the sale, and the payments if you financed it";
 
     public string ChecklistProgress => $"{Model.SaleChecklist.Count(s => s.Done)} of {Model.SaleChecklist.Count} done";
     public string FinancingBasisText => Model.FinancingBasis is { } price ? $"Worked out on {price:C}" : "Set a market value or an asking price to see the payments";

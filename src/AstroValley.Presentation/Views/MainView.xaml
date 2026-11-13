@@ -41,6 +41,9 @@
         <DataTemplate DataType="{x:Type dialogs:DueDiligenceViewModel}">
             <viewDialogs:DueDiligenceView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type dialogs:SectionEditViewModel}">
+            <viewDialogs:SectionEditView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type dialogs:SavedPinsViewModel}">
             <viewDialogs:SavedPinsView />
         </DataTemplate>

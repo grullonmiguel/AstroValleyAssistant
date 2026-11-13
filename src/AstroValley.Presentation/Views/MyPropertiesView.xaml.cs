@@ -25,6 +25,12 @@ public partial class MyPropertiesView : UserControl
         if (e.EditAction == DataGridEditAction.Commit) Dispatcher.BeginInvoke(SaveSelected, DispatcherPriority.Background);
     }
 
+    private void OnMoreClicked(object sender, System.Windows.RoutedEventArgs e)
+    {
+        MoreMenu.PlacementTarget = MoreButton;
+        MoreMenu.IsOpen = true;
+    }
+
     // a tick on the sale-readiness checklist is saved at once, not when the row loses focus
     private void OnChecklistClick(object sender, System.Windows.RoutedEventArgs e) => SaveSelected();
 
