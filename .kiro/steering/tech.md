@@ -17,14 +17,14 @@ The solution follows Clean Architecture principles with clear separation of conc
 - **Contains**:
   - `Entities/`: Core domain entities (`PropertyRecord`, `RegridMatch`, `PropertyRecordMerger`)
   - `Enums/`: All application enums (`ScrapeStatus`, `TaxSaleType`, `DialogOption`, etc.)
-  - `Models/`: Data transfer objects (`StateInfo`, `CountyInfo`, `RegridParcelResult`, `MarkerLocation`)
+  - `Models/`: Data transfer objects (`StateInfo`, `RegridParcelResult`, `MarkerLocation`)
   - `Utilities/`: Pure domain utilities (`ClipboardFormatter`, `StringExtensions`, `UrlBuilder`)
 
 ### Layer 2: Application (`src/AstroValley.Application`)
 - **Purpose**: Use cases, business logic orchestration, and interface definitions
 - **Dependencies**: Domain only
 - **Contains**:
-  - `Interfaces/Data/`: Data service contracts (`IGeographyDataService`, `IRealAuctionDataService`)
+  - `Interfaces/Data/`: Data service contracts (`IRealAuctionDataService`)
   - `Interfaces/Export/`: Export service contracts (`IExporter<TData, TDestination>`)
   - `Interfaces/Scraping/`: Scraping service contracts (`IRegridScraper`, `IRealTaxDeedClient`, `IRegridHttpClient`)
   - `Interfaces/Settings/`: Settings contracts (`IRegridSettings`, `IRealAuctionSettings`)
@@ -34,7 +34,7 @@ The solution follows Clean Architecture principles with clear separation of conc
 - **Purpose**: External concerns - data access, HTTP clients, file I/O, third-party integrations
 - **Dependencies**: Application, Domain
 - **Contains**:
-  - `Data/`: JSON data files and data services (`GeographyDataService`, `RealAuctionDataService`)
+  - `Data/`: JSON data files and data services (`RealAuctionDataService`)
   - `Scraping/`: HTTP clients and web scrapers (`RegridScraper`, `RealTaxDeedClient`, `RegridHttpClient`)
   - `Export/`: Export implementations (`ExcelPropertyExporter`, `HtmlMarkerMapExporter`, `MarkerMapParserService`)
 

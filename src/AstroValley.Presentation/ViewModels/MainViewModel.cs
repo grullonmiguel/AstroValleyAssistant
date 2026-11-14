@@ -72,8 +72,7 @@ public partial class MainViewModel : ObservableObject
         _serviceProvider = serviceProvider;
         Home = serviceProvider.GetRequiredService<HomeViewModel>();
         Comps = serviceProvider.GetRequiredService<CompsViewModel>();
-        serviceProvider.GetRequiredService<MyPropertiesViewModel>(); // made at start-up so the owned properties' pins are on the Home map
-        //CurrentViewModel = _serviceProvider.GetRequiredService<MapViewModel>();
+        serviceProvider.GetRequiredService<MyPropertiesViewModel>();
     }
 
     [RelayCommand]
@@ -94,7 +93,6 @@ public partial class MainViewModel : ObservableObject
             "RealAuction" => _serviceProvider.GetRequiredService<RealAuctionViewModel>(),
             "Comps" => Comps,
             "MyProperties" => _serviceProvider.GetRequiredService<MyPropertiesViewModel>(),
-            "Map" => _serviceProvider.GetRequiredService<MapViewModel>(),
             _ => CurrentViewModel // Default case, does nothing
         };
     }

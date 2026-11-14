@@ -66,7 +66,6 @@ namespace AstroValley.Presentation
             services.AddSingleton<RegridViewModel>();
             services.AddSingleton<MyPropertiesViewModel>();
             services.AddSingleton<RealAuctionViewModel>();
-            services.AddSingleton<MapViewModel>();
 
             // ── Dialog ViewModels (Transient) ────────────────────────────────
             services.AddTransient<RegridSettingsViewModel>();
@@ -84,9 +83,6 @@ namespace AstroValley.Presentation
             services.AddSingleton<IRegridSettings>(x => x.GetRequiredService<SettingsService>());
             services.AddSingleton<IRealAuctionSettings>(x => x.GetRequiredService<SettingsService>());
 
-            // ── Presentation: Factories ──────────────────────────────────────
-            services.AddSingleton<ICountyMapDialogFactory, CountyMapDialogFactory>();
-
             // ── Application: Use-case Services ──────────────────────────────
             services.AddSingleton<IRegridService, RegridService>();
 
@@ -95,7 +91,6 @@ namespace AstroValley.Presentation
             services.AddSingleton<IPropertyImporter, GenericImporter>();
 
             // ── Infrastructure: Data Services ────────────────────────────────
-            services.AddSingleton<IGeographyDataService, GeographyDataService>();
             services.AddSingleton<IGeocoder, Geocoder>();
             // per-user and writable without admin rights (unlike ProgramData); beside the app's logs
             services.AddSingleton<IPinStore>(new JsonPinStore(System.IO.Path.Combine(

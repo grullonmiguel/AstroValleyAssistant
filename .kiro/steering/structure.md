@@ -40,9 +40,7 @@ src/AstroValley.Domain/
 │
 ├── Models/                              # Data transfer objects
 │   ├── AppSettings.cs
-│   ├── CountyInfo.cs
 │   ├── MarkerLocation.cs                # Lat/lon pin for map export
-│   ├── RealAuctionCountyInfo.cs
 │   ├── RegridParcelResult.cs            # Regrid API response model
 │   └── StateInfo.cs
 │
@@ -64,7 +62,6 @@ src/AstroValley.Application/
 │
 ├── Interfaces/                          # All service contracts
 │   ├── Data/
-│   │   ├── IGeographyDataService.cs     # County/state data provider
 │   │   └── IRealAuctionDataService.cs   # RealAuction county data provider
 │   │
 │   ├── Export/
@@ -94,9 +91,7 @@ src/AstroValley.Infrastructure/
 ├── AstroValley.Infrastructure.csproj
 │
 ├── Data/                                # Data services and JSON files
-│   ├── Counties.json                    # County data (copied to output)
 │   ├── Counties_RealAuction.json        # RealAuction county data (copied to output)
-│   ├── GeographyDataService.cs          # Implements IGeographyDataService
 │   └── RealAuctionDataService.cs        # Implements IRealAuctionDataService
 │
 ├── Export/                              # Export implementations
@@ -128,18 +123,14 @@ src/AstroValley.Presentation/
 │   ├── MainViewModel.cs                 # Shell VM; handles navigation and dialog orchestration
 │   ├── RegridViewModel.cs               # Regrid page VM
 │   ├── RealAuctionViewModel.cs          # RealAuction page VM
-│   ├── MapViewModel.cs                  # Map page VM
 │   ├── PropertyDataViewModel.cs         # Wraps a single PropertyRecord for display
 │   ├── PropertyScraperViewModelBase.cs  # Shared base for scraper page VMs
-│   ├── CountyViewModel.cs               # County selection VM
 │   ├── StateViewModel.cs                # State selection VM
 │   ├── SettingsViewModel.cs             # Settings VM
 │   ├── RealAuctionCalendarDataViewModel.cs
 │   │
 │   └── Dialogs/                         # Dialog ViewModels (transient lifetime)
-│       ├── CountyMapDialogViewModel.cs
 │       ├── ImportViewModel.cs
-│       ├── MarkerMapViewModel.cs
 │       ├── RegridSettingsViewModel.cs
 │       ├── ResolveMatchesViewModel.cs   # Multiple matches resolution dialog
 │       └── ThemeSettingsViewModel.cs
@@ -148,12 +139,10 @@ src/AstroValley.Presentation/
 │   ├── MainView.xaml                    # Shell window with navigation and dialog host
 │   ├── RegridView.xaml
 │   ├── RealAuctionView.xaml
-│   ├── MapView.xaml
 │   ├── PropertyDetailsControl.xaml      # Reusable property details control
 │   ├── MultipleMatchesBanner.xaml       # Banner for multiple matches notification
 │   │
 │   └── Dialogs/
-│       ├── CountyMapView.xaml
 │       ├── ImportView.xaml
 │       ├── MarkerMapView.xaml
 │       ├── RegridSettingsView.xaml
@@ -192,7 +181,6 @@ src/AstroValley.Presentation/
 │   ├── FileService.cs / IFileService.cs
 │   ├── ThemeService.cs / IThemeService.cs
 │   ├── SettingsService.cs               # Implements IRegridSettings + IRealAuctionSettings
-│   ├── CountyMapDialogFactory.cs / ICountyMapDialogFactory.cs
 │
 ├── Behaviors/                           # XAML attached behaviors (Interaction.Behaviors)
 │   ├── ComboBoxItemTemplateSelector.cs

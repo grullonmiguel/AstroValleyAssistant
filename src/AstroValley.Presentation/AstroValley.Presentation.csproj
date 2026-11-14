@@ -18,16 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Views\Dialogs\CountyMapView.xaml.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Update="Views\Dialogs\RegridSettingsView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Views\Dialogs\ThemeSettingsView.xaml.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Update="Views\MapView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Views\PropertyDetailsControl.xaml.cs">

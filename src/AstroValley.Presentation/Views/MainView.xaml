@@ -23,12 +23,6 @@
         <DataTemplate DataType="{x:Type viewmodels:MyPropertiesViewModel}">
             <views:MyPropertiesView/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type viewmodels:MapViewModel}">
-            <views:MapView/>
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type dialogs:CountyMapDialogViewModel}">
-            <viewDialogs:CountyMapView/>
-        </DataTemplate>
         <DataTemplate DataType="{x:Type dialogs:RegridSettingsViewModel}">
             <viewDialogs:RegridSettingsView/>
         </DataTemplate>
