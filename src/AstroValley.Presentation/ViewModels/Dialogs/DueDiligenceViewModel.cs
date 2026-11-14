@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using AstroValley.Domain.DueDiligence;
 using AstroValley.Domain.Models;
-using AstroValley.Presentation.Services;
+using AstroValley.Presentation.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 

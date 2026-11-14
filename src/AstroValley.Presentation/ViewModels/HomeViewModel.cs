@@ -1,14 +1,14 @@
 using AstroValley.Application.Interfaces.Data;
 using AstroValley.Application.Interfaces.Export;
-using AstroValley.Domain.Entities;
 using AstroValley.Domain.Enums;
 using AstroValley.Domain.Models;
+using AstroValley.Presentation.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using System.Windows.Data;
 using System.IO;
 using System.Text.Json;
+using System.Windows.Data;
 
 namespace AstroValley.Presentation.ViewModels;
 
@@ -42,11 +42,11 @@ public partial class HomeViewModel : ObservableObject
     public ObservableCollection<MarkerLocation> Markers { get; } = [];
 
     private readonly IPinSheetExporter _sheetExporter;
-    private readonly Services.IBrowserService _browser;
+    private readonly IBrowserService _browser;
     private readonly IPinStore _pinStore;
     private readonly IServiceProvider _serviceProvider; // IDialogService is resolved when needed: it depends on MainViewModel, which holds this view model
 
-    public HomeViewModel(IPinSheetExporter sheetExporter, Services.IBrowserService browser, IPinStore pinStore, IServiceProvider serviceProvider)
+    public HomeViewModel(IPinSheetExporter sheetExporter, IBrowserService browser, IPinStore pinStore, IServiceProvider serviceProvider)
     {
         _sheetExporter = sheetExporter;
         _browser = browser;
@@ -176,7 +176,7 @@ public partial class HomeViewModel : ObservableObject
         pin.SearchNames ??= AstroValley.Domain.DueDiligence.Jurisdictions.SearchNames(
             pin.ExtraDetails?.GetValueOrDefault("Owner"), pin.ExtraDetails?.GetValueOrDefault("Other Owners")); // pins saved before names existed
         var dialog = new ViewModels.Dialogs.DueDiligenceViewModel(pin, _browser, SavePinsCommand);
-        Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Services.IDialogService>(_serviceProvider).ShowDialog(dialog);
+        Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IDialogService>(_serviceProvider).ShowDialog(dialog);
         try { await dialog.Result; }
         catch (TaskCanceledException) { } // closed with X: the answers were already written to the pin
         AutoSave([pin]);
@@ -263,7 +263,7 @@ public partial class HomeViewModel : ObservableObject
 
     [RelayCommand]
     private void OpenSavedPins() =>
-        Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Services.IDialogService>(_serviceProvider)
+        Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Services.Interfaces.IDialogService>(_serviceProvider)
             .ShowDialog(new ViewModels.Dialogs.SavedPinsViewModel(_pinStore, _browser, AddMarkers));
 
     // --- Owned properties: Home draws their pins; MyPropertiesViewModel keeps them and listens to these ---

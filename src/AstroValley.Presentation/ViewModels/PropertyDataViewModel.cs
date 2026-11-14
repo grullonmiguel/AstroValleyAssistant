@@ -1,7 +1,7 @@
 ﻿using AstroValley.Domain.Entities;
 using AstroValley.Domain.Enums;
 using AstroValley.Domain.Utilities;
-using AstroValley.Presentation.Services;
+using AstroValley.Presentation.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;

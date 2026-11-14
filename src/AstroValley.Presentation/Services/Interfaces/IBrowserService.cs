@@ -1,4 +1,4 @@
-﻿namespace AstroValley.Presentation.Services;
+﻿namespace AstroValley.Presentation.Services.Interfaces;
 
 /// <summary>
 /// Defines a contract for launching URLs in the system browser.

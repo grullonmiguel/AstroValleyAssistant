@@ -1,4 +1,6 @@
-﻿namespace AstroValley.Presentation.Services;
+﻿using AstroValley.Presentation.Services.Interfaces;
+
+namespace AstroValley.Presentation.Services;
 
 public class FileService : IFileService
 {

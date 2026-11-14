@@ -1,4 +1,4 @@
-﻿namespace AstroValley.Presentation.Services;
+﻿namespace AstroValley.Presentation.Services.Interfaces;
 
 public interface IFileService
 {

@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using AstroValley.Application.Interfaces.Data;
 using AstroValley.Domain.Models;
-using AstroValley.Presentation.Services;
+using AstroValley.Presentation.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
