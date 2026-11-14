@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:enum="clr-namespace:AstroValley.Domain.Models;assembly=AstroValley.Domain"
              xmlns:local="clr-namespace:AstroValley.Presentation.Views"
-             xmlns:control="clr-namespace:AstroValley.Presentation.Themes.Controls"
+             xmlns:control="clr-namespace:AstroValley.Presentation.Styles.Controls"
              xmlns:behaviors="clr-namespace:AstroValley.Presentation.Behaviors"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">

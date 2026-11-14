@@ -2,7 +2,7 @@
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace AstroValley.Presentation.Themes.Controls;
+namespace AstroValley.Presentation.Styles.Controls;
 
 public class IconTextButton : Button
 {

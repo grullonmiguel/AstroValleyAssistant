@@ -8,10 +8,10 @@
 
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Themes/_Resources.xaml"/>
-                <ResourceDictionary Source="/Themes/_Controls.xaml"/>
-                <ResourceDictionary Source="/Themes/Palettes/Light.xaml"/>
-                <ResourceDictionary Source="/Themes/Accents/Purple.xaml"/>
+                <ResourceDictionary Source="/Styles/_Resources.xaml"/>
+                <ResourceDictionary Source="/Styles/_Controls.xaml"/>
+                <ResourceDictionary Source="/Styles/Palettes/Light.xaml"/>
+                <ResourceDictionary Source="/Styles/Accents/Purple.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <conv:BooleanInvertConverter x:Key="BooleanInvertConverter"/>

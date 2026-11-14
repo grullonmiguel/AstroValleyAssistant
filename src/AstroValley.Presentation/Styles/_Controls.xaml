@@ -3,10 +3,10 @@
 
     <!-- This file's only job is to group the individual control styles together. -->
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/Themes/Controls/Button.xaml"/>
-        <ResourceDictionary Source="/Themes/Controls/RadioButton.xaml"/>
-        <ResourceDictionary Source="/Themes/Controls/ListBox.xaml"/>
-        <ResourceDictionary Source="/Themes/Controls/ToolTip.xaml"/>
+        <ResourceDictionary Source="/Styles/Controls/Button.xaml"/>
+        <ResourceDictionary Source="/Styles/Controls/RadioButton.xaml"/>
+        <ResourceDictionary Source="/Styles/Controls/ListBox.xaml"/>
+        <ResourceDictionary Source="/Styles/Controls/ToolTip.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

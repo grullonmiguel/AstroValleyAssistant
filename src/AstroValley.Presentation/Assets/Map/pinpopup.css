@@ -1,5 +1,5 @@
 /* Pin popup look, shared by the Home map (homemaplibre.html) and the exported map (pinsexport.html). */
-/* The app's palette, so the popup matches the WPF dialogs: same values as Themes/Accents/Purple.xaml and Themes/Palettes/Light.xaml. */
+/* The app's palette, so the popup matches the WPF dialogs: same values as Styles/Accents/Purple.xaml and Styles/Palettes/Light.xaml. */
 :root {
     --av-accent: #534B80; --av-accent-hover: #3E3175; --av-ink: #30294B; --av-pill: #DBD8E9; --av-hover: #EDEBF2;
     --av-text: #333333; --av-muted: #777777; --av-border: #E0E0E0; --av-card: #FFFFFF;
