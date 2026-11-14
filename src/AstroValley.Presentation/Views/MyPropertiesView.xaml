@@ -89,12 +89,14 @@
                                         </StackPanel>
                                     </DockPanel>
                                 </ToggleButton>
-                                <ContentPresenter x:Name="Body" Margin="16,2,16,14" Visibility="Collapsed"/>
+                                <!-- slides open and closed like the Comps sidebar's sections -->
+                                <Border Style="{StaticResource Theme.Border.Collapsible}" Tag="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ContentPresenter Margin="16,2,16,14"/>
+                                </Border>
                             </DockPanel>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsExpanded" Value="True">
-                                <Setter TargetName="Body" Property="Visibility" Value="Visible"/>
                                 <Setter TargetName="Chevron" Property="RenderTransform"><Setter.Value><RotateTransform Angle="0"/></Setter.Value></Setter>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -127,6 +129,7 @@
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
+        
         <Style x:Key="PropertyRowContainer" TargetType="ListBoxItem">
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -150,12 +153,12 @@
 
     <Grid Style="{StaticResource ViewSlideInFromTopStyle}" Margin="0 0 16 16">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="270"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="400"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Left: the properties -->
-        <Border Grid.Column="0" Background="{DynamicResource Brush.Background.Secondary}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,14,0">
+        <!-- Property List -->
+        <Border Grid.Column="1" Background="{DynamicResource Brush.Background.Secondary}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,14,0">
             <DockPanel>
                 <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
                     <Button DockPanel.Dock="Right" Command="{Binding AddCommand}" Style="{StaticResource Theme.Button.Outline}" Padding="7" BorderThickness="1" ToolTip="Add a property">
@@ -178,8 +181,8 @@
             </DockPanel>
         </Border>
 
-        <!-- Right: the selected property -->
-        <DockPanel Grid.Column="1">
+        <!-- Selected property -->
+        <DockPanel Grid.Column="0">
             <TextBlock DockPanel.Dock="Bottom" Text="{Binding Status}" Style="{StaticResource Theme.Dialog.Text.Small}" Margin="0,8,0,0"/>
 
             <!-- address, quick facts and the menu -->

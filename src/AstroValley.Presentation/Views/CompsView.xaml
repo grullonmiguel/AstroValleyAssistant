@@ -93,33 +93,6 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
-        <!-- slides open / closed (height and fade, 0.2 s) when Tag turns true / false; starts closed, so nothing flickers on load -->
-        <Style x:Key="Collapsible" TargetType="Border">
-            <Setter Property="ClipToBounds" Value="True"/>
-            <Setter Property="Opacity" Value="0"/>
-            <Setter Property="LayoutTransform"><Setter.Value><ScaleTransform ScaleY="0"/></Setter.Value></Setter>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}">
-                    <DataTrigger.Value><sys:Boolean>True</sys:Boolean></DataTrigger.Value>
-                    <DataTrigger.EnterActions>
-                        <BeginStoryboard><Storyboard>
-                            <DoubleAnimation Storyboard.TargetProperty="(Border.LayoutTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.2">
-                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
-                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
-                        </Storyboard></BeginStoryboard>
-                    </DataTrigger.EnterActions>
-                    <DataTrigger.ExitActions>
-                        <BeginStoryboard><Storyboard>
-                            <DoubleAnimation Storyboard.TargetProperty="(Border.LayoutTransform).(ScaleTransform.ScaleY)" To="0" Duration="0:0:0.18">
-                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseIn"/></DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
-                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/>
-                        </Storyboard></BeginStoryboard>
-                    </DataTrigger.ExitActions>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
         <!-- white card with a soft shadow -->
         <Style x:Key="Card" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource Brush.Background.Secondary}"/>
@@ -222,7 +195,9 @@
                         <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Content="{Binding Name}" Style="{StaticResource SitePill}" CommandParameter="{Binding Name}"
+                                <Button Content="{Binding Name}" 
+                                        Style="{StaticResource SitePill}" 
+                                        CommandParameter="{Binding Name}"
                                         Command="{Binding DataContext.GoSiteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -267,7 +242,6 @@
         </Grid>
 
         <!-- Sidebar -->
-        <!-- Sidebar: actions, the property, the value, filters, the comps, then the value to apply -->
         <Grid Grid.Column="1" Margin="12,0,8,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -319,7 +293,7 @@
                         </Grid>
 
                         <!-- the boxes -->
-                        <Border Style="{StaticResource Collapsible}" Tag="{Binding IsEditingSubject}">
+                        <Border Style="{StaticResource Theme.Border.Collapsible}" Tag="{Binding IsEditingSubject}">
                         <Grid Margin="0,10,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="56"/>
@@ -480,7 +454,7 @@
                                 </ToggleButton.Template>
                             </ToggleButton>
 
-                            <Border Style="{StaticResource Collapsible}" Tag="{Binding IsChecked, ElementName=FiltersToggle}">
+                            <Border Style="{StaticResource Theme.Border.Collapsible}" Tag="{Binding IsChecked, ElementName=FiltersToggle}">
                             <StackPanel Margin="0,10,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>

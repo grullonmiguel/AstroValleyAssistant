@@ -61,7 +61,6 @@ public partial class MyPropertiesViewModel : ObservableObject
         {
             Status = $"Could not read the saved properties: {ex.Message}";
         }
-        foreach (var item in Properties) SyncPin(item);
         Selected = Properties.FirstOrDefault();
     }
 
@@ -344,14 +343,15 @@ public partial class MyPropertiesViewModel : ObservableObject
         SyncPin(item);
     }
 
-    // --- Home map: each property with coordinates has a gold pin there, redrawn when the property changes ---
+    // --- Home map: a property's gold pin appears only after "Show on map", then is redrawn when the property changes ---
     private readonly Dictionary<string, MarkerLocation> _pins = [];
     private bool _editFromPin;
 
     private void SyncPin(OwnedPropertyViewModel item)
     {
         if (_editFromPin) return; // the pin already shows the edit; redrawing it would close its popup
-        if (_pins.Remove(item.Model.Id, out var old)) _home.RemoveMarkerCommand.Execute(old);
+        if (!_pins.Remove(item.Model.Id, out var old)) return; // never shown on the map: nothing to refresh
+        _home.RemoveMarkerCommand.Execute(old);
         if (item.Model.ToPin() is not { } pin) return;
         _home.AddMarkers([pin]);
         _pins[item.Model.Id] = pin;
@@ -460,11 +460,13 @@ public partial class MyPropertiesViewModel : ObservableObject
     private void ShowOnMap()
     {
         if (Selected is not { } item) return;
-        if (!_pins.TryGetValue(item.Model.Id, out var pin))
+        if (item.Model.ToPin() is not { } fresh)
         {
             Status = $"{item.Title} has no coordinates yet. Press Scrape, or type the latitude and longitude.";
             return;
         }
+        var pin = _pins.GetValueOrDefault(item.Model.Id) ?? fresh;
+        if (_home.AddMarkers([pin]) > 0) _pins[item.Model.Id] = pin; // 0 = already on the map
         _services.GetRequiredService<MainViewModel>().CurrentViewModel = _home;
         _home.FlyTo(pin);
     }

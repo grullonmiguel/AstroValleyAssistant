@@ -1417,6 +1417,37 @@
     </Style>
     <!--#endregion-->
 
+    <!--#region Collapsible -->
+    <!-- shared by the Comps sidebar and the My Properties sections -->
+    <!-- slides open / closed (height and fade, 0.2 s) when Tag turns true / false; starts closed, so nothing flickers on load -->
+    <Style x:Key="Theme.Border.Collapsible" TargetType="Border">
+        <Setter Property="ClipToBounds" Value="True"/>
+        <Setter Property="Opacity" Value="0"/>
+        <Setter Property="LayoutTransform"><Setter.Value><ScaleTransform ScaleY="0"/></Setter.Value></Setter>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}">
+                <DataTrigger.Value><sys:Boolean>True</sys:Boolean></DataTrigger.Value>
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard><Storyboard>
+                        <DoubleAnimation Storyboard.TargetProperty="(Border.LayoutTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.2">
+                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
+                    </Storyboard></BeginStoryboard>
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                    <BeginStoryboard><Storyboard>
+                        <DoubleAnimation Storyboard.TargetProperty="(Border.LayoutTransform).(ScaleTransform.ScaleY)" To="0" Duration="0:0:0.18">
+                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseIn"/></DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/>
+                    </Storyboard></BeginStoryboard>
+                </DataTrigger.ExitActions>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <!--#endregion-->
+
     <!--#region Dialogs -->
     <!-- Shared look of the app's dialogs: a header and a footer bar around white cards, each card with an icon and a title.
          Colours, sizes and button looks come from the theme; these only arrange them. -->
