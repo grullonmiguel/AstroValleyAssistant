@@ -4,7 +4,6 @@ public class AppSettings
 {
     public RegridSettings Regrid { get; set; } = new();
     public RealAuctionSettings RealAuction { get; set; } = new();
-    public ThemeSettings Theme { get; set; } = new();
     public SellerSettings Seller { get; set; } = new();
 }
 
@@ -31,10 +30,5 @@ public class RealAuctionSettings
 
     /// <summary>Property count from the last scrape of each recent URL (key = URL).</summary>
     public Dictionary<string, int> RecentCounts { get; set; } = [];
-}
-
-public class ThemeSettings
-{
-    public string Name { get; set; } = "Light-Purple";
 }
 

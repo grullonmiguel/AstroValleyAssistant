@@ -70,14 +70,12 @@ namespace AstroValley.Presentation
 
             // ── Dialog ViewModels (Transient) ────────────────────────────────
             services.AddTransient<RegridSettingsViewModel>();
-            services.AddTransient<ThemeSettingsViewModel>();
             services.AddTransient<ResolveMatchesViewModel>();
             services.AddTransient<WebNavigationDialogViewModel>();
 
             // ── Presentation: WPF Services ───────────────────────────────────
             services.AddSingleton<IBrowserService, BrowserService>();
             services.AddSingleton<IFileService, FileService>();
-            services.AddSingleton<IThemeService, ThemeService>();
 
             // ── Presentation: Settings (stub — pending JSON migration) ───────
             services.AddSingleton<SettingsService>();
@@ -320,7 +318,6 @@ namespace AstroValley.Presentation
                 new System.IO.StreamWriter(System.IO.Path.Combine(logDir, "app.log"), append: false) { AutoFlush = true }));
 
             await _host.StartAsync();
-            _host.Services.GetRequiredService<IThemeService>().Initialize();
 
 
             // Initialize MainViewModel's current view AFTER all services are ready

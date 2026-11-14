@@ -111,13 +111,6 @@ public partial class MainViewModel : ObservableObject
                     break;
                 }
 
-            case MenuOption.Themes:
-                {
-                    var vm = _serviceProvider.GetRequiredService<ThemeSettingsViewModel>();
-                    CurrentDrawerViewModel = vm;
-                    break;
-                }
-
             default:
                 break;
         }

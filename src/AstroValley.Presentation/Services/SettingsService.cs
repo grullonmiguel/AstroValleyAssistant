@@ -49,13 +49,6 @@ public class SettingsService : IRegridSettings, IRealAuctionSettings
 
     public Dictionary<string, int> RecentCounts => _settings.RealAuction.RecentCounts;
 
-    // ── Theme (used by ThemeService) ─────────────────────────────────────
-    public string ThemeName
-    {
-        get => _settings.Theme.Name;
-        set => _settings.Theme.Name = value;
-    }
-
     // ── Seller (used by My Properties) ───────────────────────────────────
     public SellerSettings Seller => _settings.Seller ??= new();
 

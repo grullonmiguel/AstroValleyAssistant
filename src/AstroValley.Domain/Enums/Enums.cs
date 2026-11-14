@@ -12,7 +12,6 @@ public enum MenuOption
 {
     RealAuction,
     Regrid,
-    Themes,
 }
 
 public enum RegridScrapeMode

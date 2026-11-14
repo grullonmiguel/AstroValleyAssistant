@@ -26,9 +26,6 @@
         <DataTemplate DataType="{x:Type dialogs:RegridSettingsViewModel}">
             <viewDialogs:RegridSettingsView/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type dialogs:ThemeSettingsViewModel}">
-            <viewDialogs:ThemeSettingsView/>
-        </DataTemplate>
         <DataTemplate DataType="{x:Type dialogs:ResolveMatchesViewModel}">
             <viewDialogs:ResolveMatchesView />
         </DataTemplate>
@@ -79,7 +76,6 @@
                             <Button.ContextMenu>
                                 <ContextMenu Style="{StaticResource Theme.ContextMenu}">
                                     <MenuItem Header="Regrid" Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.Regrid}" />
-                                    <MenuItem Header="Theme"  Style="{StaticResource Theme.ContextMenuItem}" Command="{Binding OpenDrawerCommand}" CommandParameter="{x:Static consts:MenuOption.Themes}" />
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>
