@@ -11,7 +11,7 @@ public static class PinsHtml
 
     public static async Task<string> BuildAsync(IEnumerable<MarkerLocation> pins, bool imagery, bool picker = false)
     {
-        var assets = Path.Combine(AppContext.BaseDirectory, "Assets");
+        var assets = Path.Combine(AppContext.BaseDirectory, "Assets", "Map");
         // Default JSON encoding escapes '<' etc., so the data can't break out of the <script> tag.
         var pinsJson = ToJson(pins);
 

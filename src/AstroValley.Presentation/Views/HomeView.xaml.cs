@@ -71,9 +71,7 @@ public partial class HomeView : UserControl
                 HighlightSelectedState();
                 if (DataContext is HomeViewModel { Markers.Count: > 0 } loaded) PushMarkers(loaded.Markers);
             };
-            // homemaplibre.html = MapLibre globe; homeglobe.html = Cesium globe; homemap.html = Leaflet flat map.
-            // Same functions/messages in all three, so switching is this one name.
-            MapWebView.CoreWebView2.Navigate("https://appassets.local/homemaplibre.html");
+            MapWebView.CoreWebView2.Navigate("https://appassets.local/Map/homemaplibre.html");
             // Safety net: never leave the cover up if the page can't report ready (e.g. offline tiles).
             await Task.Delay(TimeSpan.FromSeconds(20));
             HideLoading();

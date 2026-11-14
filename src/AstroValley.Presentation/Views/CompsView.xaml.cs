@@ -51,7 +51,7 @@ public partial class CompsView : UserControl
                 return;
             }
 
-            var reader = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "compsreader.js"));
+            var reader = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "compsreader.js"));
             // Runtime.evaluate waits for the reader's promise (it scrolls Zillow's list first); ExecuteScriptAsync would return "{}"
             vm.ReadPage = async () =>
             {

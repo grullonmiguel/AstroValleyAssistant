@@ -16,7 +16,7 @@
     <div id="map"></div>
     <div id="countyTip"></div>
     <script>
-        // Same page contract as homemap.html (Leaflet) and homeglobe.html (Cesium): WPF calls highlightState /
+        // Page contract: WPF calls highlightState /
         // highlightCounty / setImagery and receives {type:'counties'} messages, so HomeView doesn't care which page loads.
         var esri = function (path) {
             return 'https://server.arcgisonline.com/ArcGIS/rest/services/' + path + '/MapServer/tile/{z}/{y}/{x}';
@@ -116,7 +116,7 @@
 
         // ---- selected state outline + counties -----------------------------------------------------------------
         var statesData = null, selectedName = null, countyFeatures = [], loadToken = 0, hadOutline = false;
-        fetch('Geo/us-states.geojson').then(function (r) { return r.json(); }).then(function (d) { statesData = d; whenReady(drawOutline); });
+        fetch('../Geo/us-states.geojson').then(function (r) { return r.json(); }).then(function (d) { statesData = d; whenReady(drawOutline); });
 
         // The style may not be loaded yet when WPF or fetch call in.
         function whenReady(fn) { if (map.isStyleLoaded()) fn(); else map.once('style.load', fn); }
@@ -184,7 +184,7 @@
 
         function loadCounties(fips, stateName) {
             var token = ++loadToken;
-            fetch('Geo/counties/' + fips + '.geojson').then(function (r) { return r.json(); }).then(function (d) {
+            fetch('../Geo/counties/' + fips + '.geojson').then(function (r) { return r.json(); }).then(function (d) {
                 if (token !== loadToken) return; // another state was selected meanwhile
                 countyFeatures = d.features;
                 map.getSource('counties').setData(d);
