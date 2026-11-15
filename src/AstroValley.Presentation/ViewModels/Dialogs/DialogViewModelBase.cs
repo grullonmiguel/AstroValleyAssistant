@@ -35,13 +35,19 @@ public abstract class DialogViewModelBase<TResult> : ObservableObject, IDialogVi
         _dialogService = dialogService;
     }
 
+    /// <summary>Set by DialogService.ShowAsync: closes the DialogHost with the given result.</summary>
+    private Action<object?>? _close;
+
+    internal void AttachClose(Action<object?> close) => _close = close;
+
     /// <summary>
     /// Completes the dialog with the specified result and requests closure.
     /// </summary>
     protected void CompleteDialog(TResult result)
     {
         _taskCompletionSource.TrySetResult(result);
-        _dialogService?.CloseDialog();
+        if (_close != null) _close(result);
+        else _dialogService?.CloseDialog();
     }
 
     /// <summary>
@@ -50,7 +56,8 @@ public abstract class DialogViewModelBase<TResult> : ObservableObject, IDialogVi
     protected void CancelDialog()
     {
         _taskCompletionSource.TrySetCanceled();
-        _dialogService?.CloseDialog();
+        if (_close != null) _close(null);
+        else _dialogService?.CloseDialog();
     }
 
     /// <summary>

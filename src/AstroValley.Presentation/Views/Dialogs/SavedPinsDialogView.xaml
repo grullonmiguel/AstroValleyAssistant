@@ -1,0 +1,82 @@
+<UserControl x:Class="AstroValley.Presentation.Views.Dialogs.SavedPinsDialogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Width="720">
+    <!-- The automatically saved pins (SavedPinsDialogViewModel): one card per auction, with Load and Delete. Shown on the shell's DialogHost. -->
+    <UserControl.Resources>
+        <!-- one saved set: place as the title, auction / pin count / saved time under it, actions on the right -->
+        <DataTemplate x:Key="SavedSet">
+            <materialDesign:Card Margin="0,0,0,10" Padding="16,12">
+                <DockPanel>
+                    <materialDesign:PackIcon DockPanel.Dock="Left" Kind="MapMarker" Width="20" Height="20" Margin="0,0,14,0"
+                                             VerticalAlignment="Top" Foreground="{DynamicResource MaterialDesign.Brush.Primary}"/>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource TextButtonStyle}" CommandParameter="{Binding}"
+                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                ToolTip="Move this saved set to the Recycle Bin. Pins already on the map stay there.">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Delete" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Delete"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Margin="0" CommandParameter="{Binding}"
+                                Command="{Binding DataContext.LoadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                ToolTip="Put these pins on the map, with the notes, checklist and comps saved with them">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="TrayArrowDown" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Load"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding Title}" FontWeight="Bold" Style="{StaticResource BodyTextStyle}" Margin="0,0,0,4"/>
+                    <TextBlock Text="{Binding Summary}" Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                </DockPanel>
+            </materialDesign:Card>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <DockPanel Margin="24">
+        <!-- title bar (DialogHost has no chrome of its own) -->
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <Button DockPanel.Dock="Right" Style="{StaticResource MaterialDesignIconButton}" Width="32" Height="32"
+                    Command="{Binding CloseCommand}" IsCancel="True" ToolTip="Close">
+                <materialDesign:PackIcon Kind="Close"/>
+            </Button>
+            <TextBlock Text="{Binding Title}" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center"/>
+        </DockPanel>
+
+        <!-- what happened last, and the way out -->
+        <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource AppDividerBrush}" BorderThickness="0,1,0,0" Padding="0,12,0,0" Margin="0,2,0,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding OpenFolderCommand}"
+                            ToolTip="Show the saved files; each one can be copied to another computer and loaded there with Import Pins">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FolderOpen" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Open folder"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource PrimaryButtonStyle}" Margin="0" Command="{Binding CloseCommand}" IsDefault="True">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Check" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Close"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <materialDesign:PackIcon Kind="Information" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"
+                                         Foreground="{DynamicResource MaterialDesign.Brush.Primary}"/>
+                <TextBlock Text="{Binding Status}" Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <Grid>
+            <ScrollViewer MaxHeight="480" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+                <ItemsControl ItemsSource="{Binding Sets}" ItemTemplate="{StaticResource SavedSet}" Focusable="False"/>
+            </ScrollViewer>
+            <TextBlock Text="Nothing saved yet. Send scraped properties to the Home map and they will appear here."
+                       Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,24"
+                       Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        </Grid>
+    </DockPanel>
+</UserControl>

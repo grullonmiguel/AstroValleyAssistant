@@ -1,7 +1,9 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:pages="clr-namespace:AstroValley.Presentation.ViewModels.Pages"
-                    xmlns:pageViews="clr-namespace:AstroValley.Presentation.Views.Pages">
+                    xmlns:pageViews="clr-namespace:AstroValley.Presentation.Views.Pages"
+                    xmlns:dialogs="clr-namespace:AstroValley.Presentation.ViewModels.Dialogs"
+                    xmlns:dialogViews="clr-namespace:AstroValley.Presentation.Views.Dialogs">
 
     <!--
         VIEW-MODEL TO VIEW MAP. To add a page or dialog, add one DataTemplate here.
@@ -18,5 +20,8 @@
     </DataTemplate>
 
     <!-- Dialogs -->
-    
+    <DataTemplate DataType="{x:Type dialogs:SavedPinsDialogViewModel}">
+        <dialogViews:SavedPinsDialogView />
+    </DataTemplate>
+
 </ResourceDictionary>

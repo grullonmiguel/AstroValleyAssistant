@@ -277,9 +277,9 @@ public partial class HomeViewModel : PageViewModelBase
     }
 
     [RelayCommand]
-    private void OpenSavedPins() =>
+    private Task OpenSavedPins() =>
         Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Services.Interfaces.IDialogService>(_serviceProvider)
-            .ShowDialog(new ViewModels.Dialogs.SavedPinsViewModel(_pinStore, _browser, AddMarkers));
+            .ShowAsync(new ViewModels.Dialogs.SavedPinsDialogViewModel(_pinStore, _browser, AddMarkers));
 
     // --- Owned properties: Home draws their pins; MyPropertiesViewModel keeps them and listens to these ---
 

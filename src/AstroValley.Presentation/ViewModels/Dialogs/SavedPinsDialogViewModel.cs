@@ -12,7 +12,7 @@ namespace AstroValley.Presentation.ViewModels.Dialogs;
 /// The pins the app saved automatically, one set per auction: put a set back on the map, or delete it.
 /// The map page owns the pins, so it supplies <c>addToMap</c> (returns how many were new).
 /// </summary>
-public partial class SavedPinsViewModel(IPinStore store, IBrowserService browser, Func<IEnumerable<MarkerLocation>, int> addToMap)
+public partial class SavedPinsDialogViewModel(IPinStore store, IBrowserService browser, Func<IEnumerable<MarkerLocation>, int> addToMap)
     : DialogViewModelBase<bool>
 {
     public override string Title => "Saved pins";

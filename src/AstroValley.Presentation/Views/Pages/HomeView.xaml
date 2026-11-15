@@ -241,16 +241,19 @@
                             </DockPanel>
                         </Border>
 
-                        <Button Command="{Binding ClearMarkersCommand}" Background="#33D64545" BorderBrush="#66D64545"
-                                ToolTip="Remove all pins from the map. They stay in Load &gt; Saved pins." AutomationProperties.Name="Clear map">
+                        <Button Command="{Binding ClearMarkersCommand}" 
+                                Background="#33D64545" 
+                                BorderBrush="#66D64545"
+                                ToolTip="Remove all pins from the map." AutomationProperties.Name="Clear map">
                             <materialDesign:PackIcon Kind="TrashCanOutline"/>
                         </Button>
                         <Rectangle/>
-                        <Button Click="OnFlyoutClicked" ToolTip="Put pins on the map: a saved set or a file">
+                        <Button Click="OnFlyoutClicked" 
+                                ToolTip="Import pins from a file">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="TrayArrowUp" Margin="0 0 6 0"/>
-                                <TextBlock Text="Load" VerticalAlignment="Center"/>
-                                <materialDesign:PackIcon Kind="ChevronDown" Margin="6 0 0 0"/>
+                                <materialDesign:PackIcon Kind="TrayArrowUp" Margin="0 0 0 0"/>
+                                <!--<TextBlock Text="Load" VerticalAlignment="Center"/>
+                                <materialDesign:PackIcon Kind="ChevronDown" Margin="6 0 0 0"/>-->
                             </StackPanel>
                             <Button.ContextMenu>
                                 <ContextMenu>
@@ -261,13 +264,12 @@
                             </Button.ContextMenu>
                         </Button>
                         <!-- Filled (light on the primary bar) so it stands out, like the reference's Download. -->
-                        <Button Click="OnFlyoutClicked" ToolTip="Save the pins to a file"
-                                Background="{DynamicResource MaterialDesign.Brush.Primary.Foreground}"
-                                Foreground="{DynamicResource MaterialDesign.Brush.Primary}">
+                        <Button Click="OnFlyoutClicked" 
+                                ToolTip="Download to a file">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="TrayArrowDown" Margin="0 0 8 0"/>
-                                <TextBlock Text="Download" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                <materialDesign:PackIcon Kind="ChevronDown" Margin="6 0 0 0"/>
+                                <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 0 0"/>
+                                <!--<TextBlock Text="Export" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                <materialDesign:PackIcon Kind="ChevronDown" Margin="6 0 0 0"/>-->
                             </StackPanel>
                             <Button.ContextMenu>
                                 <ContextMenu>
@@ -282,10 +284,11 @@
                             </Button.ContextMenu>
                         </Button>
                         <Rectangle/>
-                        <Button Command="{Binding PlanRouteCommand}" ToolTip="Open one Google Maps driving route through the pins that are showing.">
+                        <Button Command="{Binding PlanRouteCommand}"
+                                ToolTip="Open one Google Maps driving route through the pins that are showing.">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="MapMarkerPath" Margin="0 0 8 0"/>
-                                <TextBlock Text="Plan Route" VerticalAlignment="Center"/>
+                                <TextBlock Text="Route" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>

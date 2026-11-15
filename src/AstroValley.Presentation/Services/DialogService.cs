@@ -1,43 +1,41 @@
-﻿using AstroValley.Presentation.Services.Interfaces;
+﻿using AstroValley.Presentation.Helpers;
+using AstroValley.Presentation.Services.Interfaces;
 using AstroValley.Presentation.ViewModels;
-using AstroValley.Presentation.ViewModels.Dialogs;
+using MaterialDesignThemes.Wpf;
 
 namespace AstroValley.Presentation.Services;
 
-public class DialogService : IDialogService
+/// <summary>
+/// Shows dialogs through Material Design's DialogHost (the one named <see cref="AppDefaults.RootDialogIdentifier"/>).
+/// The view for each dialog view-model comes from the DataTemplates in Views/ViewTemplates.xaml.
+/// </summary>
+public sealed class DialogService : IDialogService
 {
-    private readonly MainViewModel _mainViewModel;
+    // DialogHost allows a single open dialog, so queue concurrent requests.
+    private readonly SemaphoreSlim _gate = new(1, 1);
 
-    public bool IsDialogOpen => _mainViewModel.CurrentDialogViewModel != null;
-
-    public DialogService(MainViewModel mainViewModel)
+    public async Task<TResult?> ShowAsync<TResult>(DialogViewModelBase<TResult> viewModel)
     {
-        _mainViewModel = mainViewModel;
-    }
-
-    public void ShowDialog(object dialogViewModel)
-    {
-        // Inject self so the VM can trigger close via CompleteDialog/CancelDialog
-        var vmType = dialogViewModel.GetType();
-        var method = vmType.GetMethod("SetDialogService",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-        method?.Invoke(dialogViewModel, [this]);
-
-        // Wrap the dialog ViewModel in a DialogWrapper that provides chrome
-        var wrapper = new DialogWrapper(dialogViewModel, this);
-        _mainViewModel.CurrentDialogViewModel = wrapper;
-    }
-
-    public void CloseDialog()
-    {
-        var currentDialog = _mainViewModel.CurrentDialogViewModel;
-        _mainViewModel.CurrentDialogViewModel = null;
-
-        // Notify ViewModel AFTER clearing, so any re-entrant CloseDialog calls are no-ops
-        if (currentDialog is DialogWrapper wrapper &&
-            wrapper.ContentViewModel is IDialogViewModel dialogVm)
+        await _gate.WaitAsync();
+        try
         {
-            dialogVm.OnDialogClosing();
+            viewModel.AttachClose(result => DialogHost.Close(AppDefaults.RootDialogIdentifier, result));
+
+            var result = await DialogHost.Show(viewModel, AppDefaults.RootDialogIdentifier);
+            viewModel.OnDialogClosing(); // Esc or click-away: finishes the view-model's Result task too
+            return result is TResult typed ? typed : default;
+        }
+        finally
+        {
+            _gate.Release();
         }
     }
+
+    // shortcut: old overlay dialogs are not on DialogHost yet; migrate each caller to ShowAsync, then delete these.
+    public bool IsDialogOpen => DialogHost.IsDialogOpen(AppDefaults.RootDialogIdentifier);
+
+    public void ShowDialog(object dialogViewModel) =>
+        throw new NotSupportedException($"{dialogViewModel.GetType().Name} has not been moved to the new dialog host yet (use ShowAsync).");
+
+    public void CloseDialog() => DialogHost.Close(AppDefaults.RootDialogIdentifier);
 }

@@ -35,8 +35,8 @@
         <DataTemplate DataType="{x:Type dialogs:SectionEditViewModel}">
             <viewDialogs:SectionEditView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type dialogs:SavedPinsViewModel}">
-            <viewDialogs:SavedPinsView />
+        <DataTemplate DataType="{x:Type dialogs:SavedPinsDialogViewModel}">
+            <viewDialogs:SavedPinsDialogView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewmodels:DialogWrapper}">
             <views:DialogWrapperView/>
