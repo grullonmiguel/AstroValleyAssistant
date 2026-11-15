@@ -3,15 +3,31 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:AstroValley.Presentation"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
-             xmlns:conv="clr-namespace:AstroValley.Presentation.Converters">
+             xmlns:conv="clr-namespace:AstroValley.Presentation.Converters"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
     <Application.Resources>
 
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
+            <!--<ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Styles/_Resources.xaml"/>
                 <ResourceDictionary Source="/Styles/_Controls.xaml"/>
                 <ResourceDictionary Source="/Styles/Palettes/Light.xaml"/>
                 <ResourceDictionary Source="/Styles/Accents/Purple.xaml"/>
+            </ResourceDictionary.MergedDictionaries>-->
+            <ResourceDictionary.MergedDictionaries>
+                <!--
+                    Material Design first, so our styles can build on its styles and override its resources.
+                    PrimaryColor / SecondaryColor here are only the initial values; ThemeService applies the real
+                    brand color (AppDefaults.PrimaryColorHex or the user's saved choice) at startup.
+                -->
+                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="DeepPurple" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml" />
+
+                <!-- Our design system: tokens + control styles. -->
+                <ResourceDictionary Source="Styles/Styles.xaml" />
+
+                <!-- View-model to view map (pages and dialogs). -->
+                <ResourceDictionary Source="Views/ViewTemplates.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <conv:BooleanInvertConverter x:Key="BooleanInvertConverter"/>

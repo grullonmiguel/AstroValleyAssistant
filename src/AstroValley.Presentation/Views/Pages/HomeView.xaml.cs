@@ -1,11 +1,11 @@
-using AstroValley.Presentation.ViewModels;
+using AstroValley.Presentation.ViewModels.Pages;
 using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 
-namespace AstroValley.Presentation.Views;
+namespace AstroValley.Presentation.Views.Pages;
 
 public partial class HomeView : UserControl
 {
@@ -15,6 +15,9 @@ public partial class HomeView : UserControl
     public HomeView()
     {
         InitializeComponent();
+        // PageHost only collapses this kept-alive view when the user leaves (Loaded doesn't fire again), so re-send the
+        // Settings color whenever Home becomes visible: it may have changed meanwhile.
+        IsVisibleChanged += (_, e) => { if ((bool)e.NewValue) PushPrimaryColor(); };
         Loaded += async (_, _) =>
         {
             if (_initialized) return; // view is kept alive; load the map once
@@ -30,7 +33,9 @@ public partial class HomeView : UserControl
                 vm.ChecklistChanged += pin =>
                     _ = RunScript($"setChecklist({Inv(pin.Latitude)}, {Inv(pin.Longitude)}, {JsonSerializer.Serialize(pin.Checklist, new JsonSerializerOptions { PropertyNamingPolicy = null })});");
                 vm.FlyToRequested += pin => _ = RunScript($"flyToMarker({Inv(pin.Latitude)}, {Inv(pin.Longitude)});");
+                vm.LocationRequested += (lat, lon, zoom, label) => _ = RunScript($"showPlace({Inv(lat)}, {Inv(lon)}, {zoom}, {JsonSerializer.Serialize(label)});");
                 vm.TerrainToggleRequested += () => _ = RunScript("toggle3d();");
+                vm.ZoomToStateRequested += () => _ = RunScript("zoomToState();");
                 vm.OverlayToggleRequested += key => _ = RunScript($"toggleOverlay('{key}');");
                 vm.TourToggleRequested += () => _ = RunScript("toggleTour();");
                 vm.MarkerRemoved += async m =>
@@ -68,6 +73,7 @@ public partial class HomeView : UserControl
             MapWebView.NavigationCompleted += (_, _) =>
             {
                 _pageLoaded = true;
+                PushPrimaryColor();
                 HighlightSelectedState();
                 if (DataContext is HomeViewModel { Markers.Count: > 0 } loaded) PushMarkers(loaded.Markers);
             };
@@ -84,8 +90,36 @@ public partial class HomeView : UserControl
         else if (e.PropertyName == nameof(HomeViewModel.SelectedCounty)) HighlightSelectedCounty();
         else if (e.PropertyName == nameof(HomeViewModel.IsSidebarOpen) && sender is HomeViewModel sb)
             _ = RunScript($"setSidebarOpen({(sb.IsSidebarOpen ? "true" : "false")});");
-        else if (e.PropertyName == nameof(HomeViewModel.IsImagery) && _pageLoaded && sender is HomeViewModel vm)
-            _ = MapWebView.CoreWebView2.ExecuteScriptAsync($"setImagery({(vm.IsImagery ? "true" : "false")});");
+        else if (e.PropertyName == nameof(HomeViewModel.IsBarOpen)) SlideBar(animate: true);
+    }
+
+    // The top bar is centered, so how far it slides depends on the window width (a Style storyboard can't bind To):
+    // hidden = moved right until only its arrow tab shows at the right edge.
+    private void SlideBar(bool animate)
+    {
+        var open = DataContext is not HomeViewModel { IsBarOpen: false };
+        var to = open ? 0 : (BarArea.ActualWidth + TopBar.ActualWidth) / 2 - BarTab.ActualWidth;
+        var slide = new DoubleAnimation(to, animate ? (System.Windows.Duration)FindResource("SidebarAnimationDuration") : new System.Windows.Duration(TimeSpan.Zero))
+        { EasingFunction = (IEasingFunction)FindResource("StandardEase") };
+        BarShift.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, slide);
+    }
+
+    private void OnBarAreaSizeChanged(object sender, System.Windows.SizeChangedEventArgs e) => SlideBar(animate: false);
+
+    private void OnSearchKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter && DataContext is HomeViewModel vm && vm.SearchCommand.CanExecute(null))
+            vm.SearchCommand.Execute(null);
+    }
+
+    // Import / Download flyouts: the button's ContextMenu, opened below it on a left click.
+    private void OnFlyoutClicked(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (sender is not Button { ContextMenu: { } menu } button) return;
+        menu.PlacementTarget = button;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        menu.DataContext = DataContext;
+        menu.IsOpen = true;
     }
 
     // The map posts the selected state's counties once its county GeoJSON has loaded.
@@ -104,6 +138,16 @@ public partial class HomeView : UserControl
                 root.GetProperty("accessStatus").GetString(),
                 root.GetProperty("accessFt").ValueKind == JsonValueKind.Number ? root.GetProperty("accessFt").GetDouble() : null,
                 root.GetProperty("accessRoad").GetString(), root.GetProperty("accessChecked").GetString());
+            return;
+        }
+        if (type == "addPin")
+        {
+            vm.AddSearchPin(root.GetProperty("lat").GetDouble(), root.GetProperty("lon").GetDouble(), root.GetProperty("address").GetString() ?? "");
+            return;
+        }
+        if (type == "regrid")
+        {
+            vm.LookUpRegrid(root.GetProperty("lat").GetDouble(), root.GetProperty("lon").GetDouble());
             return;
         }
         if (type == "dueDiligence")
@@ -141,6 +185,12 @@ public partial class HomeView : UserControl
             vm.SelectedCounty = vm.Counties.FirstOrDefault(c => c.Id == id) ?? vm.SelectedCounty;
             return;
         }
+        if (type == "stateClick") // a state was clicked on the map: select it in the list, which draws its outline and counties
+        {
+            var name = root.GetProperty("name").GetString();
+            vm.SelectedState = vm.States.FirstOrDefault(s => s.Name == name) ?? vm.SelectedState; // e.g. Puerto Rico isn't in the list
+            return;
+        }
         if (type != "counties") return;
         // Ignore a late reply for a state that is no longer selected.
         if (root.GetProperty("state").GetString() != vm.SelectedState?.Name) return;
@@ -154,12 +204,6 @@ public partial class HomeView : UserControl
     private void OnCountySelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (sender is ListBox { SelectedItem: { } county } list) list.ScrollIntoView(county);
-    }
-
-    private void OnMenuClicked(object sender, System.Windows.RoutedEventArgs e)
-    {
-        PinsMenu.PlacementTarget = MenuButton;
-        PinsMenu.IsOpen = true;
     }
 
     private void HideLoading()
@@ -191,6 +235,13 @@ public partial class HomeView : UserControl
         if (DataContext is not HomeViewModel vm) return Task.CompletedTask;
         var keys = vm.HiddenMarkers.Select(m => $"{Inv(m.Latitude)},{Inv(m.Longitude)}");
         return RunScript($"setHidden({JsonSerializer.Serialize(keys)});");
+    }
+
+    // The Material Design primary brush follows the color picked in Settings.
+    private void PushPrimaryColor()
+    {
+        if (TryFindResource("MaterialDesign.Brush.Primary") is not System.Windows.Media.SolidColorBrush { Color: var c }) return;
+        _ = RunScript($"setPrimaryColor('#{c.R:X2}{c.G:X2}{c.B:X2}');"); // CSS wants #RRGGBB, Color.ToString() gives #AARRGGBB
     }
 
     // Invariant culture so the decimal separator is always '.' in scripts.

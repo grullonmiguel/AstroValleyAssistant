@@ -1,0 +1,25 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!--
+        TYPOGRAPHY TOKENS
+        Fonts are embedded from Assets/Fonts (Build Action: Resource). If the files are missing,
+        WPF falls back to Segoe UI, so the app still runs.
+        To change the app font, edit AppFontFamily only.
+    -->
+    <FontFamily x:Key="AppFontFamily">pack://application:,,,/Assets/Fonts/#Inter, Segoe UI</FontFamily>
+
+    <!-- Material Design controls read this key for their text, so overriding it re-fonts them too. -->
+    <FontFamily x:Key="MaterialDesignFont">pack://application:,,,/Assets/Fonts/#Inter, Segoe UI</FontFamily>
+
+    <!-- Icon fonts used by the caption buttons. Segoe Fluent Icons exists on Windows 11, MDL2 on Windows 10. -->
+    <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+    <sys:Double x:Key="FontSizeCaption">12</sys:Double>
+    <sys:Double x:Key="FontSizeBody">14</sys:Double>
+    <sys:Double x:Key="FontSizeSubtitle">16</sys:Double>
+    <sys:Double x:Key="FontSizeTitle">22</sys:Double>
+    <sys:Double x:Key="FontSizeHeadline">28</sys:Double>
+
+</ResourceDictionary>

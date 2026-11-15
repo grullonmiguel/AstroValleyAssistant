@@ -15,6 +15,7 @@ using AstroValley.Presentation.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AstroValley.Presentation.Services.Interfaces;
+using AstroValley.Presentation.ViewModels.Pages;
 
 namespace AstroValley.Presentation.ViewModels;
 
@@ -28,11 +29,11 @@ public partial class MyPropertiesViewModel : ObservableObject
     private readonly IBrowserService _browser;
     private readonly HomeViewModel _home;
     private readonly IRegridService _regrid;
-    private readonly SettingsService _settings;
+    private readonly ISettingsService _settings;
     private readonly IPortfolioExporter _excel;
     private readonly IServiceProvider _services; // MainViewModel, the dialogs and Comps are resolved when needed: they are built after this view model
 
-    public MyPropertiesViewModel(IOwnedPropertyStore store, IBrowserService browser, HomeViewModel home, IRegridService regrid, SettingsService settings, IPortfolioExporter excel, IServiceProvider services)
+    public MyPropertiesViewModel(IOwnedPropertyStore store, IBrowserService browser, HomeViewModel home, IRegridService regrid, ISettingsService settings, IPortfolioExporter excel, IServiceProvider services)
     {
         _settings = settings;
         _excel = excel;
@@ -212,11 +213,11 @@ public partial class MyPropertiesViewModel : ObservableObject
     /// <summary>The line under the logo on every term sheet (city, e-mail, phone); kept in the app's settings, not per property.</summary>
     public string ContactLine
     {
-        get => _settings.Seller.ContactLine;
+        get => _settings.Current.Seller.ContactLine;
         set
         {
-            if (value == _settings.Seller.ContactLine) return;
-            _settings.Seller.ContactLine = value ?? "";
+            if (value == _settings.Current.Seller.ContactLine) return;
+            _settings.Current.Seller.ContactLine = value ?? "";
             SaveSettings();
             OnPropertyChanged();
         }
@@ -228,14 +229,14 @@ public partial class MyPropertiesViewModel : ObservableObject
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Status = $"Could not save the settings: {ex.Message}"; }
     }
 
-    private List<FinancingTier> StartingTiers() => [.. (_settings.Seller.FinancingTiers is { Count: > 0 } mine ? mine : FinancingTier.Defaults()).Select(t => t with { })];
+    private List<FinancingTier> StartingTiers() => [.. (_settings.Current.Seller.FinancingTiers is { Count: > 0 } mine ? mine : FinancingTier.Defaults()).Select(t => t with { })];
 
     /// <summary>Makes the selected property's financing offers the ones every new property starts with.</summary>
     [RelayCommand(CanExecute = nameof(HasSelection))]
     private void SaveTiersAsDefault()
     {
         if (Selected is not { } item) return;
-        _settings.Seller.FinancingTiers = [.. item.Model.FinancingTiers.Select(t => t with { })];
+        _settings.Current.Seller.FinancingTiers = [.. item.Model.FinancingTiers.Select(t => t with { })];
         SaveSettings();
         Status = "New properties will start with these financing offers.";
     }

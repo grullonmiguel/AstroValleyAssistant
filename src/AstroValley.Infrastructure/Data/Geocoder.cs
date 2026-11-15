@@ -93,7 +93,10 @@ public class Geocoder : IGeocoder
         // and the state is needed or a common street name can land in another state.
         var parts = Regex.Match(address, @"^(.*?),\s*[^,]+,\s*([A-Za-z]{2})\s+(\d{5})");
         var street = Regex.Replace(LotNumber.Replace(parts.Success ? parts.Groups[1].Value : address, " "), @"\s+", " ").Trim();
-        var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&" + (parts.Success && street.Length > 0
+        // A bare ZIP goes in as a postal code: as free text "16269" matched a bus stop of that number in Arizona.
+        var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&" + (Regex.IsMatch(address, @"^\s*\d{5}\s*$")
+            ? "postalcode=" + address.Trim()
+            : parts.Success && street.Length > 0
             ? $"street={Uri.EscapeDataString(street)}&state={parts.Groups[2].Value}&postalcode={parts.Groups[3].Value}"
             : "q=" + Uri.EscapeDataString(street));
         using var doc = JsonDocument.Parse(await Http.GetStringAsync(url, ct));

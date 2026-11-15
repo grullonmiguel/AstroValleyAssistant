@@ -1,0 +1,16 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- MOTION TOKENS: durations and distances for animations. -->
+
+    <!-- Sidebar expand / collapse slide. -->
+    <Duration x:Key="SidebarAnimationDuration">0:0:0.25</Duration>
+
+    <!-- New page entrance (fade + slide). Read by Controls/PageHost.cs. -->
+    <Duration x:Key="PageTransitionDuration">0:0:0.30</Duration>
+    <sys:Double x:Key="PageTransitionOffset">28</sys:Double>
+
+    <CubicEase x:Key="StandardEase" EasingMode="EaseOut" />
+
+</ResourceDictionary>

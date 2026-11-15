@@ -1,0 +1,32 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!--
+        LAYOUT TOKENS
+        Every shell dimension lives here. Change a number once and the whole app follows.
+    -->
+
+    <!-- ============================================================ -->
+    <!-- BRAND BLOCK: the short colored bar at the very top-left.      -->
+    <!-- It keeps this width even when the sidebar is collapsed.       -->
+    <!-- Edit this one value to make the bar longer or shorter.        -->
+    <!-- ============================================================ -->
+    <sys:Double x:Key="BrandBlockWidth">270</sys:Double>
+
+    <!-- Sidebar widths. Independent of BrandBlockWidth: the bar stays BrandBlockWidth wide when the sidebar collapses. -->
+    <sys:Double x:Key="SidebarExpandedWidth">180</sys:Double>
+    <sys:Double x:Key="SidebarCollapsedWidth">56</sys:Double>
+
+    <!-- Height of the top strip (drag area + caption buttons + brand block). -->
+    <sys:Double x:Key="CaptionHeight">32</sys:Double>
+    <sys:Double x:Key="CaptionButtonWidth">46</sys:Double>
+
+    <!-- Resize grip thickness around the window. -->
+    <Thickness x:Key="WindowResizeBorderThickness">6</Thickness>
+
+    <sys:Double x:Key="NavItemHeight">44</sys:Double>
+    <sys:Double x:Key="NavIconSize">22</sys:Double>
+    <sys:Double x:Key="StatusBarHeight">32</sys:Double>
+
+</ResourceDictionary>

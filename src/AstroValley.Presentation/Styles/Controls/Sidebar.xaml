@@ -1,0 +1,156 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:models="clr-namespace:AstroValley.Presentation.Models">
+
+    <!-- A style can only resolve StaticResource keys from its own file and the files merged into it, so merge the tokens. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Tokens.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--
+        SIDEBAR + BRAND BLOCK
+        The sidebar's color follows the Material Design primary color (DynamicResource), so changing the
+        primary color through IThemeService recolors everything here instantly.
+    -->
+
+    <!-- Sidebar container. Slides between SidebarExpandedWidth and SidebarCollapsedWidth. -->
+    <Style x:Key="SidebarStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
+        <Setter Property="Width" Value="{StaticResource SidebarExpandedWidth}" />
+        <Setter Property="ClipToBounds" Value="True" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Width"
+                                             To="{StaticResource SidebarCollapsedWidth}"
+                                             Duration="{StaticResource SidebarAnimationDuration}"
+                                             EasingFunction="{StaticResource StandardEase}" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Width"
+                                             To="{StaticResource SidebarExpandedWidth}"
+                                             Duration="{StaticResource SidebarAnimationDuration}"
+                                             EasingFunction="{StaticResource StandardEase}" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.ExitActions>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- The short bar at the top-left. Width comes from BrandBlockWidth in Tokens/Sizes.xaml. -->
+    <Style x:Key="BrandBlockBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+        <Setter Property="Width" Value="{StaticResource BrandBlockWidth}" />
+        <Setter Property="Height" Value="{StaticResource CaptionHeight}" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+    </Style>
+
+    <Style x:Key="BrandBlockTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="12,0,0,0" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <!-- Hamburger toggle at the top of the sidebar. Always as wide as the collapsed sidebar so the icon never moves. -->
+    <Style x:Key="HamburgerButtonStyle" TargetType="{x:Type Button}">
+        <Setter Property="Width" Value="{StaticResource SidebarCollapsedWidth}" />
+        <Setter Property="Height" Value="{StaticResource NavItemHeight}" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Root" Background="{TemplateBinding Background}">
+                        <materialDesign:PackIcon Kind="Menu"
+                                                 Width="{StaticResource NavIconSize}"
+                                                 Height="{StaticResource NavIconSize}"
+                                                 HorizontalAlignment="Center"
+                                                 VerticalAlignment="Center"
+                                                 Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{StaticResource OnPrimaryHoverBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Navigation list -->
+    <Style x:Key="NavListBoxStyle" TargetType="{x:Type ListBox}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="ItemContainerStyle" Value="{DynamicResource NavListBoxItemStyle}" />
+    </Style>
+
+    <Style x:Key="NavListBoxItemStyle" TargetType="{x:Type ListBoxItem}">
+        <Setter Property="Height" Value="{StaticResource NavItemHeight}" />
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="ToolTip" Value="{Binding Title}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                    <Grid x:Name="Root" Background="Transparent">
+                        <Border x:Name="Highlight" Background="Transparent" />
+                        <Border x:Name="SelectedBar" HorizontalAlignment="Left" Width="3" Visibility="Collapsed"
+                                Background="{TemplateBinding Foreground}" />
+                        <ContentPresenter VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Highlight" Property="Background" Value="{StaticResource OnPrimaryHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Highlight" Property="Background" Value="{StaticResource OnPrimarySelectedBrush}" />
+                            <Setter TargetName="SelectedBar" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- How one NavigationItem is drawn: icon in a collapsed-width column, then the title. -->
+    <DataTemplate x:Key="NavItemTemplate" DataType="{x:Type models:NavigationItem}">
+        <DockPanel LastChildFill="True">
+            <!-- Icon cell is as wide as the collapsed sidebar, so the icon never moves while the sidebar slides. -->
+            <Border DockPanel.Dock="Left" Width="{StaticResource SidebarCollapsedWidth}">
+                <materialDesign:PackIcon Kind="{Binding Icon}"
+                                         Width="{StaticResource NavIconSize}"
+                                         Height="{StaticResource NavIconSize}"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
+            </Border>
+            <TextBlock Text="{Binding Title}"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"
+                       TextWrapping="NoWrap"
+                       Margin="0,0,8,0" />
+        </DockPanel>
+    </DataTemplate>
+
+</ResourceDictionary>

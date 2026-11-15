@@ -1,0 +1,13 @@
+<UserControl x:Class="AstroValley.Presentation.Controls.BrandBlock"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+    <!--
+        The short colored bar at the top-left of the window. It stays this wide even when the sidebar is collapsed.
+        Width / height / color all come from the styles: BrandBlockWidth in Styles/Tokens/Sizes.xaml,
+        BrandBlockBorderStyle in Styles/Controls/Sidebar.xaml.
+    -->
+    <Border Style="{StaticResource BrandBlockBorderStyle}">
+        <TextBlock Text="{Binding Text, ElementName=Root}" Style="{StaticResource BrandBlockTextStyle}" Visibility="Collapsed" />
+    </Border>
+</UserControl>

@@ -10,20 +10,33 @@ using System.IO;
 using System.Text.Json;
 using System.Windows.Data;
 
-namespace AstroValley.Presentation.ViewModels;
+namespace AstroValley.Presentation.ViewModels.Pages;
 
 // Id is the county FIPS code within the state (unique even when names repeat, e.g. Richmond county/city).
 public record CountyItem(string Id, string Name);
 
-public partial class HomeViewModel : ObservableObject
+public partial class HomeViewModel : PageViewModelBase
 {
+    public override string Title => "Home";
+
     private const TaxSaleType Lien = TaxSaleType.TaxLien, Deed = TaxSaleType.TaxDeed,
         Redeemable = TaxSaleType.RedeemableDeed, Hybrid = TaxSaleType.Hybrid;
 
+    // The state card: slid out until a state is picked on the map.
     [ObservableProperty]
-    private bool _isSidebarOpen = true;
+    private bool _isSidebarOpen;
+
+    // The state card's county list (Details button).
+    [ObservableProperty]
+    private bool _isDetailsOpen;
+
+    [RelayCommand]
+    private void ToggleDetails() => IsDetailsOpen = !IsDetailsOpen;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ToggleSidebarCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ClearStateCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ZoomToStateCommand))]
     private StateViewModel? _selectedState;
 
     // Counties of the selected state; filled from the map's county GeoJSON (see HomeView).
@@ -36,6 +49,7 @@ public partial class HomeViewModel : ObservableObject
     {
         Counties.Clear();
         SelectedCounty = null;
+        IsSidebarOpen = value is not null;
     }
 
     // Pins sent from Real Auction / Regrid. The map page is kept alive, so these live for the whole app session.
@@ -58,6 +72,7 @@ public partial class HomeViewModel : ObservableObject
             SavePinsCommand.NotifyCanExecuteChanged();
             ExportMapCommand.NotifyCanExecuteChanged();
             ExportSheetCommand.NotifyCanExecuteChanged();
+            ExportGeoJsonCommand.NotifyCanExecuteChanged();
             ClearMarkersCommand.NotifyCanExecuteChanged();
             PlanRouteCommand.NotifyCanExecuteChanged();
         };
@@ -314,7 +329,7 @@ public partial class HomeViewModel : ObservableObject
         BeginExport("Exporting map...");
         try
         {
-            await File.WriteAllTextAsync(dialog.FileName, await Services.PinsHtml.BuildAsync(Markers, IsImagery));
+            await File.WriteAllTextAsync(dialog.FileName, await Services.PinsHtml.BuildAsync(Markers, imagery: false));
             OpenFile(dialog.FileName);
         }
         catch (Exception ex)
@@ -367,6 +382,129 @@ public partial class HomeViewModel : ObservableObject
         catch (Exception ex) { System.Windows.MessageBox.Show($"Could not save the pins: {ex.Message}", "Save pins"); }
     }
 
+    // Pins as GeoJSON points (Google Earth, QGIS, other map tools). One-way: Import Pins reads our own JSON, not this.
+    [RelayCommand(CanExecute = nameof(HasMarkers))]
+    private async Task ExportGeoJson()
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "GeoJSON File (*.geojson)|*.geojson", FileName = "AstroValley-Pins.geojson" };
+        if (dialog.ShowDialog() != true) return;
+        try { await File.WriteAllTextAsync(dialog.FileName, ToGeoJson(Markers)); }
+        catch (Exception ex) { System.Windows.MessageBox.Show($"Could not export GeoJSON: {ex.Message}", "Export GeoJSON"); }
+    }
+
+    // shortcut: a point per pin, the parcel outline is not included; add it as a Polygon if another tool needs the shape.
+    internal static string ToGeoJson(IEnumerable<MarkerLocation> pins) => JsonSerializer.Serialize(new
+    {
+        type = "FeatureCollection",
+        features = pins.Select(p => new
+        {
+            type = "Feature",
+            geometry = new { type = "Point", coordinates = new[] { p.Longitude, p.Latitude } }, // GeoJSON order is lon, lat
+            properties = new Dictionary<string, string?>(p.ExtraDetails ?? [])
+            {
+                ["ParcelID"] = p.ParcelID, ["Address"] = p.Address, ["State"] = p.State, ["County"] = p.County, ["Acres"] = p.Acres,
+                ["AuctionDate"] = p.AuctionDate?.ToString("yyyy-MM-dd"), ["Status"] = p.Status, ["Notes"] = p.Notes, ["RegridUrl"] = p.RegridUrl,
+            }
+        })
+    }, PinJson);
+
+    // --- Top bar ---
+
+    /// <summary>The top bar: slides out to the right edge and back, like the state card does on the left. Starts hidden.</summary>
+    [ObservableProperty]
+    private bool _isBarOpen;
+
+    [RelayCommand]
+    private void ToggleBar() => IsBarOpen = !IsBarOpen;
+
+    [ObservableProperty]
+    private string _searchText = "";
+
+    /// <summary>Asks the map to fly to a searched place (lat, lon, zoom, label) and offer "Add pin" there.</summary>
+    public event Action<double, double, int, string>? LocationRequested;
+
+    /// <summary>
+    /// Search box, first match wins: "lat, lon" → a pin by parcel ID or address → a state by name or code → any address, city or ZIP
+    /// through the geocoder (US Census, then OpenStreetMap; online, on Enter only since OpenStreetMap allows about one request a second).
+    /// </summary>
+    [RelayCommand]
+    private async Task Search()
+    {
+        var q = SearchText.Trim();
+        if (q.Length == 0) return;
+
+        var coords = System.Text.RegularExpressions.Regex.Match(q, @"^(-?\d+(?:\.\d+)?)\s*[,\s]\s*(-?\d+(?:\.\d+)?)$");
+        if (coords.Success)
+        {
+            var lat = double.Parse(coords.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+            var lon = double.Parse(coords.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
+            if (lat is >= -90 and <= 90 && lon is >= -180 and <= 180) { LocationRequested?.Invoke(lat, lon, 17, q); return; }
+        }
+
+        if ((Markers.FirstOrDefault(m => string.Equals(m.ParcelID, q, StringComparison.OrdinalIgnoreCase))
+            ?? Markers.FirstOrDefault(m => m.Address.Contains(q, StringComparison.OrdinalIgnoreCase))) is { } pin)
+        { FlyTo(pin); return; }
+
+        if (States.FirstOrDefault(s => s.Name.Equals(q, StringComparison.OrdinalIgnoreCase) || s.Abbreviation.Equals(q, StringComparison.OrdinalIgnoreCase)) is { } state)
+        { SelectedState = state; return; }
+
+        BeginExport("Searching...");
+        try
+        {
+            var hit = await Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IGeocoder>(_serviceProvider).GeocodeAsync(q);
+            if (hit is { } p) LocationRequested?.Invoke(p.Lat, p.Lon, char.IsDigit(q[0]) && !q.All(char.IsDigit) ? 17 : 12, q); // street address close up; city or ZIP wider
+            else System.Windows.MessageBox.Show($"Nothing found for \"{q}\".", "Search");
+        }
+        catch (Exception ex) { System.Windows.MessageBox.Show($"Search failed: {ex.Message}", "Search"); }
+        finally { IsScraping = false; }
+    }
+
+    /// <summary>The search popup's "Add pin": a bare pin (spot + the searched text). Right-click it on the map to fill it from Regrid.</summary>
+    public void AddSearchPin(double lat, double lon, string address) =>
+        AddMarkers([new MarkerLocation { Latitude = lat, Longitude = lon, Address = address }]);
+
+    /// <summary>
+    /// A pin's right-click "Look up in Regrid" (pins with no parcel data): the single-parcel lookup on its address, picking one of several
+    /// matches in the usual dialog. The pin is replaced by the full one and keeps its status and notes.
+    /// shortcut: the bare pin stays in its saved "Unsorted" set (IPinStore has no per-pin delete); delete that set from Saved pins if it bothers.
+    /// </summary>
+    public async void LookUpRegrid(double lat, double lon)
+    {
+        var pin = Markers.FirstOrDefault(m => Math.Abs(m.Latitude - lat) < 1e-9 && Math.Abs(m.Longitude - lon) < 1e-9);
+        if (pin is null || IsScraping) return;
+        var regrid = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<AstroValley.Application.Interfaces.Scraping.IRegridService>(_serviceProvider);
+        BeginExport("Looking up on Regrid...");
+        try
+        {
+            var result = await regrid.ScrapeSingleAsync(pin.Address, CancellationToken.None);
+            if (result.IsMultiple)
+            {
+                IsScraping = false; // the dialog needs the screen
+                var dialog = new ViewModels.Dialogs.ResolveMatchesViewModel("", pin.Address, "", result.Matches);
+                Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IDialogService>(_serviceProvider).ShowDialog(dialog);
+                AstroValley.Domain.Entities.RegridMatch? match = null;
+                try { match = await dialog.Result; }
+                catch (TaskCanceledException) { } // closed without choosing
+                if (match is null) return;
+                BeginExport("Reading the parcel from Regrid...");
+                result = await regrid.ScrapeSingleAsync(match.FullUrl, CancellationToken.None);
+            }
+
+            var full = result.Record is { } r && !result.NotFound && result.Error is null && !result.IsRateLimited ? MarkerLocation.FromRecord(r, null) : null;
+            if (full is null)
+            {
+                System.Windows.MessageBox.Show(result.IsRateLimited ? "Regrid is limiting requests right now. Try again in a few minutes."
+                    : result.Error is not null ? $"Regrid lookup failed: {result.Error.Message}"
+                    : $"Regrid found no parcel for \"{pin.Address}\". Try the full address with city and state.", "Look up in Regrid");
+                return;
+            }
+            full.RestoreWorkFrom(pin);
+            RemoveMarker(pin);
+            if (AddMarkers([full]) == 0) FlyTo(Markers.First(m => m.Key == full.Key)); // that parcel was already on the map
+        }
+        finally { IsScraping = false; }
+    }
+
     [RelayCommand]
     private async Task LoadPins()
     {
@@ -412,10 +550,7 @@ public partial class HomeViewModel : ObservableObject
         return added.Count;
     }
 
-    // Required by the shared state-list style's scroll-offset binding.
-    public double ListBoxScrollOffset { get; set; }
-
-    // State list.
+    // All states: looked up by name when one is clicked on the map (tax sale type, county count).
     public ObservableCollection<StateViewModel> States { get; } = new(
         new (string Name, string Abbr, int Counties, TaxSaleType Type)[]
         {
@@ -442,16 +577,18 @@ public partial class HomeViewModel : ObservableObject
             Name = s.Name, Abbreviation = s.Abbr, CountyCount = s.Counties, TaxStatus = s.Type
         }));
 
-    // Satellite imagery instead of the plain street map.
-    [ObservableProperty]
-    private bool _isImagery;
+    private bool HasState() => SelectedState is not null;
 
-    [RelayCommand]
-    private void ShowMap() => IsImagery = false;
-
-    [RelayCommand]
-    private void ShowSatellite() => IsImagery = true;
-
-    [RelayCommand]
+    // Nothing to show without a state, so the sidebar stays collapsed until one is clicked on the map.
+    [RelayCommand(CanExecute = nameof(HasState))]
     private void ToggleSidebar() => IsSidebarOpen = !IsSidebarOpen;
+
+    [RelayCommand(CanExecute = nameof(HasState))]
+    private void ClearState() => SelectedState = null;
+
+    /// <summary>Asks the map to fit the selected state (the state card's Zoom button).</summary>
+    public event Action? ZoomToStateRequested;
+
+    [RelayCommand(CanExecute = nameof(HasState))]
+    private void ZoomToState() => ZoomToStateRequested?.Invoke();
 }

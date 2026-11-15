@@ -1,0 +1,18 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- SPACING TOKENS: 4-pixel scale. Use these instead of literal margins in views. -->
+    <sys:Double x:Key="SpaceXs">4</sys:Double>
+    <sys:Double x:Key="SpaceSm">8</sys:Double>
+    <sys:Double x:Key="SpaceMd">16</sys:Double>
+    <sys:Double x:Key="SpaceLg">24</sys:Double>
+    <sys:Double x:Key="SpaceXl">32</sys:Double>
+
+    <Thickness x:Key="PagePadding">24,48,24,16</Thickness>
+    <Thickness x:Key="SectionMargin">0,0,0,16</Thickness>
+    <Thickness x:Key="ControlMargin">0,0,8,0</Thickness>
+
+    <CornerRadius x:Key="ControlCornerRadius">4</CornerRadius>
+
+</ResourceDictionary>

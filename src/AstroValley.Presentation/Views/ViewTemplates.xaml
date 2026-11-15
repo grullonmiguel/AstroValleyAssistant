@@ -1,0 +1,22 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:pages="clr-namespace:AstroValley.Presentation.ViewModels.Pages"
+                    xmlns:pageViews="clr-namespace:AstroValley.Presentation.Views.Pages">
+
+    <!--
+        VIEW-MODEL TO VIEW MAP. To add a page or dialog, add one DataTemplate here.
+        PageHost and DialogHost pick these up automatically (no code changes needed).
+        PageHost sets the DataContext, so the view only needs to be declared.
+    -->
+
+    <!-- Pages -->
+    <DataTemplate DataType="{x:Type pages:HomeViewModel}">
+        <pageViews:HomeView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type pages:SettingsViewModel}">
+        <pageViews:SettingsView />
+    </DataTemplate>
+
+    <!-- Dialogs -->
+    
+</ResourceDictionary>

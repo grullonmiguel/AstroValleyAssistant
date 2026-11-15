@@ -114,19 +114,6 @@
                 </views:CompsView.Style>
             </views:CompsView>
 
-            <!-- Home: one persistent instance, edge to edge behind the header. -->
-            <views:HomeView Grid.Row="0" Grid.RowSpan="2" DataContext="{Binding Home}">
-                <views:HomeView.Style>
-                    <Style TargetType="views:HomeView">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding DataContext.IsFullBleed, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </views:HomeView.Style>
-            </views:HomeView>
         </Grid>
 
         <!-- Left/Top Accent Lines -->

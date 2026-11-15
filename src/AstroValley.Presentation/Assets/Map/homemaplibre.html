@@ -9,35 +9,97 @@
         html, body, #map { height: 100%; margin: 0; background: #000; }
         #countyTip { position: absolute; display: none; pointer-events: none; z-index: 5; padding: 3px 8px; border-radius: 6px;
             background: #4F4486; color: #fff; font: 600 12px 'Segoe UI', sans-serif; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+        /* Layers button (bottom left) and its map style panel */
+        :root { --primary: #4F4486; } /* the app's primary color, updated by setPrimaryColor */
+        #layers { position: absolute; left: 16px; bottom: 24px; z-index: 6; font: 600 13px 'Segoe UI', sans-serif; color: #fff; }
+        #layers-btn { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid rgba(255,255,255,.15); border-radius: 12px;
+            background: var(--primary); color: inherit; font: inherit; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+        #layers-panel { display: none; position: absolute; left: 0; bottom: 48px; padding: 12px 14px; border-radius: 14px;
+            background: var(--primary); border: 1px solid rgba(255,255,255,.15); box-shadow: 0 4px 16px rgba(0,0,0,.45); }
+        #layers.open #layers-panel { display: block; }
+        #layers-panel h4 { margin: 0 0 10px; font-size: 14px; color: rgba(255,255,255,.85); }
+        .styles { display: flex; gap: 10px; }
+        .style-opt { padding: 4px; border: 1px solid transparent; border-radius: 12px; background: none; color: rgba(255,255,255,.8); font: inherit; cursor: pointer; }
+        .style-opt img { display: block; width: 72px; height: 72px; border-radius: 10px; margin-bottom: 4px; }
+        /* search result / bare-pin popup: one action button in the app's primary color */
+        .place-popup .maplibregl-popup-content { padding: 14px 16px; font: 13px 'Segoe UI', sans-serif; color: #30294B; }
+        .place-popup .maplibregl-popup-close-button { width: 26px; height: 26px; margin: 6px 6px 0 0; font-size: 20px; color: #30294B; }
+        .place-title { font-weight: 700; font-size: 14px; margin: 0 26px 10px 0; }
+        .place-sub { color: #777; font-size: 12px; margin: -6px 0 10px; }
+        .place-btn { background: var(--primary); color: #fff; border: 0; border-radius: 8px; padding: 6px 14px; font: 600 12px 'Segoe UI', sans-serif; cursor: pointer; }
+        /* the panel is the primary color, so the chosen style is marked in white over a darker shade of it */
+        .style-opt.on { border-color: #fff; box-shadow: 0 0 0 1px #fff; background: rgba(0,0,0,.18); color: #fff; }
     </style>
     <script src="pinpopup.js"></script>
 </head>
 <body>
     <div id="map"></div>
     <div id="countyTip"></div>
+    <div id="layers">
+        <div id="layers-panel">
+            <h4>Map style</h4>
+            <div class="styles">
+                <!-- thumbnails: one Esri tile over Orlando, z11 -->
+                <button class="style-opt on" data-imagery="false"><img src="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/11/853/561" alt="" />Default</button>
+                <button class="style-opt" data-imagery="true"><img src="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/11/853/561" alt="" />Satellite</button>
+            </div>
+        </div>
+        <button id="layers-btn" title="Map style">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5" opacity=".6"/></svg>
+            Layers
+        </button>
+    </div>
     <script>
-        // Page contract: WPF calls highlightState /
-        // highlightCounty / setImagery and receives {type:'counties'} messages, so HomeView doesn't care which page loads.
+        // Page contract: WPF calls highlightState / highlightCounty / setPrimaryColor (street/satellite is the Layers panel here)
+        // and receives {type:'counties'|'countyClick'|'stateClick'} messages, so HomeView doesn't care which page loads.
         var esri = function (path) {
             return 'https://server.arcgisonline.com/ArcGIS/rest/services/' + path + '/MapServer/tile/{z}/{y}/{x}';
         };
-        var PURPLE = '#4F4486', WHITE = '#FFFFFF';
+        var primary = '#4F4486', WHITE = '#FFFFFF';
         var imagery = false;
-        function lineColor() { return imagery ? WHITE : PURPLE; }
+        function lineColor() { return imagery ? WHITE : primary; }
         function emptyFc() { return { type: 'FeatureCollection', features: [] }; }
 
         var map = new maplibregl.Map({
             container: 'map',
             center: [-98, 38], zoom: 3,
-            attributionControl: { compact: true },
-            style: {
-                version: 8,
+            attributionControl: { compact: true }
+        });
+        // Base map = OpenFreeMap's Positron vector style; our sources/layers are merged into it.
+        // Order: base fills/lines, then ours, then the base place labels on top so names stay readable.
+        var baseLayerIds = [];
+        // Two-letter state codes. Points are hand-placed inside each state; the tiny Northeast states sit just
+        // offshore (like a printed map) so they don't collide at country zoom.
+        var STATE_CODES = [
+            ['AL', -86.8, 32.8], ['AK', -152, 64], ['AZ', -111.7, 34.3], ['AR', -92.4, 34.8], ['CA', -119.6, 37.2],
+            ['CO', -105.5, 39.0], ['CT', -71.8, 40.6], ['DE', -74.4, 38.6], ['DC', -74.6, 37.5], ['FL', -81.7, 28.3],
+            ['GA', -83.4, 32.7], ['HI', -156.5, 20.3], ['ID', -114.6, 43.6], ['IL', -89.2, 40.0], ['IN', -86.3, 39.9],
+            ['IA', -93.5, 42.0], ['KS', -98.4, 38.5], ['KY', -85.3, 37.5], ['LA', -92.4, 31.0], ['ME', -69.2, 45.3],
+            ['MD', -77.2, 39.5], ['MA', -69.4, 42.2], ['MI', -84.7, 43.4], ['MN', -94.3, 46.3], ['MS', -89.7, 32.7],
+            ['MO', -92.5, 38.4], ['MT', -109.6, 47.0], ['NE', -99.8, 41.5], ['NV', -116.6, 39.3], ['NH', -71.6, 43.8],
+            ['NJ', -73.6, 39.8], ['NM', -106.1, 34.4], ['NY', -75.5, 42.9], ['NC', -79.4, 35.5], ['ND', -100.5, 47.4],
+            ['OH', -82.8, 40.3], ['OK', -97.5, 35.5], ['OR', -120.6, 43.9], ['PA', -77.6, 40.9], ['RI', -70.9, 41.1],
+            ['SC', -80.9, 33.9], ['SD', -100.2, 44.4], ['TN', -86.4, 35.8], ['TX', -99.3, 31.4], ['UT', -111.7, 39.3],
+            ['VT', -72.7, 44.1], ['VA', -78.8, 37.5], ['WA', -120.5, 47.4], ['WV', -80.6, 38.6], ['WI', -89.8, 44.6],
+            ['WY', -107.5, 43.0]
+        ];
+        var CODE_DARK = '#333333', STATE_HOVER_MAX_ZOOM = 6;
+        map.setStyle('https://tiles.openfreemap.org/styles/positron', { transformStyle: function (_, base) {
+            // Positron's full state names would clash with our two-letter codes.
+            var baseLayers = base.layers.filter(function (l) { return l.id !== 'label_state'; });
+            baseLayerIds = baseLayers.map(function (l) { return l.id; });
+            var under = baseLayers.filter(function (l) { return l.type !== 'symbol'; });
+            var labelsOnTop = baseLayers.filter(function (l) { return l.type === 'symbol'; });
+            return Object.assign({}, base, {
                 projection: { type: 'globe' },
-                sources: {
-                    street: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, maxzoom: 19, attribution: '&copy; OpenStreetMap contributors' },
+                sources: Object.assign({}, base.sources, {
                     imagery: { type: 'raster', tiles: [esri('World_Imagery')], tileSize: 256, maxzoom: 19, attribution: 'Tiles &copy; Esri' },
                     labels: { type: 'raster', tiles: [esri('Reference/World_Boundaries_and_Places')], tileSize: 256, maxzoom: 19 },
                     outline: { type: 'geojson', data: emptyFc() },
+                    states: { type: 'geojson', data: emptyFc() },
+                    'state-codes': { type: 'geojson', data: { type: 'FeatureCollection', features: STATE_CODES.map(function (s) {
+                        return { type: 'Feature', properties: { code: s[0] }, geometry: { type: 'Point', coordinates: [s[1], s[2]] } };
+                    }) } },
                     counties: { type: 'geojson', data: emptyFc() },
                     highlight: { type: 'geojson', data: emptyFc() },
                     parcels: { type: 'geojson', data: emptyFc() },
@@ -45,40 +107,47 @@
                     flood: overlaySource('flood'),
                     wetlands: overlaySource('wetlands'),
                     epa: epaSource()
-                },
-                layers: [
-                    { id: 'bg', type: 'background', paint: { 'background-color': '#000' } },
-                    { id: 'street', type: 'raster', source: 'street' },
+                }),
+                layers: under.concat([
                     { id: 'imagery', type: 'raster', source: 'imagery', layout: { visibility: 'none' } },
                     overlayLayer('flood'), overlayLayer('wetlands'), // toggled from WPF; under our lines
                     // our lines sit under the labels so place names stay readable
+                    // same idea as county-hit/county-hover below, for the country view only (codes vanish at the same zoom)
+                    { id: 'state-hit', type: 'fill', source: 'states', maxzoom: STATE_HOVER_MAX_ZOOM, paint: { 'fill-opacity': 0 } },
+                    { id: 'state-hover', type: 'fill', source: 'states', maxzoom: STATE_HOVER_MAX_ZOOM, filter: ['==', ['get', 'name'], ''], paint: { 'fill-color': primary, 'fill-opacity': 0.15 } },
+                    { id: 'state-lines', type: 'line', source: 'states', paint: { 'line-color': primary, 'line-width': 1, 'line-opacity': 0.5 } },
                     // invisible fill: only there so the mouse can hit a county; county-hover shows the one under the mouse
                     { id: 'county-hit', type: 'fill', source: 'counties', paint: { 'fill-opacity': 0 } },
-                    { id: 'county-hover', type: 'fill', source: 'counties', filter: ['==', ['get', 'COUNTY'], ''], paint: { 'fill-color': PURPLE, 'fill-opacity': 0.2 } },
-                    { id: 'county-lines', type: 'line', source: 'counties', paint: { 'line-color': PURPLE, 'line-width': 1, 'line-opacity': 0.7 } },
+                    { id: 'county-hover', type: 'fill', source: 'counties', filter: ['==', ['get', 'COUNTY'], ''], paint: { 'fill-color': primary, 'fill-opacity': 0.2 } },
+                    { id: 'county-lines', type: 'line', source: 'counties', paint: { 'line-color': primary, 'line-width': 1, 'line-opacity': 0.7 } },
                     { id: 'highlight-fill', type: 'fill', source: 'highlight', paint: {
-                        'fill-color': PURPLE,
+                        'fill-color': primary,
                         // fades out between zoom 8 and 10 so streets show when zoomed in
                         'fill-opacity': ['interpolate', ['linear'], ['zoom'], 8, 0.35, 10, 0]
                     } },
-                    { id: 'highlight-line', type: 'line', source: 'highlight', paint: { 'line-color': PURPLE, 'line-width': 3 } },
-                    { id: 'outline-line', type: 'line', source: 'outline', paint: { 'line-color': PURPLE, 'line-width': 3 } },
+                    { id: 'highlight-line', type: 'line', source: 'highlight', paint: { 'line-color': primary, 'line-width': 3 } },
+                    { id: 'outline-line', type: 'line', source: 'outline', paint: { 'line-color': primary, 'line-width': 3 } },
                     // parcel boundaries for pins sent from Real Auction / Regrid (neon green reads on both base maps)
                     { id: 'parcel-fill', type: 'fill', source: 'parcels', paint: { 'fill-color': '#39ff14', 'fill-opacity': 0.2 } },
                     { id: 'parcel-line', type: 'line', source: 'parcels', paint: { 'line-color': '#39ff14', 'line-width': 3 } },
-                    epaLayer(),
+                    epaLayer()
+                ], labelsOnTop, [
+                    // above the base labels so a city name never hides a state code; gone once a state is zoomed into
+                    { id: 'state-codes', type: 'symbol', source: 'state-codes', maxzoom: STATE_HOVER_MAX_ZOOM,
+                        layout: { 'text-field': ['get', 'code'], 'text-font': ['Noto Sans Bold'], 'text-size': 12, 'text-allow-overlap': true },
+                        paint: { 'text-color': CODE_DARK, 'text-halo-color': WHITE, 'text-halo-width': 1 } },
                     { id: 'labels', type: 'raster', source: 'labels', layout: { visibility: 'none' } }
-                ]
-            }
-        });
+                ])
+            });
+        } });
 
-        // Padding clears the WPF overlays: sidebar (+ county list once a state is selected) on the left, header on top.
-        // The state sidebar is 195px wide open, 36px collapsed (WPF reports it via setSidebarOpen).
-        var sidebarOpen = true;
+        // Padding clears the WPF overlays: the state sidebar on the left, the map buttons on top.
+        // The state card + arrow tab cover ~332px open, just the 32px tab collapsed; WPF reports it via setSidebarOpen.
+        var sidebarOpen = false;
         function setSidebarOpen(open) { sidebarOpen = open; }
-        function sideShift() { return sidebarOpen ? 0 : 159; }
         function pad(withCounties) {
-            return withCounties ? { left: 430 - sideShift(), top: 110, right: 60, bottom: 40 } : { left: 260 - sideShift(), top: 100, right: 40, bottom: 40 };
+            var left = (sidebarOpen ? 332 : 32) + 40;
+            return withCounties ? { left: left, top: 110, right: 60, bottom: 40 } : { left: left, top: 100, right: 40, bottom: 40 };
         }
         // Slightly tighter than the full contiguous US (-125..-66.5, 24.5..49.5) so the start view is closer in.
         var US_BOUNDS = [[-120, 26], [-72, 47.5]];
@@ -104,22 +173,57 @@
 
         function setImagery(on) { whenReady(function () { applyImagery(on); }); }
 
+        // Layers panel: the map always opens on the default (street) style; the choice is not remembered.
+        var layersBox = document.getElementById('layers');
+        document.getElementById('layers-btn').onclick = function () { layersBox.classList.toggle('open'); };
+        document.querySelectorAll('.style-opt').forEach(function (b) {
+            b.onclick = function () {
+                document.querySelectorAll('.style-opt').forEach(function (o) { o.classList.toggle('on', o === b); });
+                setImagery(b.dataset.imagery === 'true');
+                layersBox.classList.remove('open');
+            };
+        });
+        map.on('mousedown', function () { layersBox.classList.remove('open'); });
+
+        // The app's primary color from Settings (WPF sends it each time the Home view shows): outlines, hover fills, tooltip.
+        function setPrimaryColor(hex) {
+            primary = hex;
+            countyTip.style.background = hex;
+            document.documentElement.style.setProperty('--primary', hex);
+            whenReady(function () { applyImagery(imagery); });
+        }
+
         function applyImagery(on) {
             imagery = on;
             var vis = function (id, show) { map.setLayoutProperty(id, 'visibility', show ? 'visible' : 'none'); };
-            vis('street', !on); vis('imagery', on); vis('labels', on);
-            var c = lineColor(); // purple on the street map, white on satellite
-            ['county-lines', 'highlight-line', 'outline-line'].forEach(function (id) { map.setPaintProperty(id, 'line-color', c); });
+            baseLayerIds.forEach(function (id) { vis(id, !on); }); // satellite covers the whole base, its own labels included
+            vis('imagery', on); vis('labels', on);
+            var c = lineColor(); // primary color on the street map, white on satellite
+            map.setPaintProperty('state-codes', 'text-color', on ? WHITE : CODE_DARK);
+            map.setPaintProperty('state-codes', 'text-halo-color', on ? '#000000' : WHITE);
+            ['state-lines', 'county-lines', 'highlight-line', 'outline-line'].forEach(function (id) { map.setPaintProperty(id, 'line-color', c); });
             map.setPaintProperty('highlight-fill', 'fill-color', c);
             map.setPaintProperty('county-hover', 'fill-color', c);
+            map.setPaintProperty('state-hover', 'fill-color', c);
         }
 
         // ---- selected state outline + counties -----------------------------------------------------------------
         var statesData = null, selectedName = null, countyFeatures = [], loadToken = 0, hadOutline = false;
-        fetch('../Geo/us-states.geojson').then(function (r) { return r.json(); }).then(function (d) { statesData = d; whenReady(drawOutline); });
+        fetch('../Geo/us-states.geojson').then(function (r) { return r.json(); }).then(function (d) {
+            statesData = d;
+            // The file stores each state as closed rings drawn as lines; as polygons they can also be filled and hit by the mouse.
+            var polygons = d.features.map(function (f) {
+                var g = f.geometry, rings = g.type === 'LineString' ? [g.coordinates] : g.coordinates;
+                return { type: 'Feature', id: f.id, properties: f.properties, geometry: { type: 'MultiPolygon', coordinates: rings.map(function (r) { return [r]; }) } };
+            });
+            whenReady(function () { map.getSource('states').setData({ type: 'FeatureCollection', features: polygons }); drawOutline(); });
+        });
 
         // The style may not be loaded yet when WPF or fetch call in.
-        function whenReady(fn) { if (map.isStyleLoaded()) fn(); else map.once('style.load', fn); }
+        // Own flag, not isStyleLoaded(): that stays false while any tile is loading, after style.load has already fired.
+        var styleReady = false;
+        map.once('style.load', function () { styleReady = true; });
+        function whenReady(fn) { if (styleReady) fn(); else map.once('style.load', fn); }
 
         function highlightState(name) { selectedName = name; whenReady(drawOutline); }
 
@@ -128,21 +232,29 @@
             map.getSource('counties').setData(emptyFc());
             map.getSource('highlight').setData(emptyFc());
             countyFeatures = [];
-            hoverCounty(null);
+            hover(null);
         }
 
-        // ---- county under the mouse: hover fill + name tooltip; a click selects it in the WPF county list ----------
+        // ---- county or state under the mouse: hover fill + name tooltip; a county click selects it in the WPF county list ----
+        // A county (only there once a state is selected) wins over the state under it. States aren't clickable here.
         var countyTip = document.getElementById('countyTip'), hoveredId = '';
-        function hoverCounty(f, point) {
-            var id = f ? f.properties.COUNTY : '';
+        function hover(f, point) {
+            var county = f && f.layer.id === 'county-hit' ? f.properties.COUNTY : '';
+            var state = f && !county ? f.properties.name : '';
+            var id = county ? 'c' + county : state ? 's' + state : '';
             if (id !== hoveredId) {
                 hoveredId = id;
-                map.setFilter('county-hover', ['==', ['get', 'COUNTY'], id]);
+                map.setFilter('county-hover', ['==', ['get', 'COUNTY'], county]);
+                map.setFilter('state-hover', ['==', ['get', 'name'], state]);
                 map.getCanvas().style.cursor = f ? 'pointer' : '';
                 countyTip.style.display = f ? 'block' : 'none';
-                if (f) countyTip.textContent = countyLabel(f.properties);
+                if (f) countyTip.textContent = county ? countyLabel(f.properties) : state;
             }
             if (f) { countyTip.style.left = (point.x + 14) + 'px'; countyTip.style.top = (point.y + 14) + 'px'; }
+        }
+        function hoverAt(e) {
+            return countyAt(e) || (e.originalEvent.target === map.getCanvas()
+                ? map.queryRenderedFeatures(e.point, { layers: ['state-hit'] })[0] : null);
         }
         // Only when the mouse is on the map itself, not on a pin or an open popup.
         // And only while zoomed out: once streets show, the fill, pointer and tooltip get in the way.
@@ -152,14 +264,21 @@
                 ? map.queryRenderedFeatures(e.point, { layers: ['county-hit'] })[0] : null;
         }
         // zooming in with the mouse still: drop the hover without waiting for the next move
-        map.on('zoom', function () { if (map.getZoom() >= COUNTY_HOVER_MAX_ZOOM) hoverCounty(null); });
-        map.on('mousemove', function (e) { hoverCounty(countyAt(e), e.point); });
-        map.on('mouseout', function () { hoverCounty(null); });
+        map.on('zoom', function () {
+            var z = map.getZoom();
+            if (z >= COUNTY_HOVER_MAX_ZOOM || (z >= STATE_HOVER_MAX_ZOOM && hoveredId[0] === 's')) hover(null);
+        });
+        map.on('mousemove', function (e) { hover(hoverAt(e), e.point); });
+        map.on('mouseout', function () { hover(null); });
         map.on('click', function (e) {
             // those clicks already mean something else: stop the tour / identify the flood zone or wetland at that spot
             if (TOUR.on || overlayOn.flood || overlayOn.wetlands) return;
-            var f = countyAt(e);
-            if (f && window.chrome && window.chrome.webview) window.chrome.webview.postMessage({ type: 'countyClick', id: f.properties.COUNTY });
+            // a county click picks it in the county list; a state click selects that state (WPF then calls highlightState)
+            var f = hoverAt(e);
+            if (!f || !(window.chrome && window.chrome.webview)) return;
+            window.chrome.webview.postMessage(f.layer.id === 'county-hit'
+                ? { type: 'countyClick', id: f.properties.COUNTY }
+                : { type: 'stateClick', name: f.properties.name });
         });
 
         // "Bay" for counties; "Acadia Parish", "Richmond city" etc. otherwise (keeps same-named entries apart).
@@ -177,9 +296,15 @@
             var f = statesData.features.find(function (f) { return f.properties.name === selectedName; });
             if (!f) return;
             map.getSource('outline').setData({ type: 'FeatureCollection', features: [f] });
-            hadOutline = true;
-            flyTo(boundsOf(f.geometry, selectedName === 'Alaska'), true);
             loadCounties(f.id, selectedName); // state FIPS = feature id, same as the county file name
+        }
+
+        // The state card's Zoom button: selecting a state no longer moves the map on its own.
+        function zoomToState() {
+            var f = statesData && selectedName && statesData.features.find(function (f) { return f.properties.name === selectedName; });
+            if (!f) return;
+            hadOutline = true; // so clearing the state flies back out
+            flyTo(boundsOf(f.geometry, selectedName === 'Alaska'), true);
         }
 
         function loadCounties(fips, stateName) {
@@ -211,6 +336,12 @@
                 list.forEach(function (loc) {
                     var marker = makePin(loc, map); // colour by auction urgency (pinpopup.js)
                     pinMarkers.push({ marker: marker, lat: loc.Latitude, lon: loc.Longitude, loc: loc });
+                    // A pin with no parcel data (added from a search): right-click offers the Regrid lookup, which the user starts.
+                    if (!loc.ParcelID) marker.getElement().addEventListener('contextmenu', function (e) {
+                        e.preventDefault(); e.stopPropagation();
+                        actionPopup(loc.Latitude, loc.Longitude, loc.Address, 'No parcel data yet', 'Look up in Regrid',
+                            { type: 'regrid', lat: loc.Latitude, lon: loc.Longitude });
+                    });
                     bounds.extend([loc.Longitude, loc.Latitude]);
 
                     if (!loc.ParcelLines) return;
@@ -326,14 +457,35 @@
         }
 
         // The parcel list adds a third panel on the left (county list too once a state is selected).
-        function pinPad() { return { left: (countyFeatures.length ? 650 : 490) - sideShift(), top: 110, right: 60, bottom: 40 }; }
+        // Same left edge as pad(), plus the 163px parcel list; top clears the WPF toolbar.
+        function pinPad() { return { left: pad(false).left + 163, top: 130, right: 60, bottom: 40 }; }
+
+        // Search result: fly there, then a popup on the spot with "Add pin" (the app adds a bare pin; right-click it for Regrid).
+        function showPlace(lat, lon, zoom, label) {
+            flyToMarker(lat, lon, zoom);
+            map.once('moveend', function () { actionPopup(lat, lon, label, '', 'Add pin', { type: 'addPin', lat: lat, lon: lon, address: label }); });
+        }
+
+        var placePopup = null; // one at a time
+        function actionPopup(lat, lon, title, sub, button, message) {
+            if (placePopup) placePopup.remove();
+            placePopup = new maplibregl.Popup({ className: 'place-popup', offset: 14, maxWidth: '320px' }).setLngLat([lon, lat])
+                .setHTML('<div class="place-title">' + esc(title) + '</div>' + (sub ? '<div class="place-sub">' + esc(sub) + '</div>' : '')
+                    + '<button class="place-btn">' + esc(button) + '</button>')
+                .addTo(map);
+            var p = placePopup;
+            p.getElement().querySelector('.place-btn').onclick = function () {
+                p.remove();
+                if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage(message);
+            };
+        }
 
         // Flies to a pin and opens its popup once the camera arrives (other popups are closed first).
-        function flyToMarker(lat, lon) {
+        function flyToMarker(lat, lon, zoom) { // zoom: only for a searched place, pins use 17
             var hit = pinMarkers.find(function (p) { return Math.abs(p.lat - lat) < 1e-9 && Math.abs(p.lon - lon) < 1e-9; });
             pinMarkers.forEach(function (p) { if (p.marker.getPopup().isOpen()) p.marker.togglePopup(); });
             map.once('moveend', function () { if (hit && !hit.marker.getPopup().isOpen()) hit.marker.togglePopup(); });
-            map.flyTo({ center: [lon, lat], zoom: 17, padding: pinPad(), essential: true });
+            map.flyTo({ center: [lon, lat], zoom: zoom || 17, padding: pinPad(), essential: true });
         }
 
         function highlightCounty(id) {

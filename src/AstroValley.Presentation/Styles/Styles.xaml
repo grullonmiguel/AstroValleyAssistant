@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        THE ONLY STYLE FILE App.xaml MERGES.
+        Order matters: tokens first (other files reference them with StaticResource), then control styles.
+        To add a styles file, create it and add one line below.
+    -->
+    <ResourceDictionary.MergedDictionaries>
+        <!-- Tokens -->
+        <ResourceDictionary Source="Tokens/Tokens.xaml" />
+
+        <!-- Control styles -->
+        <ResourceDictionary Source="Controls/Window.xaml" />
+        <ResourceDictionary Source="Controls/Sidebar.xaml" />
+        <ResourceDictionary Source="Controls/TextBlocks.xaml" />
+        <ResourceDictionary Source="Controls/Buttons.xaml" />
+        <ResourceDictionary Source="Controls/StatusBar.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

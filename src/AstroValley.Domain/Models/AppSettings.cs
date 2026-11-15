@@ -5,6 +5,11 @@ public class AppSettings
     public RegridSettings Regrid { get; set; } = new();
     public RealAuctionSettings RealAuction { get; set; } = new();
     public SellerSettings Seller { get; set; } = new();
+
+    /// <summary>Primary color as a hex string, or null to use <see cref="Helpers.AppDefaults.PrimaryColorHex"/>.</summary>
+    public string? PrimaryColor { get; set; }
+
+    public bool IsSidebarExpanded { get; set; } = true;
 }
 
 /// <summary>What My Properties puts on a term sheet and starts a new property with.</summary>
