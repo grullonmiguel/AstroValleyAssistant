@@ -14,6 +14,13 @@
                 <controls:PageHeader Title="{Binding Title}" />
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource TextButtonStyle}" Command="{Binding ToggleAddParcelsCommand}"
+                            ToolTip="Paste or import your own parcels">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="PlaylistPlus" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Add" />
+                        </StackPanel>
+                    </Button>
                     <Button Style="{StaticResource TextButtonStyle}" Command="{Binding ToggleGetDetailsCommand}"
                             ToolTip="Fill in the parcels' details from a data source" ToolTipService.ShowOnDisabled="True">
                         <StackPanel Orientation="Horizontal">
@@ -32,7 +39,7 @@
             </Grid>            
         </materialDesign:Card>
 
-        <!-- Everything under the header, with the Auction Lists and Get Details flyouts floating over it -->
+        <!-- Everything under the header, with the Auction Lists, Add Parcels and Get Details flyouts floating over it -->
         <Grid>
         <DockPanel>
 
@@ -65,12 +72,6 @@
                                     <TextBlock Text="Map" />
                                 </StackPanel>
                             </Button>
-                            <Button Style="{StaticResource TextButtonStyle}" Command="{Binding CopyCommand}" ToolTip="Copy the list to paste into a spreadsheet">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="ContentCopy" Margin="0,0,6,0" VerticalAlignment="Center" />
-                                    <TextBlock Text="Copy" />
-                                </StackPanel>
-                            </Button>
                             <Button Style="{StaticResource TextButtonStyle}" Command="{Binding ExportToExcelCommand}" ToolTip="Save the list as an Excel file">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="MicrosoftExcel" Margin="0,0,6,0" VerticalAlignment="Center" />
@@ -84,9 +85,20 @@
                                 </StackPanel>
                             </Button>
                         </StackPanel>
-                        <TextBlock Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Center">
-                            <Run Text="{Binding Rows.Count, Mode=OneWay}" /><Run Text=" parcels" />
-                        </TextBlock>
+                        <!-- where the list came from (opens that auction on RealAuction), then how many -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource InlineLinkButtonStyle}" Command="{Binding OpenLoadedAuctionCommand}"
+                                    ToolTip="Open this auction on RealAuction"
+                                    Visibility="{Binding LoadedAuctionAlias, Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Gavel" Style="{StaticResource InlineIconStyle}" />
+                                    <TextBlock Text="{Binding LoadedAuctionAlias}" />
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Center">
+                                <Run Text="{Binding Rows.Count, Mode=OneWay}" /><Run Text=" parcels" />
+                            </TextBlock>
+                        </StackPanel>
                     </DockPanel>
 
                 <Grid>
@@ -195,7 +207,7 @@
             <materialDesign:Card Style="{StaticResource FlyoutCardStyle}">
                 <StackPanel>
                     <DockPanel>
-                        <Button DockPanel.Dock="Right" Style="{StaticResource FlyoutIconButtonStyle}" Command="{Binding CloseListsCommand}"
+                        <Button DockPanel.Dock="Right" Style="{StaticResource FlyoutIconButtonStyle}" Command="{Binding CloseFlyoutCommand}"
                                 ToolTip="Close" AutomationProperties.Name="Close auction lists">
                             <materialDesign:PackIcon Kind="Close" Width="20" Height="20" />
                         </Button>
@@ -244,6 +256,50 @@
             </materialDesign:Card>
         </StackPanel>
 
+        <!-- Add Parcels flyout: the ways to bring in your own list. Layout only for now; the options get their commands next
+             (see data/parcel-lookup-remaining.md). Its tail points at the Add Parcels button. -->
+        <StackPanel Style="{StaticResource FlyoutPanelStyle}"
+                    Visibility="{Binding IsAddParcelsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel.RenderTransform>
+                <TranslateTransform />
+            </StackPanel.RenderTransform>
+            <Path Style="{StaticResource FlyoutTailStyle}" Margin="{StaticResource AddParcelsFlyoutTailMargin}" />
+            <materialDesign:Card Style="{StaticResource FlyoutCardStyle}">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource FlyoutIconButtonStyle}" Command="{Binding CloseFlyoutCommand}"
+                                ToolTip="Close" AutomationProperties.Name="Close add parcels">
+                            <materialDesign:PackIcon Kind="Close" Width="20" Height="20" />
+                        </Button>
+                        <materialDesign:PackIcon Kind="PlaylistPlus" Width="22" Height="22" Margin="0,0,10,0" VerticalAlignment="Center" />
+                        <TextBlock Text="Add Parcels" Style="{StaticResource FlyoutTitleTextStyle}" />
+                    </DockPanel>
+
+                    <TextBlock Text="FROM THE CLIPBOARD" Style="{StaticResource FlyoutLabelTextStyle}" />
+                    <Button Style="{StaticResource FlyoutListButtonStyle}" ToolTip="Paste parcel IDs, one per line">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentPaste" Margin="0,0,10,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Paste parcel IDs" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource FlyoutListButtonStyle}" ToolTip="Paste addresses, one per line">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="MapMarkerOutline" Margin="0,0,10,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Paste addresses" />
+                        </StackPanel>
+                    </Button>
+
+                    <TextBlock Text="FROM A FILE" Style="{StaticResource FlyoutLabelTextStyle}" />
+                    <Button Style="{StaticResource FlyoutListButtonStyle}" ToolTip="Import a CSV or Excel file of parcels">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileUploadOutline" Margin="0,0,10,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Import CSV or Excel" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </materialDesign:Card>
+        </StackPanel>
+
         <!-- Get Details flyout: pick a data provider and the list is looked up in it straight away. Its tail points at the Get Details button. -->
         <StackPanel Style="{StaticResource FlyoutPanelStyle}"
                     Visibility="{Binding IsGetDetailsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -254,7 +310,7 @@
             <materialDesign:Card Style="{StaticResource FlyoutCardStyle}">
                 <StackPanel>
                     <DockPanel>
-                        <Button DockPanel.Dock="Right" Style="{StaticResource FlyoutIconButtonStyle}" Command="{Binding CloseGetDetailsCommand}"
+                        <Button DockPanel.Dock="Right" Style="{StaticResource FlyoutIconButtonStyle}" Command="{Binding CloseFlyoutCommand}"
                                 ToolTip="Close" AutomationProperties.Name="Close get details">
                             <materialDesign:PackIcon Kind="Close" Width="20" Height="20" />
                         </Button>

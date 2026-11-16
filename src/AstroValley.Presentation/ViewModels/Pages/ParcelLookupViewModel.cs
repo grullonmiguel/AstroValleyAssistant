@@ -34,6 +34,14 @@ public sealed partial class ParcelLookupViewModel : PageViewModelBase
     /// <summary>The auction the rows came from; stored on each map pin.</summary>
     private string? _loadedAuctionUrl;
 
+    /// <summary>"Bay - 11/17/26" for the auction the rows came from (shown over the grid); null when the list did not come from an auction.</summary>
+    [ObservableProperty]
+    private string? loadedAuctionAlias;
+
+    /// <summary>The grid header's auction name: open that auction on RealAuction.</summary>
+    [RelayCommand]
+    private void OpenLoadedAuction() => _browser.Launch(_loadedAuctionUrl);
+
     public ParcelLookupViewModel(RealAuctionSourceViewModel auction, IEnumerable<IParcelDataProvider> providers,
         IBrowserService browser, ISnackbarService snackbar, IDialogService dialogs, INavigationService navigation,
         IFileService files, IClipboardExporter clipboardExporter, IExcelExporter excelExporter)
@@ -56,7 +64,7 @@ public sealed partial class ParcelLookupViewModel : PageViewModelBase
             LookupCommand.NotifyCanExecuteChanged();
             NotifyListCommands();
             ToggleGetDetailsCommand.NotifyCanExecuteChanged();
-            if (!HasLookupTargets) IsGetDetailsOpen = false;
+            if (!HasLookupTargets && IsGetDetailsOpen) CloseFlyout();
         };
     }
 
@@ -118,6 +126,7 @@ public sealed partial class ParcelLookupViewModel : PageViewModelBase
 
         Rows.Clear();
         _loadedAuctionUrl = Auction.Url;
+        LoadedAuctionAlias = Auction.Alias;
         var county = RealAuctionSourceViewModel.CountyFrom(Auction.Url);
         foreach (var record in records)
             Rows.Add(new PropertyDataViewModel(string.IsNullOrWhiteSpace(record.County) && county is not null ? record with { County = county } : record, _browser));
@@ -127,25 +136,32 @@ public sealed partial class ParcelLookupViewModel : PageViewModelBase
 
     private bool CanLoadAuction() => !IsBusy && Auction.CanLoad;
 
-    // ----- Auction Lists flyout: pick an auction and it loads straight away -----
+    // ----- Header flyouts (Lists, Add Parcels, Get Details): one open at a time -----
 
+    /// <summary>Which header flyout is showing, if any.</summary>
     [ObservableProperty]
-    private bool isListsOpen;
+    [NotifyPropertyChangedFor(nameof(IsListsOpen), nameof(IsAddParcelsOpen), nameof(IsGetDetailsOpen))]
+    private ParcelLookupFlyout openFlyout;
+
+    public bool IsListsOpen => OpenFlyout == ParcelLookupFlyout.Lists;
+    public bool IsAddParcelsOpen => OpenFlyout == ParcelLookupFlyout.AddParcels;
+    public bool IsGetDetailsOpen => OpenFlyout == ParcelLookupFlyout.GetDetails;
+
+    private void Toggle(ParcelLookupFlyout flyout) => OpenFlyout = OpenFlyout == flyout ? ParcelLookupFlyout.None : flyout;
 
     [RelayCommand]
-    private void ToggleLists() => IsListsOpen = !IsListsOpen;
+    private void ToggleLists() => Toggle(ParcelLookupFlyout.Lists);
 
     [RelayCommand]
-    private void CloseLists() => IsListsOpen = false;
+    private void ToggleAddParcels() => Toggle(ParcelLookupFlyout.AddParcels);
 
-    // one flyout at a time
-    partial void OnIsListsOpenChanged(bool value) { if (value) IsGetDetailsOpen = false; }
-    partial void OnIsGetDetailsOpenChanged(bool value) { if (value) IsListsOpen = false; }
+    [RelayCommand(CanExecute = nameof(HasLookupTargets))]
+    private void ToggleGetDetails() => Toggle(ParcelLookupFlyout.GetDetails);
+
+    [RelayCommand]
+    private void CloseFlyout() => OpenFlyout = ParcelLookupFlyout.None;
 
     // ----- Get Details flyout: pick a data provider and the lookup runs straight away -----
-
-    [ObservableProperty]
-    private bool isGetDetailsOpen;
 
     /// <summary>At least one row has something a provider can search by (a parcel ID or an address).</summary>
     public bool HasLookupTargets => Rows.Any(HasLookupTarget);
@@ -153,17 +169,11 @@ public sealed partial class ParcelLookupViewModel : PageViewModelBase
     private static bool HasLookupTarget(PropertyDataViewModel row) =>
         !string.IsNullOrWhiteSpace(row.ParcelId) || !string.IsNullOrWhiteSpace(row.Address);
 
-    [RelayCommand(CanExecute = nameof(HasLookupTargets))]
-    private void ToggleGetDetails() => IsGetDetailsOpen = !IsGetDetailsOpen;
-
-    [RelayCommand]
-    private void CloseGetDetails() => IsGetDetailsOpen = false;
-
     /// <summary>A provider in the flyout: use it, and look up the list now.</summary>
     [RelayCommand(CanExecute = nameof(IsIdle))]
     private Task LookupWith(IParcelDataProvider provider)
     {
-        IsGetDetailsOpen = false;
+        CloseFlyout();
         SelectedProvider = provider;
         return CanLookup() ? Lookup() : Task.CompletedTask;
     }
@@ -172,7 +182,7 @@ public sealed partial class ParcelLookupViewModel : PageViewModelBase
     [RelayCommand(CanExecute = nameof(IsIdle))]
     private async Task BrowseRealAuction()
     {
-        IsListsOpen = false;
+        CloseFlyout();
         if (await Auction.BrowseAsync())
             await LoadCurrentAuction();
     }
@@ -181,7 +191,7 @@ public sealed partial class ParcelLookupViewModel : PageViewModelBase
     [RelayCommand(CanExecute = nameof(IsIdle))]
     private Task LoadRecentAuction(AuctionUrlEntry entry)
     {
-        IsListsOpen = false;
+        CloseFlyout();
         Auction.Select(entry);
         return LoadCurrentAuction();
     }
@@ -316,6 +326,7 @@ public sealed partial class ParcelLookupViewModel : PageViewModelBase
         Rows.Clear();
         SelectedRow = null;
         _loadedAuctionUrl = null;
+        LoadedAuctionAlias = null;
     }
 
     private bool CanUseList() => !IsBusy && HasRows;
@@ -348,4 +359,13 @@ public sealed partial class ParcelLookupViewModel : PageViewModelBase
             IsBusy = false;
         }
     }
+}
+
+/// <summary>The header flyouts on Parcel Lookup; at most one is open.</summary>
+public enum ParcelLookupFlyout
+{
+    None,
+    Lists,
+    AddParcels,
+    GetDetails
 }

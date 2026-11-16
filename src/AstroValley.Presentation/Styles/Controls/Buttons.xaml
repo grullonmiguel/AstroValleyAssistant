@@ -66,6 +66,13 @@
         <Setter Property="Height" Value="28" />
     </Style>
 
+    <!-- A compact link inside a line of text (e.g. the auction name over the grid): flat, no extra height or margin. -->
+    <Style x:Key="InlineLinkButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource MaterialDesignFlatButton}">
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="4,0" />
+        <Setter Property="Margin" Value="0,0,8,0" />
+    </Style>
+
     <!-- One link in a vertical list of links (icon + label, left aligned, full width). -->
     <Style x:Key="QuickLinkButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource MaterialDesignFlatButton}">
         <Setter Property="HorizontalAlignment" Value="Stretch" />

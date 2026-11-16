@@ -19,6 +19,8 @@
     <Thickness x:Key="FlyoutTailMargin">0,0,16,-1</Thickness>
     <!-- Parcel Lookup's Get Details button sits left of Lists, so its flyout's tail sits further in. -->
     <Thickness x:Key="GetDetailsFlyoutTailMargin">0,0,131,-1</Thickness>
+    <!-- Add Parcels sits left of Get Details. -->
+    <Thickness x:Key="AddParcelsFlyoutTailMargin">0,0,220,-1</Thickness>
     <!-- Pulls the flyout up over the SectionMargin gap so the tail's tip touches the header card it hangs from. -->
     <Thickness x:Key="FlyoutPanelMargin">0,-16,0,0</Thickness>
 
