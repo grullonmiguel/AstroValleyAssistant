@@ -480,12 +480,9 @@ public partial class HomeViewModel : PageViewModelBase
             if (result.IsMultiple)
             {
                 IsScraping = false; // the dialog needs the screen
-                var dialog = new ViewModels.Dialogs.ResolveMatchesViewModel("", pin.Address, "", result.Matches);
-                Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IDialogService>(_serviceProvider).ShowDialog(dialog);
-                AstroValley.Domain.Entities.RegridMatch? match = null;
-                try { match = await dialog.Result; }
-                catch (TaskCanceledException) { } // closed without choosing
-                if (match is null) return;
+                var match = await Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IDialogService>(_serviceProvider)
+                    .ShowAsync(new ViewModels.Dialogs.ResolveMatchesDialogViewModel("", pin.Address, "", result.Matches));
+                if (match is null) return; // closed without choosing
                 BeginExport("Reading the parcel from Regrid...");
                 result = await regrid.ScrapeSingleAsync(match.FullUrl, CancellationToken.None);
             }

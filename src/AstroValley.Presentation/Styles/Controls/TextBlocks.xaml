@@ -38,4 +38,32 @@
         <Setter Property="Foreground" Value="{StaticResource AppSubtleForegroundBrush}" />
     </Style>
 
+    <!-- Small heading above a group inside a card. -->
+    <Style x:Key="SectionLabelTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource CaptionTextStyle}">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0,16,0,8" />
+    </Style>
+
+    <!-- Title of a FlyoutCard (inherits the card's light foreground). -->
+    <Style x:Key="FlyoutTitleTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <!-- Small heading above a group on a FlyoutCard, medium emphasis. -->
+    <Style x:Key="FlyoutLabelTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Opacity" Value="0.7" />
+        <Setter Property="Margin" Value="0,16,0,6" />
+    </Style>
+
+    <!-- A short warning next to the thing it is about (e.g. an auction whose date has passed). -->
+    <Style x:Key="WarningTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource CaptionTextStyle}">
+        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
 </ResourceDictionary>

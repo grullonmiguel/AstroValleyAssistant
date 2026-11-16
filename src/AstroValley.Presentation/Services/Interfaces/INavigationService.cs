@@ -11,7 +11,8 @@ public interface INavigationService
 
     event EventHandler? CurrentPageChanged;
 
-    void NavigateTo<TPage>() where TPage : PageViewModelBase;
+    /// <summary>Shows the page and returns it (the kept-alive instance when it has one), so callers can hand it data.</summary>
+    TPage NavigateTo<TPage>() where TPage : PageViewModelBase;
 
     void NavigateTo(Type pageType);
 }

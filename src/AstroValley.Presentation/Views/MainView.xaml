@@ -26,8 +26,8 @@
         <DataTemplate DataType="{x:Type dialogs:RegridSettingsViewModel}">
             <viewDialogs:RegridSettingsView/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type dialogs:ResolveMatchesViewModel}">
-            <viewDialogs:ResolveMatchesView />
+        <DataTemplate DataType="{x:Type dialogs:ResolveMatchesDialogViewModel}">
+            <viewDialogs:ResolveMatchesDialogView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type dialogs:DueDiligenceViewModel}">
             <viewDialogs:DueDiligenceView />
@@ -41,8 +41,8 @@
         <DataTemplate DataType="{x:Type viewmodels:DialogWrapper}">
             <views:DialogWrapperView/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type dialogs:WebNavigationDialogViewModel}">
-            <viewDialogs:WebNavigationView />
+        <DataTemplate DataType="{x:Type dialogs:BrowseForUrlDialogViewModel}">
+            <viewDialogs:BrowseForUrlDialogView />
         </DataTemplate>
     </Window.Resources>
 

@@ -243,7 +243,7 @@ public abstract partial class PropertyScraperViewModelBase : ObservableObject
         try
         {
             // Create the dialog ViewModel with original property info
-            var dialogVm = new ResolveMatchesViewModel(
+            var dialogVm = new ResolveMatchesDialogViewModel(
                 property.ParcelId,
                 property.Address,
                 property.Owner,

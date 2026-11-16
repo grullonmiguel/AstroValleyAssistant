@@ -2,9 +2,9 @@
 
 namespace AstroValley.Presentation.Views.Dialogs;
 
-public partial class ResolveMatchesView : UserControl
+public partial class ResolveMatchesDialogView : UserControl
 {
-    public ResolveMatchesView()
+    public ResolveMatchesDialogView()
     {
         InitializeComponent();
     }

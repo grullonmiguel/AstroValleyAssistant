@@ -26,7 +26,11 @@ public sealed class NavigationService : INavigationService
 
     public event EventHandler? CurrentPageChanged;
 
-    public void NavigateTo<TPage>() where TPage : PageViewModelBase => NavigateTo(typeof(TPage));
+    public TPage NavigateTo<TPage>() where TPage : PageViewModelBase
+    {
+        NavigateTo(typeof(TPage));
+        return (TPage)CurrentPage!;
+    }
 
     public void NavigateTo(Type pageType)
     {

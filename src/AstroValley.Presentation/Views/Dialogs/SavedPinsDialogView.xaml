@@ -36,11 +36,11 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <DockPanel Margin="24">
+    <DockPanel Margin="{StaticResource DialogPadding}">
         <!-- title bar (DialogHost has no chrome of its own) -->
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
-            <Button DockPanel.Dock="Right" Style="{StaticResource MaterialDesignIconButton}" Width="32" Height="32"
-                    Command="{Binding CloseCommand}" IsCancel="True" ToolTip="Close">
+            <Button DockPanel.Dock="Right" Style="{StaticResource DialogCloseButtonStyle}"
+                    Command="{Binding CloseCommand}">
                 <materialDesign:PackIcon Kind="Close"/>
             </Button>
             <TextBlock Text="{Binding Title}" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center"/>

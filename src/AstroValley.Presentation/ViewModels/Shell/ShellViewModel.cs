@@ -28,6 +28,7 @@ public sealed partial class ShellViewModel : ObservableObject
         NavigationItems =
         [
             new NavigationItem("Home", PackIconKind.HomeOutline, typeof(HomeViewModel)),
+            new NavigationItem("Parcel Lookup", PackIconKind.MapSearchOutline, typeof(ParcelLookupViewModel)),
             //new NavigationItem("Regrid", PackIconKind.FlaskOutline, typeof(RegridViewModel)),
             //new NavigationItem("About", PackIconKind.InformationOutline, typeof(AboutViewModel)),
         ];

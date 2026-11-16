@@ -417,11 +417,8 @@ public partial class MyPropertiesViewModel : ObservableObject
             var result = await _regrid.ScrapeSingleAsync(query, CancellationToken.None);
             if (result.IsMultiple)
             {
-                var dialog = new ResolveMatchesViewModel(r.ParcelId, r.Address, r.Owner, result.Matches);
-                _services.GetRequiredService<IDialogService>().ShowDialog(dialog);
-                RegridMatch? match = null;
-                try { match = await dialog.Result; }
-                catch (TaskCanceledException) { } // closed without choosing
+                var match = await _services.GetRequiredService<IDialogService>()
+                    .ShowAsync(new ResolveMatchesDialogViewModel(r.ParcelId, r.Address, r.Owner, result.Matches));
                 if (match is null) { Status = $"Regrid found {result.Matches.Count} parcels for {query}; none was chosen."; return; }
                 Status = $"Reading {match.Address} from Regrid...";
                 result = await _regrid.ScrapeSingleAsync(match.FullUrl, CancellationToken.None);

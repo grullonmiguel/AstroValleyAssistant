@@ -1,0 +1,76 @@
+﻿<UserControl x:Class="AstroValley.Presentation.Views.Dialogs.ResolveMatchesDialogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Width="720">
+    <!-- A lookup found several parcels (ResolveMatchesDialogViewModel): what was searched for on top, one card per match, pick one. -->
+    <DockPanel Margin="{StaticResource DialogPadding}">
+        <!-- title bar (DialogHost has no chrome of its own) -->
+        <DockPanel DockPanel.Dock="Top">
+            <Button DockPanel.Dock="Right" Style="{StaticResource DialogCloseButtonStyle}" Command="{Binding CancelCommand}">
+                <materialDesign:PackIcon Kind="Close" />
+            </Button>
+            <TextBlock Text="{Binding Title}" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
+        </DockPanel>
+        <TextBlock DockPanel.Dock="Top" Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap" Margin="0,4,0,16">
+            <Run Text="{Binding Matches.Count, Mode=OneWay}" /><Run Text=" parcels match what was searched for. Pick the right one and it will be looked up." />
+        </TextBlock>
+
+        <!-- footer -->
+        <Button DockPanel.Dock="Bottom" Style="{StaticResource TextButtonStyle}" HorizontalAlignment="Right" Margin="0,16,0,0"
+                Content="Cancel" Command="{Binding CancelCommand}" />
+
+        <!-- what was searched for -->
+        <materialDesign:Card DockPanel.Dock="Top" Style="{StaticResource HighlightCardStyle}">
+            <StackPanel>
+                <TextBlock Text="Searched for" Style="{StaticResource CaptionTextStyle}" Margin="0,0,0,4" />
+                <TextBlock Text="{Binding OriginalParcelId, TargetNullValue='No parcel ID'}" Style="{StaticResource SubtitleTextStyle}" Margin="0,0,0,8" />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <materialDesign:PackIcon Kind="MapMarkerOutline" Style="{StaticResource InlineIconStyle}" />
+                    <TextBlock Text="{Binding OriginalAddress}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="AccountOutline" Style="{StaticResource InlineIconStyle}" />
+                    <TextBlock Text="{Binding OriginalOwner}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" />
+                </StackPanel>
+            </StackPanel>
+        </materialDesign:Card>
+
+        <!-- the matches -->
+        <ScrollViewer MaxHeight="420" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+            <ItemsControl ItemsSource="{Binding Matches}" Focusable="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <materialDesign:Card Style="{StaticResource SectionCardStyle}" Margin="0,0,0,8">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" Margin="16,0,0,0" VerticalAlignment="Center"
+                                        Command="{Binding DataContext.SelectMatchCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" ToolTip="This is the right parcel: look it up">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Check" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="Select" />
+                                    </StackPanel>
+                                </Button>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding ParcelId}" Style="{StaticResource SubtitleTextStyle}" Margin="0,0,0,8" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <materialDesign:PackIcon Kind="MapMarkerOutline" Style="{StaticResource InlineIconStyle}" />
+                                        <TextBlock Text="{Binding Address}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <materialDesign:PackIcon Kind="City" Style="{StaticResource InlineIconStyle}" />
+                                        <TextBlock Text="{Binding City}" Style="{StaticResource BodyTextStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="AccountOutline" Style="{StaticResource InlineIconStyle}" />
+                                        <TextBlock Text="{Binding Owner, TargetNullValue='—'}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </DockPanel>
+                        </materialDesign:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

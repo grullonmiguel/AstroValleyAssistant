@@ -9,9 +9,18 @@
     <sys:Double x:Key="SpaceLg">24</sys:Double>
     <sys:Double x:Key="SpaceXl">32</sys:Double>
 
-    <Thickness x:Key="PagePadding">24,48,24,16</Thickness>
+    <Thickness x:Key="PagePadding">24,34,24,16</Thickness>
     <Thickness x:Key="SectionMargin">0,0,0,16</Thickness>
     <Thickness x:Key="ControlMargin">0,0,8,0</Thickness>
+    <Thickness x:Key="PageHeaderCardMargin">0,0,-24,16</Thickness>
+    <Thickness x:Key="CardPadding">8</Thickness>
+    <Thickness x:Key="DialogPadding">24</Thickness>
+    <!-- Right margin puts the tail under the middle of the button that opens the flyout; -1 bottom tucks it into the card. -->
+    <Thickness x:Key="FlyoutTailMargin">0,0,16,-1</Thickness>
+    <!-- Parcel Lookup's Get Details button sits left of Lists, so its flyout's tail sits further in. -->
+    <Thickness x:Key="GetDetailsFlyoutTailMargin">0,0,131,-1</Thickness>
+    <!-- Pulls the flyout up over the SectionMargin gap so the tail's tip touches the header card it hangs from. -->
+    <Thickness x:Key="FlyoutPanelMargin">0,-16,0,0</Thickness>
 
     <CornerRadius x:Key="ControlCornerRadius">4</CornerRadius>
 

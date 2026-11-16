@@ -13,6 +13,7 @@
     <Color x:Key="SuccessColor">#2E7D32</Color>
     <Color x:Key="WarningColor">#ED8B00</Color>
     <Color x:Key="ErrorColor">#D1031C</Color>
+    <Color x:Key="InfoColor">#1565C0</Color>
 
     <Color x:Key="CaptionCloseHoverColor">#E81123</Color>
 

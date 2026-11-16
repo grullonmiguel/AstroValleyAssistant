@@ -28,5 +28,10 @@
     <sys:Double x:Key="NavItemHeight">44</sys:Double>
     <sys:Double x:Key="NavIconSize">22</sys:Double>
     <sys:Double x:Key="StatusBarHeight">32</sys:Double>
+    <sys:Double x:Key="DetailsPanelWidth">260</sys:Double>
+    <sys:Double x:Key="FlyoutWidth">260</sys:Double>
+    <sys:Double x:Key="ThumbnailHeight">150</sys:Double>
+    <sys:Double x:Key="BrowserDialogWidth">1100</sys:Double>
+    <sys:Double x:Key="BrowserDialogHeight">720</sys:Double>
 
 </ResourceDictionary>

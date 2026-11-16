@@ -1,5 +1,6 @@
 ﻿using AstroValley.Domain.Entities;
 using AstroValley.Domain.Enums;
+using AstroValley.Domain.Models;
 using AstroValley.Domain.Utilities;
 using AstroValley.Presentation.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -128,6 +129,34 @@ public partial class PropertyDataViewModel : ObservableObject
     // -----------------------------
     // Update Properties
     // -----------------------------
+    /// <summary>
+    /// Takes one parcel-data lookup result (Parcel Lookup page): merges the data on success, otherwise sets the status
+    /// and keeps whatever helps the user follow up (the provider's search URL, the candidate matches).
+    /// </summary>
+    public void ApplyLookupResult(RegridParcelResult result)
+    {
+        Matches.Clear();
+        HasMultipleMatches = false;
+
+        if (result.IsRateLimited) { Status = ScrapeStatus.RateLimited; return; }
+        if (result.Error != null) { Status = ScrapeStatus.Error; return; }
+
+        if (result.NotFound || result.IsMultiple)
+        {
+            if (!string.IsNullOrWhiteSpace(result.Record?.RegridUrl))
+                Record = Record with { RegridUrl = result.Record.RegridUrl };
+
+            foreach (var match in result.Matches)
+                Matches.Add(match);
+            HasMultipleMatches = result.IsMultiple;
+            Status = result.IsMultiple ? ScrapeStatus.MultipleMatches : ScrapeStatus.NotFound;
+            return;
+        }
+
+        Record = PropertyRecordMerger.Merge(Record, result.Record!);
+        Status = ScrapeStatus.Success;
+    }
+
     private void RaiseRecordDependentProperties()
     {
         OnPropertyChanged(nameof(ParcelId));

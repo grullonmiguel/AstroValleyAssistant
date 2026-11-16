@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
     <!-- A style can only resolve StaticResource keys from its own file and the files merged into it, so merge the tokens. -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="../Tokens/Tokens.xaml" />
@@ -18,6 +19,58 @@
 
     <Style x:Key="TextButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource MaterialDesignFlatButton}">
         <Setter Property="Margin" Value="{StaticResource ControlMargin}" />
+    </Style>
+
+    <!-- A small round icon button in a dialog's title row (back, close). -->
+    <Style x:Key="DialogIconButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource MaterialDesignIconButton}">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+    </Style>
+
+    <!-- The X in a dialog's title row; Esc presses it. -->
+    <Style x:Key="DialogCloseButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource DialogIconButtonStyle}">
+        <Setter Property="IsCancel" Value="True" />
+        <Setter Property="ToolTip" Value="Close" />
+    </Style>
+
+    <!-- Buttons on a FlyoutCard (primary background): light text and outline. -->
+    <Style x:Key="FlyoutOutlinedButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+        <Setter Property="Height" Value="40" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
+        <Setter Property="BorderBrush" Value="{StaticResource OnPrimaryOutlineBrush}" />
+        <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="8" />
+        <Setter Property="materialDesign:RippleAssist.Feedback" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
+    </Style>
+
+    <!-- One row of a list on a FlyoutCard: full width, left aligned, light text. -->
+    <Style x:Key="FlyoutListButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource MaterialDesignFlatButton}">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
+        <Setter Property="materialDesign:RippleAssist.Feedback" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
+    </Style>
+
+    <!-- Round icon button on a FlyoutCard (the card's close X). -->
+    <Style x:Key="FlyoutIconButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource MaterialDesignIconButton}">
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
+    </Style>
+
+    <!-- Small icon button at the end of a FlyoutCard list row (open, remove). -->
+    <Style x:Key="FlyoutSmallIconButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource FlyoutIconButtonStyle}">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+    </Style>
+
+    <!-- One link in a vertical list of links (icon + label, left aligned, full width). -->
+    <Style x:Key="QuickLinkButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource MaterialDesignFlatButton}">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Margin" Value="0" />
     </Style>
 
     <!-- Round color swatch. Background is the color it represents; content (a check mark) shows when selected. -->

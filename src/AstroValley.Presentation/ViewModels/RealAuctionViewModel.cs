@@ -187,10 +187,8 @@ public partial class RealAuctionViewModel : PropertyScraperViewModelBase
     [RelayCommand(CanExecute = nameof(CanOpenWebNavigation))]
     private async Task OpenWebNavigation()
     {
-        var dialogVm = new WebNavigationDialogViewModel("https://www.realauction.com/clients");
-        _dialogService!.ShowDialog(dialogVm);
-
-        var selectedUrl = await dialogVm.Result;
+        var selectedUrl = await _dialogService!.ShowAsync(new BrowseForUrlDialogViewModel("Real Auction", "https://www.realauction.com/clients",
+            Sources.RealAuctionSourceViewModel.IsAuctionUrl, "Navigate to a specific auction date page to enable selection."));
 
         if (selectedUrl is null)
             return;

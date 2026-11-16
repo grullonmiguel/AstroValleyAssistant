@@ -7,8 +7,12 @@ namespace AstroValley.Application.Services;
 /// <summary>
 /// Regrid scraping operations: Handles sequential scraping, throttling, cancellation, and progress reporting.
 /// </summary>
-public class RegridService : IRegridService
+public class RegridService : IRegridService, IParcelDataProvider
 {
+    public string Name => "Regrid";
+
+    public Task<RegridParcelResult> LookupAsync(string query, CancellationToken ct) => ScrapeSingleAsync(query, ct);
+
     private readonly IRegridScraper _scraper;
     private readonly IRegridSettings _settings;
 

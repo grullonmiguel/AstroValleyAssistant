@@ -14,6 +14,7 @@ using AstroValley.Presentation.ViewModels;
 using AstroValley.Presentation.ViewModels.Dialogs;
 using AstroValley.Presentation.ViewModels.Pages;
 using AstroValley.Presentation.ViewModels.Shell;
+using AstroValley.Presentation.ViewModels.Sources;
 using AstroValley.Presentation.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
@@ -52,6 +53,8 @@ public static class ServiceCollectionExtensions
         // Register new pages here and map them to a view in Views/ViewTemplates.xaml.
         services.AddTransient<HomeViewModel>();
         services.AddTransient<SettingsViewModel>();
+        services.AddTransient<ParcelLookupViewModel>();
+        services.AddTransient<RealAuctionSourceViewModel>();
 
         //services.AddSingleton<MainViewModel>();
         //services.AddSingleton<IDialogService>(sp => new DialogService(sp.GetRequiredService<MainViewModel>()));
@@ -66,15 +69,18 @@ public static class ServiceCollectionExtensions
 
         // Dialog view-models (transient: one per dialog).
         services.AddTransient<RegridSettingsViewModel>();
-        services.AddTransient<ResolveMatchesViewModel>();
-        services.AddTransient<WebNavigationDialogViewModel>();
+        services.AddTransient<ResolveMatchesDialogViewModel>();
 
         return services;
     }
 
     private static IServiceCollection AddApplicationAndInfrastructure(this IServiceCollection services)
     {
-        services.AddSingleton<IRegridService, RegridService>();
+        services.AddSingleton<RegridService>();
+        services.AddSingleton<IRegridService>(sp => sp.GetRequiredService<RegridService>());
+
+        // Parcel Lookup providers: one instance per provider, shared with the old pages so the Regrid login is reused.
+        services.AddSingleton<IParcelDataProvider>(sp => sp.GetRequiredService<RegridService>());
 
         // First importer that recognizes the headers wins; generic must stay last.
         services.AddSingleton<IPropertyImporter, ParcelFairImporter>();

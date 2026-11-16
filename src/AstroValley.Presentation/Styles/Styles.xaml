@@ -16,6 +16,10 @@
         <ResourceDictionary Source="Controls/TextBlocks.xaml" />
         <ResourceDictionary Source="Controls/Buttons.xaml" />
         <ResourceDictionary Source="Controls/StatusBar.xaml" />
+        <ResourceDictionary Source="Controls/Cards.xaml" />
+        <ResourceDictionary Source="Controls/DataGrids.xaml" />
+        <ResourceDictionary Source="Controls/Snackbar.xaml" />
+        <ResourceDictionary Source="Controls/Icons.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

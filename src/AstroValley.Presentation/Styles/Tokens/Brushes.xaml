@@ -29,11 +29,18 @@
     <SolidColorBrush x:Key="SuccessBrush" po:Freeze="True" Color="{StaticResource SuccessColor}" />
     <SolidColorBrush x:Key="WarningBrush" po:Freeze="True" Color="{StaticResource WarningColor}" />
     <SolidColorBrush x:Key="ErrorBrush" po:Freeze="True" Color="{StaticResource ErrorColor}" />
+    <SolidColorBrush x:Key="InfoBrush" po:Freeze="True" Color="{StaticResource InfoColor}" />
+
+    <!-- Light tints of the status colors, for badge backgrounds. -->
+    <SolidColorBrush x:Key="SuccessSubtleBrush" po:Freeze="True" Color="{StaticResource SuccessColor}" Opacity="0.12" />
+    <SolidColorBrush x:Key="WarningSubtleBrush" po:Freeze="True" Color="{StaticResource WarningColor}" Opacity="0.12" />
+    <SolidColorBrush x:Key="ErrorSubtleBrush" po:Freeze="True" Color="{StaticResource ErrorColor}" Opacity="0.12" />
 
     <SolidColorBrush x:Key="CaptionCloseHoverBrush" po:Freeze="True" Color="{StaticResource CaptionCloseHoverColor}" />
 
     <!-- Translucent white overlays used on top of the primary-colored sidebar. -->
     <SolidColorBrush x:Key="OnPrimaryHoverBrush" po:Freeze="True" Color="#1FFFFFFF" />
     <SolidColorBrush x:Key="OnPrimarySelectedBrush" po:Freeze="True" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="OnPrimaryOutlineBrush" po:Freeze="True" Color="#4DFFFFFF" />
 
 </ResourceDictionary>

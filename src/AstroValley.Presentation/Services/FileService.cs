@@ -13,4 +13,15 @@ public class FileService : IFileService
         };
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
+
+    public string? SaveFile(string title, string filter, string fileName)
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = title,
+            Filter = filter,
+            FileName = fileName
+        };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
 }

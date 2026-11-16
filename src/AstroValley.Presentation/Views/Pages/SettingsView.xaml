@@ -4,8 +4,17 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:controls="clr-namespace:AstroValley.Presentation.Controls">
     <StackPanel Margin="{StaticResource PagePadding}" >
-        <controls:PageHeader Title="Settings"
-                             Description="Pick a primary color. The whole app changes immediately and the choice is remembered." />
+        <materialDesign:Card DockPanel.Dock="Top" Style="{StaticResource SectionCardStyle}" Margin="{StaticResource PageHeaderCardMargin}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <controls:PageHeader Title="Settings" />
+            </Grid>
+        </materialDesign:Card>
+        <!--<controls:PageHeader Title="Settings"
+                             Description="Pick a primary color. The whole app changes immediately and the choice is remembered." />-->
 
         <TextBlock Margin="0,0,0,12"
                    Text="Primary color" 

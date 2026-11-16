@@ -1,0 +1,52 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:models="clr-namespace:AstroValley.Presentation.Models">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Tokens.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- SNACKBAR: colored by the current message's severity (ISnackbarService.Show). -->
+
+    <!-- The Dismiss / action button: white text so it reads on every severity color. -->
+    <Style x:Key="SnackbarActionButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource MaterialDesignFlatButton}">
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="AppSnackbarStyle" TargetType="{x:Type materialDesign:Snackbar}" BasedOn="{StaticResource {x:Type materialDesign:Snackbar}}">
+        <Setter Property="Background" Value="{StaticResource InfoBrush}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="ActionButtonStyle" Value="{StaticResource SnackbarActionButtonStyle}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Message.Content.Severity, RelativeSource={RelativeSource Self}}" Value="{x:Static models:SnackbarSeverity.Success}">
+                <Setter Property="Background" Value="{StaticResource SuccessBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Message.Content.Severity, RelativeSource={RelativeSource Self}}" Value="{x:Static models:SnackbarSeverity.Warning}">
+                <Setter Property="Background" Value="{StaticResource WarningBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Message.Content.Severity, RelativeSource={RelativeSource Self}}" Value="{x:Static models:SnackbarSeverity.Error}">
+                <Setter Property="Background" Value="{StaticResource ErrorBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- How a message is drawn inside the snackbar: severity icon, then the text. -->
+    <DataTemplate DataType="{x:Type models:SnackbarNotice}">
+        <StackPanel Orientation="Horizontal">
+            <materialDesign:PackIcon x:Name="Icon" Kind="InformationOutline" Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" />
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Severity}" Value="{x:Static models:SnackbarSeverity.Success}">
+                <Setter TargetName="Icon" Property="Kind" Value="CheckCircleOutline" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Severity}" Value="{x:Static models:SnackbarSeverity.Warning}">
+                <Setter TargetName="Icon" Property="Kind" Value="AlertOutline" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Severity}" Value="{x:Static models:SnackbarSeverity.Error}">
+                <Setter TargetName="Icon" Property="Kind" Value="AlertCircleOutline" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+</ResourceDictionary>

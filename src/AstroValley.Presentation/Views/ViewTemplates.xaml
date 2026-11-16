@@ -18,10 +18,19 @@
     <DataTemplate DataType="{x:Type pages:SettingsViewModel}">
         <pageViews:SettingsView />
     </DataTemplate>
+    <DataTemplate DataType="{x:Type pages:ParcelLookupViewModel}">
+        <pageViews:ParcelLookupView />
+    </DataTemplate>
 
     <!-- Dialogs -->
     <DataTemplate DataType="{x:Type dialogs:SavedPinsDialogViewModel}">
         <dialogViews:SavedPinsDialogView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type dialogs:ResolveMatchesDialogViewModel}">
+        <dialogViews:ResolveMatchesDialogView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type dialogs:BrowseForUrlDialogViewModel}">
+        <dialogViews:BrowseForUrlDialogView />
     </DataTemplate>
 
 </ResourceDictionary>

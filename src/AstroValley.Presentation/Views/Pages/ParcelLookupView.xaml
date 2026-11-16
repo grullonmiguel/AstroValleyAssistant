@@ -1,0 +1,286 @@
+<UserControl x:Class="AstroValley.Presentation.Views.Pages.ParcelLookupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:controls="clr-namespace:AstroValley.Presentation.Controls">
+    <DockPanel Margin="{StaticResource PagePadding}">
+
+        <materialDesign:Card DockPanel.Dock="Top" Style="{StaticResource SectionCardStyle}" Margin="{StaticResource PageHeaderCardMargin}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <controls:PageHeader Title="{Binding Title}" />
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource TextButtonStyle}" Command="{Binding ToggleGetDetailsCommand}"
+                            ToolTip="Fill in the parcels' details from a data source" ToolTipService.ShowOnDisabled="True">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="DatabaseSearchOutline" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Get Details" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource TextButtonStyle}" Margin="0" Command="{Binding ToggleListsCommand}"
+                            ToolTip="Get the list">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ViewList" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Lists" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>            
+        </materialDesign:Card>
+
+        <!-- Everything under the header, with the Auction Lists and Get Details flyouts floating over it -->
+        <Grid>
+        <DockPanel>
+
+        <!-- While loading or looking up: progress and Cancel. Results go to the snackbar. -->
+        <DockPanel DockPanel.Dock="Top" Margin="{StaticResource SectionMargin}"
+                   Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Button DockPanel.Dock="Right" Style="{StaticResource TextButtonStyle}" Margin="16,0,0,0" Content="Cancel" Command="{Binding CancelCommand}" />
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{Binding ProgressText}" Style="{StaticResource CaptionTextStyle}" Margin="0,0,0,4" />
+                <ProgressBar IsIndeterminate="{Binding IsProgressIndeterminate}" Value="{Binding ProgressValue}" />
+            </StackPanel>
+        </DockPanel>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- The parcels -->
+            <materialDesign:Card Style="{StaticResource FillCardStyle}">
+                <DockPanel>
+                    <!-- what to do with the list -->
+                    <DockPanel DockPanel.Dock="Top" Style="{StaticResource CardHeaderStyle}"
+                               Visibility="{Binding HasRows, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Style="{StaticResource TextButtonStyle}" Command="{Binding ShowOnMapCommand}" ToolTip="Put the parcels that have a location on the Home map">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="MapMarkerMultipleOutline" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Map" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource TextButtonStyle}" Command="{Binding CopyCommand}" ToolTip="Copy the list to paste into a spreadsheet">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="ContentCopy" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Copy" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource TextButtonStyle}" Command="{Binding ExportToExcelCommand}" ToolTip="Save the list as an Excel file">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="MicrosoftExcel" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Export" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource TextButtonStyle}" Margin="0" Command="{Binding ClearCommand}" ToolTip="Empty the list">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="DeleteSweepOutline" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Clear" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Center">
+                            <Run Text="{Binding Rows.Count, Mode=OneWay}" /><Run Text=" parcels" />
+                        </TextBlock>
+                    </DockPanel>
+
+                <Grid>
+                    <DataGrid Style="{StaticResource ReadOnlyDataGridStyle}"
+                              ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}"
+                              Visibility="{Binding HasRows, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Status" CellTemplate="{StaticResource LookupStatusBadgeTemplate}" />
+                            <DataGridTextColumn Header="Parcel ID" Binding="{Binding ParcelId}" />
+                            <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*" />
+                            <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="*" />
+                            <DataGridTextColumn Header="Type" Binding="{Binding PropertyType}" />
+                            <DataGridTextColumn Header="Assessed" Binding="{Binding AssessedValue, StringFormat={}{0:C0}}" ElementStyle="{StaticResource NumericCellTextStyle}" />
+                            <DataGridTextColumn Header="Opening bid" Binding="{Binding Bid, StringFormat={}{0:C0}}" ElementStyle="{StaticResource NumericCellTextStyle}" />
+                            <DataGridTextColumn Header="Acres" Binding="{Binding Acres, StringFormat={}{0:N2}}" ElementStyle="{StaticResource NumericCellTextStyle}" />
+                            <DataGridTextColumn Header="Est. value" Binding="{Binding CompsValue, StringFormat={}{0:C0}}" ElementStyle="{StaticResource NumericCellTextStyle}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Text="Pick an auction under Lists to list its parcels here." Style="{StaticResource BodyTextStyle}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24"
+                               Visibility="{Binding HasRows, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}" />
+                </Grid>
+                </DockPanel>
+            </materialDesign:Card>
+
+            <!-- The selected parcel: aerial photo and links to look it up elsewhere -->
+            <materialDesign:Card Grid.Column="1" Width="{StaticResource DetailsPanelWidth}" Margin="16,0,0,0" Padding="{StaticResource CardPadding}"
+                                 VerticalAlignment="Top" DataContext="{Binding SelectedRow}"
+                                 Visibility="{Binding Converter={StaticResource NullToVisibilityConverter}}">
+                <StackPanel>
+                    <TextBlock Text="{Binding ParcelId}" Style="{StaticResource SubtitleTextStyle}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ParcelId}" />
+                    <TextBlock Text="{Binding Address}" Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap" Margin="0,4,0,12" />
+
+                    <!-- Several parcels matched: pick the right one -->
+                    <StackPanel Margin="0,0,0,12" Visibility="{Binding HasMultipleMatches, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <materialDesign:PackIcon Kind="AlertOutline" Style="{StaticResource InlineIconStyle}" Foreground="{StaticResource WarningBrush}" />
+                            <TextBlock Style="{StaticResource WarningTextStyle}">
+                                <Run Text="{Binding Matches.Count, Mode=OneWay}" /><Run Text=" parcels match this one" />
+                            </TextBlock>
+                        </StackPanel>
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Margin="0" HorizontalAlignment="Stretch"
+                                Command="{Binding DataContext.ResolveMatchesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FormatListChecks" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Pick the parcel" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <Border Style="{StaticResource ThumbnailBorderStyle}"
+                            ToolTip="Aerial photo from Esri World Imagery. The date is when the imagery was captured."
+                            Visibility="{Binding Aerial, Converter={StaticResource NullToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <!-- The photo and outline are built for 168x110 (PropertyDataViewModel.Aerial); the Viewbox scales both together. -->
+                        <Viewbox Stretch="UniformToFill">
+                            <Grid Width="168" Height="110">
+                                <Image Source="{Binding Aerial.Url, IsAsync=True}" Stretch="Fill" />
+                                <Path Data="{Binding Aerial.OutlinePath}" Stroke="White" StrokeThickness="1.5" StrokeLineJoin="Round" />
+                            </Grid>
+                        </Viewbox>
+                    </Border>
+                    <TextBlock Text="{Binding AerialCaption}" Style="{StaticResource CaptionTextStyle}" Margin="0,-8,0,12"
+                               Visibility="{Binding Aerial, Converter={StaticResource NullToVisibilityConverter}, FallbackValue=Collapsed}" />
+
+                    <TextBlock Text="Quick links" Style="{StaticResource SectionLabelTextStyle}" Margin="0,0,0,4" />
+                    <Button Style="{StaticResource QuickLinkButtonStyle}" Command="{Binding OpenAppraiserCommand}"
+                            IsEnabled="{Binding AppraiserUrl, Converter={StaticResource IsNotNullOrEmptyConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="OfficeBuildingOutline" Margin="0,0,12,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Appraiser" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource QuickLinkButtonStyle}" Command="{Binding OpenRegridCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="MapSearchOutline" Margin="0,0,12,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Regrid details" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource QuickLinkButtonStyle}" Command="{Binding OpenFloodCommand}" IsEnabled="{Binding HasFemaUrl}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Waves" Margin="0,0,12,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Flood details" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource QuickLinkButtonStyle}" Command="{Binding OpenMapsCommand}" IsEnabled="{Binding HasGoogleUrl}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="GoogleMaps" Margin="0,0,12,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Google Maps" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </materialDesign:Card>
+        </Grid>
+        </DockPanel>
+
+        <!-- Auction Lists flyout: pick an auction (from RealAuction or a recent one) and it loads straight away.
+             The tail points up at the Lists button above. -->
+        <StackPanel Style="{StaticResource FlyoutPanelStyle}"
+                    Visibility="{Binding IsListsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel.RenderTransform>
+                <TranslateTransform />
+            </StackPanel.RenderTransform>
+            <Path Style="{StaticResource FlyoutTailStyle}" />
+            <materialDesign:Card Style="{StaticResource FlyoutCardStyle}">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource FlyoutIconButtonStyle}" Command="{Binding CloseListsCommand}"
+                                ToolTip="Close" AutomationProperties.Name="Close auction lists">
+                            <materialDesign:PackIcon Kind="Close" Width="20" Height="20" />
+                        </Button>
+                        <materialDesign:PackIcon Kind="Gavel" Width="22" Height="22" Margin="0,0,10,0" VerticalAlignment="Center" />
+                        <TextBlock Text="Auction Lists" Style="{StaticResource FlyoutTitleTextStyle}" />
+                    </DockPanel>
+
+                    <Button Style="{StaticResource FlyoutOutlinedButtonStyle}" Margin="0,16,8,0" Command="{Binding BrowseRealAuctionCommand}"
+                            ToolTip="Find an auction on the RealAuction site; it loads as soon as you select it">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Web" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Real Auction" />
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Recent auctions: click to load; open its page on RealAuction; x to forget -->
+                    <StackPanel Visibility="{Binding Auction.HasRecentUrls, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="RECENT AUCTIONS" Style="{StaticResource FlyoutLabelTextStyle}" />
+                        <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Auction.RecentUrls}" Focusable="False">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel ToolTip="{Binding Tooltip}">
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource FlyoutSmallIconButtonStyle}"
+                                                    ToolTip="Remove from recent" AutomationProperties.Name="Remove from recent"
+                                                    Command="{Binding DataContext.Auction.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}">
+                                                <materialDesign:PackIcon Kind="Close" Width="14" Height="14" />
+                                            </Button>
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource FlyoutSmallIconButtonStyle}"
+                                                    ToolTip="Open this auction on RealAuction" AutomationProperties.Name="Open on RealAuction"
+                                                    Command="{Binding DataContext.Auction.OpenSiteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}">
+                                                <materialDesign:PackIcon Kind="OpenInNew" Width="14" Height="14" />
+                                            </Button>
+                                            <Button Style="{StaticResource FlyoutListButtonStyle}" Content="{Binding Alias}"
+                                                    Command="{Binding DataContext.LoadRecentAuctionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+                </StackPanel>
+            </materialDesign:Card>
+        </StackPanel>
+
+        <!-- Get Details flyout: pick a data provider and the list is looked up in it straight away. Its tail points at the Get Details button. -->
+        <StackPanel Style="{StaticResource FlyoutPanelStyle}"
+                    Visibility="{Binding IsGetDetailsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel.RenderTransform>
+                <TranslateTransform />
+            </StackPanel.RenderTransform>
+            <Path Style="{StaticResource FlyoutTailStyle}" Margin="{StaticResource GetDetailsFlyoutTailMargin}" />
+            <materialDesign:Card Style="{StaticResource FlyoutCardStyle}">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource FlyoutIconButtonStyle}" Command="{Binding CloseGetDetailsCommand}"
+                                ToolTip="Close" AutomationProperties.Name="Close get details">
+                            <materialDesign:PackIcon Kind="Close" Width="20" Height="20" />
+                        </Button>
+                        <materialDesign:PackIcon Kind="DatabaseSearchOutline" Width="22" Height="22" Margin="0,0,10,0" VerticalAlignment="Center" />
+                        <TextBlock Text="Get Details" Style="{StaticResource FlyoutTitleTextStyle}" />
+                    </DockPanel>
+
+                    <TextBlock Text="GET DETAILS FROM" Style="{StaticResource FlyoutLabelTextStyle}" />
+                    <ItemsControl ItemsSource="{Binding Providers}" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource FlyoutListButtonStyle}"
+                                        ToolTip="Fill in every parcel that has not been found yet"
+                                        Command="{Binding DataContext.LookupWithCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Database" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Name}" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </materialDesign:Card>
+        </StackPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>
